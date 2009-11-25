@@ -19,7 +19,7 @@
   <name>Dimensions SCM plugin</name>
   <description>Dimension SCM plugin for Hudson</description>
   <url>http://wiki.hudson-ci.org/display/HUDSON/Dimensions</url>
-  <version>0.5.4-SNAPSHOT</version>
+  <version>0.5.4</version>
 
   <properties>
     <!-- which version of Hudson is this plugin built against? -->
@@ -134,4 +134,10 @@
       </snapshots>
     </pluginRepository>
   </pluginRepositories>
+
+  <scm>
+    <connection>scm:svn:https://guest@svn.dev.java.net/svn/hudson/tags/dimensionsscm-0.5.4</connection>
+    <developerConnection>scm:svn:https://svn.dev.java.net/svn/hudson/tags/dimensionsscm-0.5.4</developerConnection>
+    <url>https://hudson.dev.java.net/source/browse/hudson/hudson/plugins/dimensionsscm/tags/dimensionsscm-0.5.4</url>
+  </scm>
 </project>
