@@ -109,6 +109,7 @@ import com.serena.dmclient.api.DimensionsNetworkException;
 import com.serena.dmclient.api.DimensionsRuntimeException;
 import com.serena.dmclient.api.DimensionsResult;
 import com.serena.dmclient.api.DimensionsObjectFactory;
+
 import com.serena.dmclient.api.DimensionsDatabaseAdmin.CommandFailedException;
 import com.serena.dmclient.api.DimensionsConnection;
 import com.serena.dmclient.api.DimensionsConnectionDetails;
@@ -448,13 +449,55 @@ public class DimensionsAPI
                     throws IOException, InterruptedException
     {
         boolean bRet = false;
+        int version = 2009;
 
         if (connection == null)
             throw new IOException("Not connected to an SCM repository");
 
         try
         {
+            // Get the server version
+            List inf = getCon().getObjectFactory().getServerVersion(2);
+            if (inf == null)
+                Logger.Debug("Detection of server information failed");
+
+            if (inf != null)
+            {
+                Logger.Debug("Server information detected -" + inf.size());
+                for (int i = 0; i < inf.size(); ++i) {
+                    String prop = (String) inf.get(i);
+                    Logger.Debug(i + " - " + prop);
+                }
+
+                // Try and locate the server version.
+                // If not found, then get the schema version and use that
+                String server = (String)inf.get(2);
+                if (server == null)
+                    server = (String)inf.get(0);
+
+                if (server != null)
+                {
+                    Logger.Debug("Detected server version: " + server);
+                    String[] tokens = server.split(" ");
+                    server = tokens[0];
+                    if (server.startsWith("10."))
+                        version = 10;
+                    else if (server.startsWith("2009"))
+                        version = 2009;
+                    else if (server.startsWith("201"))
+                        version = 2010;
+                    else
+                        version = 2009;
+                    Logger.Debug("Version to process set to " + version);
+                }
+                else
+                    Logger.Debug("No server information found");
+            }
+
             String coCmd = "UPDATE /BRIEF ";
+            if (version == 10)
+                coCmd = "DOWNLOAD ";
+
             List items = calcRepositoryDiffs(projectName,projectDir,fromDate,toDate,tz);
             if (items != null || doFullUpdate)
             {
@@ -588,8 +631,8 @@ public class DimensionsAPI
 
             Logger.Debug("Looking between " + dateAfter + " -> " + dateBefore);
             String projName = projectName.toUpperCase();
-            Project projectObj = connection.getObjectFactory().getProject(projName);
-            List items = queryItems(connection, projectObj, workspace.getRemote(), filter, attrs, true, !allRevisions);
+            Project projectObj = getCon().getObjectFactory().getProject(projName);
+            List items = queryItems(getCon(), projectObj, workspace.getRemote(), filter, attrs, true, !allRevisions);
             return items;
         }
         catch(Exception e)
