@@ -1,53 +1,34 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.jvnet.hudson.plugins</groupId>
-		<artifactId>plugin</artifactId>
-		<version>1.313</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
+  <parent>
+        <groupId>org.jvnet.hudson.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>1.313</version>
+        <relativePath>../pom.xml</relativePath>
+  </parent>
 
-  <groupId>hudson.plugins.dimensionsscm</groupId>
+  <groupId>hudson.plugins</groupId>
   <artifactId>dimensionsscm</artifactId>
   <packaging>hpi</packaging>
-
-  <!--
-     Details of the plugin. The -SNAPSHOT in the version is apparently necessary for the 
-     release process to work.
-   -->
+  <version>0.5.5-SNAPSHOT</version>
   <name>Dimensions SCM plugin</name>
   <description>Dimension SCM plugin for Hudson</description>
   <url>http://wiki.hudson-ci.org/display/HUDSON/Dimensions</url>
-  <version>0.5.5-SNAPSHOT</version>
 
-  <properties>
-    <!-- which version of Hudson is this plugin built against? -->
-    <hudson.version>1.300</hudson.version>
-  </properties>
 
   <developers>
     <developer>
       <id>TPayne</id>
       <name>Tim Payne</name>
       <email>tpayne@serena.com</email>
+      <roles>
+          <role>Developer</role>
+      </roles>
     </developer>
   </developers>
 
   <dependencies>
-    <dependency>
-      <groupId>org.jvnet.hudson.main</groupId>
-      <artifactId>hudson-core</artifactId>
-      <version>${hudson.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jvnet.hudson.main</groupId>
-      <artifactId>hudson-war</artifactId>
-      <type>war</type>
-      <version>${hudson.version}</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>com.serena</groupId>
       <artifactId>dmclient</artifactId>
@@ -57,81 +38,37 @@
   </dependencies>
 
   <build>
-    <!--
-      Since new versions need to overwrite old versions, it's better
-      not to have version number in the .hpi file name.
-    -->
     <finalName>${project.artifactId}</finalName>
     <defaultGoal>package</defaultGoal>
     <plugins>
-      <plugin>
-        <groupId>org.jvnet.hudson.tools</groupId>
-        <artifactId>maven-hpi-plugin</artifactId>
-        <version>1.39</version>
-        <extensions>true</extensions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
-        </configuration>
-      </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+               <source>1.5</source>
+               <target>1.5</target>
+            </configuration>
+         </plugin>
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.4.3</version>
+            <configuration>
+               <forkMode>always</forkMode>
+            </configuration>
+         </plugin>
     </plugins>
   </build>
 
-  <!--
-    Get everything from http://maven.glassfish.org/content/groups/public/ ,
-    which aggregates everything we need, including central.
-  -->
   <repositories>
     <repository>
-      <id>central</id>
-      <url>http://repo1.maven.org/maven2</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>m.g.o-public</id>
-      <url>http://maven.glassfish.org/content/groups/public/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-    	<id>serena-lib</id>
-    	<url>file:${project.basedir}/lib/</url></repository>
+        <id>serena-lib</id>
+        <url>file:${project.basedir}/lib/</url></repository>
   </repositories>
 
   <pluginRepositories>
     <pluginRepository>
-      <id>central</id>
-      <url>http://repo1.maven.org/maven2</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-
-    <pluginRepository>
-      <id>m.g.o-public</id>
-      <url>http://maven.glassfish.org/content/groups/public/</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
+      <id>snapshots.repository.codehaus.org</id>
+      <url>http://snapshots.repository.codehaus.org</url>
     </pluginRepository>
   </pluginRepositories>
 </project>
