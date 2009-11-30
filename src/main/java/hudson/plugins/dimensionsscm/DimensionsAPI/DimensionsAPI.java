@@ -404,7 +404,7 @@ public class DimensionsAPI
         }
         catch(Exception e)
         {
-            e.printStackTrace();
+            // e.printStackTrace();
             throw new IOException("Unable to run hasRepositoryBeenUpdated - " + e.getMessage());
         }
 
@@ -518,7 +518,7 @@ public class DimensionsAPI
                         }
                         fmtWriter.flush();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        //e.printStackTrace();
                         throw new IOException("Unable to write command log - " + e.getMessage());
                     } finally {
                         fmtWriter.close();
@@ -575,8 +575,8 @@ public class DimensionsAPI
         }
         catch(Exception e)
         {
-            e.printStackTrace();
-            throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            //e.printStackTrace();
+            throw new IOException(e.getMessage());
         }
 
         return bRet;
@@ -637,8 +637,8 @@ public class DimensionsAPI
         }
         catch(Exception e)
         {
-            e.printStackTrace();
-            throw new IOException("Unable to run hasRepositoryBeenUpdated - " + e.getMessage());
+            //e.printStackTrace();
+            throw new IOException("Unable to run calcRepositoryDiffs - " + e.getMessage());
         }
     }
 
@@ -682,7 +682,8 @@ public class DimensionsAPI
             if (date == null)
                 date = (String)item.getAttribute(getDateTypeAttribute("edit"));
             String urlString = constructURL(spec,url,getSCMDsn(),getSCMBaseDb());
-
+            if (urlString == null)
+                urlString = "";
             Logger.Debug("Change set details -" + comment + " " + revision + " " + fileName + " " + author +
                          " " + spec  + " " + date + " " + operation + " " + urlString);
             Calendar opDate = Calendar.getInstance();
@@ -736,7 +737,7 @@ public class DimensionsAPI
                 }
                 catch (Exception e)
                 {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                     throw new DimensionsRuntimeException("Unable to sort item list - " + e.getMessage());
                 }
                 return result;
@@ -828,7 +829,8 @@ public class DimensionsAPI
                 Logger.Debug("Change URL - " + urlStr);
                 urlString = urlStr;
             }   catch (Exception e) {
-                e.printStackTrace();
+                //e.printStackTrace();
+                return null;
             }
         }
 

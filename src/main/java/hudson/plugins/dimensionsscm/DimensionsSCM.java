@@ -501,9 +501,10 @@ public class DimensionsSCM extends SCM implements Serializable
         }
         catch(Exception e)
         {
-            listener.fatalError(e.getMessage());
+            listener.fatalError("Unable to run checkout callout - " + e.getMessage());
             // e.printStackTrace();
-            throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            bRet = false;
         }
         finally
         {
@@ -579,9 +580,10 @@ public class DimensionsSCM extends SCM implements Serializable
         }
         catch(Exception e)
         {
-            listener.fatalError(e.getMessage());
+            listener.fatalError("Unable to run pollChanges callout - " + e.getMessage());
             // e.printStackTrace();
-            throw new IOException("Unable to run pollChanges callout - " + e.getMessage());
+            //throw new IOException("Unable to run pollChanges callout - " + e.getMessage());
+            bChanged = false;
         }
         finally
         {

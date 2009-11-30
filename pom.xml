@@ -14,7 +14,7 @@
   <version>0.5.7-SNAPSHOT</version>
   <name>Dimensions SCM plugin</name>
   <description>Dimension SCM plugin for Hudson</description>
-  <url>http://wiki.hudson-ci.org/display/HUDSON/Dimensions</url>
+  <url>http://wiki.hudson-ci.org/display/HUDSON/Dimensions+Plugin</url>
 
 
   <developers>
