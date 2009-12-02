@@ -127,7 +127,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
@@ -166,6 +168,8 @@ public class DimensionsSCM extends SCM implements Serializable
     private String jobServer;
     private String jobDatabase;
 
+    private String[] folders = new String[0];
+
     private String jobTimeZone;
     private String jobWebUrl;
 
@@ -191,6 +195,15 @@ public class DimensionsSCM extends SCM implements Serializable
      */
     public String getDirectory() {
         return this.directory;
+    }
+
+
+    /*
+     * Gets the project paths.
+     * @return the project paths
+     */
+    public String[] getFolders() {
+        return this.folders;
     }
 
     /*
@@ -354,7 +367,6 @@ public class DimensionsSCM extends SCM implements Serializable
      *      @return void
      *-----------------------------------------------------------------
      */
-    @DataBoundConstructor
     public DimensionsSCM(String project,
                          String directory,
                          String workarea,
@@ -369,9 +381,67 @@ public class DimensionsSCM extends SCM implements Serializable
                          String jobTimeZone,
                          String jobWebUrl)
     {
+        this(project,null,workarea,canJobDelete,
+             canJobForce,canJobRevert,
+             jobUserName,jobPasswd,
+             jobServer,jobDatabase,
+             canJobUpdate,jobTimeZone,
+             jobWebUrl,directory);
+    }
+
+    /*
+     *-----------------------------------------------------------------
+     *  FUNCTION SPECIFICATION
+     *  Name:
+     *      Constructor
+     *  Description:
+     *      Default constructor for the plugin
+     * Parameters:
+     *      @param String project
+     *      @param String[] folderNames
+     *      @param String workspaceName
+     *      @param String workarea
+     *      @param String jobServer
+     *      @param String jobUserName
+     *      @param String jobPasswd
+     *      @param String jobDatabase
+     *      @param String directory
+     *  Return:
+     *      @return void
+     *-----------------------------------------------------------------
+     */
+    @DataBoundConstructor
+    public DimensionsSCM(String project,
+                         String[] folders,
+                         String workarea,
+                         boolean canJobDelete,
+                         boolean canJobForce,
+                         boolean canJobRevert,
+                         String jobUserName,
+                         String jobPasswd,
+                         String jobServer,
+                         String jobDatabase,
+                         boolean canJobUpdate,
+                         String jobTimeZone,
+                         String jobWebUrl,
+                         String directory)
+    {
+        // Check the folders specified have data specified
+        if (folders != null) {
+            Logger.Debug("Folders are populated");
+            this.folders = folders;
+        }
+		else {
+			this.folders[0] = directory;
+		}
+		
+        if (folders != null)
+            Logger.Debug("Folders are populated");
+        else
+            Logger.Debug("Folders are null");
+
         // Copying arguments to fields
         this.project = (Util.fixEmptyAndTrim(project) == null ? "${JOB_NAME}" : project);
-        this.directory = (Util.fixEmptyAndTrim(directory) == null ? "/" : directory);
         this.workarea = (Util.fixEmptyAndTrim(workarea) == null ? null : workarea);
 
         this.jobServer = (Util.fixEmptyAndTrim(jobServer) == null ? getDescriptor().getServer() : jobServer);
@@ -388,9 +458,8 @@ public class DimensionsSCM extends SCM implements Serializable
         this.jobTimeZone = (Util.fixEmptyAndTrim(jobTimeZone) == null ? getDescriptor().getTimeZone() : jobTimeZone);
         this.jobWebUrl = (Util.fixEmptyAndTrim(jobWebUrl) == null ? getDescriptor().getWebUrl() : jobWebUrl);
 
-
         String dmS = this.jobServer + "-" + this.jobUserName + ":" + this.jobDatabase;
-        Logger.Debug("Starting job for project '" + this.project + "' ('" + this.directory + "')" +
+        Logger.Debug("Starting job for project '" + this.project + "' ('" + this.folders.length + "')" +
                      ", connecting to " + dmS);
     }
 
@@ -426,7 +495,7 @@ public class DimensionsSCM extends SCM implements Serializable
 
         Logger.Debug("Invoking checkout - " + this.getClass().getName());
 
-        boolean bRet = false;
+        boolean bRet = true;
 
         try
         {
@@ -455,8 +524,7 @@ public class DimensionsSCM extends SCM implements Serializable
                             jobDatabase,
                             jobServer))
             {
-                File fileName = new File(getDirectory());
-                FilePath dname = new FilePath(fileName);
+                StringBuffer cmdOutput = new StringBuffer();
                 FilePath wa = null;
                 if (workarea != null)
                 {
@@ -471,26 +539,46 @@ public class DimensionsSCM extends SCM implements Serializable
                     wa.deleteRecursive();
                 }
 
-                StringBuffer cmdOutput = new StringBuffer();
-                bRet = dmSCM.checkout(getProject(),dname,wa,
-                                      lastBuildCal,nowDateCal,
-                                      changelogFile, tz,
-                                      cmdOutput,jobWebUrl,
-                                      true,canJobRevert);
-                Logger.Debug("SCM checkout returned " + bRet);
+                String[] folders = getFolders();
+				String cmdLog = null;
+				
+                // Iterate through the project folders and process them in Dimensions
+                for (int ii=0;ii<folders.length; ii++) {
+                    if (!bRet)
+                        break;
+					
+                    String folderN = folders[ii];
+                    File fileName = new File(folderN);
+                    FilePath dname = new FilePath(fileName);
 
-                if (cmdOutput.length() > 0 && listener.getLogger() != null) {
+					Logger.Debug("Checking out '" + folderN + "'...");
+					
+                    // Checkout the folder
+                    bRet = dmSCM.checkout(getProject(),dname,wa,
+                                          lastBuildCal,nowDateCal,
+                                          changelogFile, tz,
+                                          cmdOutput,jobWebUrl,
+                                          true,canJobRevert);
+                    Logger.Debug("SCM checkout returned " + bRet);
+
+                    if (!bRet && canJobForce)
+                        bRet = true;
+					
+					if (cmdLog==null)
+						cmdLog = "\n";
+					
+					cmdLog += cmdOutput;
+					cmdLog += "\n";
+                }
+
+                if (cmdLog.length() > 0 && listener.getLogger() != null) {
                     Logger.Debug("Found command output to log to the build logger");
                     listener.getLogger().println("(Note: Dimensions command output was - ");
-                    listener.getLogger().println(cmdOutput + ")");
+                    listener.getLogger().println(cmdLog + ")");
                     listener.getLogger().flush();
                 }
 
-                if (!bRet && canJobForce)
-                    bRet = true;
-
-                if (!bRet)
-                {
+                if (!bRet) {
                     listener.getLogger().println("==========================================================");
                     listener.getLogger().println("The Dimensions checkout command returned a failure status.");
                     listener.getLogger().println("Please review the command output and correct any issues");
@@ -571,11 +659,22 @@ public class DimensionsSCM extends SCM implements Serializable
                             jobDatabase,
                             jobServer))
             {
-                File fileName = new File(getDirectory());
-                FilePath dname = new FilePath(fileName);
-                bChanged = dmSCM.hasRepositoryBeenUpdated(getProject(),
-                                                          dname,lastBuildCal,
-                                                          nowDateCal, tz);
+                String[] folders = getFolders();
+                // Iterate through the project folders and process them in Dimensions
+                for (int ii=0;ii<folders.length; ii++) {
+                    if (bChanged)
+                        break;
+
+                    String folderN = folders[ii];
+                    File fileName = new File(folderN);
+                    FilePath dname = new FilePath(fileName);
+
+					Logger.Debug("Polling '" + folderN + "'...");
+
+                    bChanged = dmSCM.hasRepositoryBeenUpdated(getProject(),
+                                                              dname,lastBuildCal,
+                                                              nowDateCal, tz);
+                }
             }
         }
         catch(Exception e)
@@ -672,7 +771,6 @@ public class DimensionsSCM extends SCM implements Serializable
         public boolean configure(StaplerRequest req, JSONObject jobj) throws FormException
         {
             // Get the values and check them
-
             userName = req.getParameter("dimensionsscm.userName");
             passwd = req.getParameter("dimensionsscm.passwd");
             server = req.getParameter("dimensionsscm.server");
@@ -694,9 +792,7 @@ public class DimensionsSCM extends SCM implements Serializable
                 database = Util.fixNull(req.getParameter("dimensionsscm.database").trim());
 
             if (timeZone != null)
-            {
                 timeZone = Util.fixNull(req.getParameter("dimensionsscm.timeZone").trim());
-            }
 
             if (webUrl != null)
                 webUrl = Util.fixNull(req.getParameter("dimensionsscm.webUrl").trim());
@@ -704,12 +800,37 @@ public class DimensionsSCM extends SCM implements Serializable
             req.bindJSON(PluginImpl.DM_DESCRIPTOR, jobj);
 
             this.save();
-            return true;
+            return super.configure(req, jobj);
         }
 
         @Override
         public SCM newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            DimensionsSCM scm = (DimensionsSCM) super.newInstance(req, formData);
+			// Get variables and then construct a new object
+			String[] folders = req.getParameterValues("dimensionsscm.folders");
+
+			String project = req.getParameter("dimensionsscm.project");
+			String directory = req.getParameter("dimensionsscm.directory");							   
+			String workarea = req.getParameter("dimensionsscm.workarea");
+
+			Boolean canJobDelete = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete")));
+			Boolean canJobForce = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce")));
+			Boolean canJobRevert = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert")));
+			Boolean canJobUpdate = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobUpdate")));
+
+			String jobUserName = req.getParameter("dimensionsscm.jobUserName");
+			String jobPasswd = req.getParameter("dimensionsscm.jobPasswd");
+			String jobServer = req.getParameter("dimensionsscm.jobServer");
+			String jobDatabase = req.getParameter("dimensionsscm.jobDatabase");
+			String jobTimeZone = req.getParameter("dimensionsscm.jobTimeZone");
+			String jobWebUrl = req.getParameter("dimensionsscm.jobWebUrl");
+			
+			DimensionsSCM scm = new DimensionsSCM(project,folders,workarea,canJobDelete,
+												  canJobForce,canJobRevert,
+												  jobUserName,jobPasswd,
+												  jobServer,jobDatabase,
+												  canJobUpdate,jobTimeZone,
+												  jobWebUrl,directory);
+												  
             scm.browser = RepositoryBrowsers.createInstance(DimensionsSCMRepositoryBrowser.class,req,formData,"browser");
             if (scm.dmSCM == null)
                 scm.dmSCM = new DimensionsAPI();

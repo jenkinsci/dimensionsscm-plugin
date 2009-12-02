@@ -6,16 +6,28 @@
 	<i>(the format used must be PRODUCT_ID:PROJECT_NAME even for streams)</i>
     </f:entry>
 
-    <f:entry title="Folder Name" help="/plugin/dimensionsscm/directory.html">
-        <f:textbox name="dimensionsscm.directory" value="${h.defaulted(scm.directory, '/')}"
-	     checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
-    </f:entry>
-    
-    <f:entry title="Workspace Location" help="/plugin/dimensionsscm/workarea.html">
-        <f:textbox name="dimensionsscm.workarea" value="${scm.workarea}"/>
-	<i>(this folder name is optional)</i>
+    <f:entry title="${%Folders To Montor}">
+       <f:repeatable var="folders" items="${scm.folders}" noAddButton="true" minimum="1">
+	 <table width="98%" cellpadding="2" cellspacing="2">
+            <f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
+              <f:textbox name="dimensionsscm.folders" value="${h.defaulted(folders, '/')}"
+	        checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
+            </f:entry>
+	    <f:entry>
+              <div align="right">
+                <input type="button" value="${%Add folder...}" class="repeatable-add show-if-last" />
+                <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+              </div>
+	    </f:entry>
+	 </table>
+       </f:repeatable>
     </f:entry>
 
+    <f:entry title="Workspace Location" help="/plugin/dimensionsscm/workarea.html">
+       <f:textbox name="dimensionsscm.workarea" value="${scm.workarea}"/>
+       <i>(this folder name is optional)</i>
+    </f:entry>
+    
     <f:entry title="${%Clear the contents of the workspace}" help="/plugin/dimensionsscm/candelete.html">
 	<f:checkbox name="dimensionsscm.canJobDelete" default="false" checked="${scm.canJobDelete}"/>
     </f:entry>
