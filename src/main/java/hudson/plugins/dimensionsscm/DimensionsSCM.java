@@ -568,6 +568,7 @@ public class DimensionsSCM extends SCM implements Serializable
 						cmdLog = "\n";
 					
 					cmdLog += cmdOutput;
+					cmdOutput.setLength(0);
 					cmdLog += "\n";
                 }
 
