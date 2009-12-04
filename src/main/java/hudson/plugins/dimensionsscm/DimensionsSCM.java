@@ -130,6 +130,8 @@ import java.util.TimeZone;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Vector;
+
 import javax.servlet.ServletException;
 
 import net.sf.json.JSONObject;
@@ -138,6 +140,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.apache.commons.lang.StringUtils;
 
 /*
  * Hudson requires the following functions to be implemented
@@ -429,20 +432,21 @@ public class DimensionsSCM extends SCM implements Serializable
         // Check the folders specified have data specified
         if (folders != null) {
             Logger.Debug("Folders are populated");
-            this.folders = folders;
+			Vector<String> x = new Vector<String>();
+			for(int t=0;t<folders.length;t++) {
+				if (StringUtils.isNotEmpty(folders[t]))
+					x.add(folders[t]);
+			}
+			this.folders = (String[])x.toArray(new String[1]); 
         }
 		else {
 			this.folders[0] = directory;
 		}
-		
-        if (folders != null)
-            Logger.Debug("Folders are populated");
-        else
-            Logger.Debug("Folders are null");
 
         // Copying arguments to fields
         this.project = (Util.fixEmptyAndTrim(project) == null ? "${JOB_NAME}" : project);
         this.workarea = (Util.fixEmptyAndTrim(workarea) == null ? null : workarea);
+        this.directory = (Util.fixEmptyAndTrim(directory) == null ? null : directory);
 
         this.jobServer = (Util.fixEmptyAndTrim(jobServer) == null ? getDescriptor().getServer() : jobServer);
         this.jobUserName = (Util.fixEmptyAndTrim(jobUserName) == null ? getDescriptor().getUserName() : jobUserName);
@@ -812,7 +816,7 @@ public class DimensionsSCM extends SCM implements Serializable
 			String project = req.getParameter("dimensionsscm.project");
 			String directory = req.getParameter("dimensionsscm.directory");							   
 			String workarea = req.getParameter("dimensionsscm.workarea");
-
+			
 			Boolean canJobDelete = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete")));
 			Boolean canJobForce = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce")));
 			Boolean canJobRevert = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert")));

@@ -10,8 +10,7 @@
        <f:repeatable var="folders" items="${scm.folders}" noAddButton="true" minimum="1">
 	 <table width="98%" cellpadding="2" cellspacing="2">
             <f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
-              <f:textbox name="dimensionsscm.folders" value="${h.defaulted(folders, '/')}"
-	        checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
+              <f:textbox name="dimensionsscm.folders" value="${h.defaulted(folders, scm.directory)}"/>
             </f:entry>
 	    <f:entry>
               <div align="right">

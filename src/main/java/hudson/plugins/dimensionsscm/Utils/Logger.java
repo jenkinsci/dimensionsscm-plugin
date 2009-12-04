@@ -93,11 +93,21 @@
 // Package name
 package hudson.plugins.dimensionsscm;
 
+// Hudson imports
 import hudson.plugins.dimensionsscm.DateUtils;
+import hudson.FilePath;
 
 // General imports
 import java.io.IOException;
 import java.util.Map;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+
+// General imports
 
 /**
  * @author Tim Payne
@@ -133,4 +143,31 @@ public class Logger {
 
         return;
     }
+
+    /**
+     * Print a message to stdout
+     * @param  String
+     */
+    public static void DebugFile(String outln)
+    {
+		File logFile = new File("a");
+		FileWriter logFileWriter = null;
+		PrintWriter fmtWriter = null;
+		File tmpFile = null;
+		String tmpDir = System.getProperty("java.io.tmpdir");
+		
+		try {
+			tmpFile = logFile.createTempFile(tmpDir+"dmCm.log",null,null);
+			logFileWriter = new FileWriter(tmpFile);
+			fmtWriter = new PrintWriter(logFileWriter,true);
+			fmtWriter.println("DEBUG (" + DateUtils.getNowStrDate() + ") :" + outln);
+			fmtWriter.flush();
+		} catch (Exception e) {
+			// Do nothing
+		} finally {
+			fmtWriter.close();
+		}
+        return;
+    }
+	
 }
