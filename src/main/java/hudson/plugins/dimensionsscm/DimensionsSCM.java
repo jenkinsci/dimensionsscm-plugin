@@ -440,9 +440,16 @@ public class DimensionsSCM extends SCM implements Serializable
 			this.folders = (String[])x.toArray(new String[1]); 
         }
 		else {
-			this.folders[0] = directory;
+			if (directory != null)
+				this.folders[0] = directory;
 		}
 
+		// If nothing specified, then default to '/'
+		if (this.folders.length < 2) {
+			if (this.folders[0] == null || this.folders[0].length() < 1)
+				this.folders[0] = "/";
+		}
+		
         // Copying arguments to fields
         this.project = (Util.fixEmptyAndTrim(project) == null ? "${JOB_NAME}" : project);
         this.workarea = (Util.fixEmptyAndTrim(workarea) == null ? null : workarea);
@@ -828,7 +835,7 @@ public class DimensionsSCM extends SCM implements Serializable
 			String jobDatabase = req.getParameter("dimensionsscm.jobDatabase");
 			String jobTimeZone = req.getParameter("dimensionsscm.jobTimeZone");
 			String jobWebUrl = req.getParameter("dimensionsscm.jobWebUrl");
-			
+						
 			DimensionsSCM scm = new DimensionsSCM(project,folders,workarea,canJobDelete,
 												  canJobForce,canJobRevert,
 												  jobUserName,jobPasswd,
