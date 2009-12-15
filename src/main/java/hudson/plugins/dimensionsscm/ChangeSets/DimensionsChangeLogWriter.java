@@ -116,133 +116,136 @@ import org.apache.commons.lang.StringEscapeUtils;
  */
 public class DimensionsChangeLogWriter
 {
-	/*
-	 * Save the change list to the changelogFile
-	 * @param List<DimensionsChangeSet> changeSets
-	 * @param File changelogFile
-	 */
-	public boolean writeLog(List<DimensionsChangeSet> changeSets,File changelogFile)
-											throws IOException
-	{
-		boolean bRet = false;
-		FileWriter logFile = null;
-		try {
-			logFile = new FileWriter(changelogFile);
-			write(changeSets,logFile);
-			logFile.flush();
-			bRet=true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new IOException("Unable to write change log - " + e.getMessage());
-		} finally {
-			logFile.close();
-		}
+    /*
+     * Save the change list to the changelogFile
+     * @param List<DimensionsChangeSet> changeSets
+     * @param File changelogFile
+     */
+    public boolean writeLog(List<DimensionsChangeSet> changeSets,File changelogFile)
+                                            throws IOException
+    {
+        boolean bRet = false;
+        FileWriter logFile = null;
+        try {
+            logFile = new FileWriter(changelogFile);
+            write(changeSets,logFile);
+            logFile.flush();
+            bRet=true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IOException("Unable to write change log - " + e.getMessage());
+        } finally {
+            logFile.close();
+        }
 
-		return bRet;
-	}
+        return bRet;
+    }
 
 
-	/*
-	 * Save the change list to the changelogFile
-	 * @param List<DimensionsChangeSet> changeSets
-	 * @param File changelogFile
-	 */
-	private void write(List<DimensionsChangeSet> changeSets,Writer logFile)
-	{
-		PrintWriter writer = new PrintWriter(logFile);
-		writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-		writer.println("<changelog>");
-		for (DimensionsChangeSet changeSet : changeSets) {
-			writer.println(String.format("\t<changeset version=\"%s\">", escapeXML(changeSet.getVersion())));
-			writer.println(String.format("\t\t<date>%s</date>", Util.XS_DATETIME_FORMATTER.format(changeSet.getDate())));
-			writer.println(String.format("\t\t<user>%s</user>", escapeXML(changeSet.getDeveloper())));
-			writer.println(String.format("\t\t<comment>%s</comment>", escapeXML(changeSet.getSCMComment())));
-			writer.println("\t\t<items>");
-			for (DimensionsChangeSet.DmFiles item : changeSet.getFiles()) {
-				writer.println(String.format("\t\t\t<item operation=\"%s\" url=\"%s\">%s</item>", item.getOperation(),
-				                escapeHTML(item.getUrl()),
-								escapeXML(item.getFile())));
-			}
-			writer.println("\t\t</items>");
-			writer.println("\t</changeset>");
-		}
-		writer.println("</changelog>");
-		return;
-	}
+    /*
+     * Save the change list to the changelogFile
+     * @param List<DimensionsChangeSet> changeSets
+     * @param File changelogFile
+     */
+    private void write(List<DimensionsChangeSet> changeSets,Writer logFile)
+    {
+        PrintWriter writer = new PrintWriter(logFile);
+        writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        writer.println("<changelog>");
+        if (changeSets != null) {
+            for (DimensionsChangeSet changeSet : changeSets) {
+                writer.println(String.format("\t<changeset version=\"%s\">", escapeXML(changeSet.getVersion())));
+                writer.println(String.format("\t\t<date>%s</date>", Util.XS_DATETIME_FORMATTER.format(changeSet.getDate())));
+                writer.println(String.format("\t\t<user>%s</user>", escapeXML(changeSet.getDeveloper())));
+                writer.println(String.format("\t\t<comment>%s</comment>", escapeXML(changeSet.getSCMComment())));
+                writer.println("\t\t<items>");
+                for (DimensionsChangeSet.DmFiles item : changeSet.getFiles()) {
+                    writer.println(String.format("\t\t\t<item operation=\"%s\" url=\"%s\">%s</item>", item.getOperation(),
+                                    escapeHTML(item.getUrl()),
+                                    escapeXML(item.getFile())));
+                }
+                writer.println("\t\t</items>");
+                writer.println("\t</changeset>");
+            }
+        }
+        writer.println("</changelog>");
 
-	/*
-	 * Escape an XML string
-	 * @param String
-	 */
-	private static String escapeXML(String inTxt) {
-		if (inTxt == null || inTxt.length() == 0)
-			return inTxt;
+        return;
+    }
 
-		final StringBuilder outTxt = new StringBuilder();
-		final StringCharacterIterator iterator = new StringCharacterIterator(inTxt);
-		char character =  iterator.current();
+    /*
+     * Escape an XML string
+     * @param String
+     */
+    private static String escapeXML(String inTxt) {
+        if (inTxt == null || inTxt.length() == 0)
+            return inTxt;
 
-		// Scan through strings and escape as necessary...
-		while (character != CharacterIterator.DONE ) {
-	  		if (character == '<') {
-				outTxt.append("&lt;");
-	  		}
-	  		else if (character == '>') {
-				outTxt.append("&gt;");
-	  		}
-	  		else if (character == '\"') {
-				outTxt.append("&quot;");
-	  		}
-	  		else if (character == '\'') {
-				outTxt.append("&#039;");
-	  		}
-	  		else if (character == '&') {
-				outTxt.append("&amp;");
-	  		}
-	  		else {
-				outTxt.append(character);
-	  		}
-	  		character = iterator.next();
-		}
-		return outTxt.toString();
-	}
+        final StringBuilder outTxt = new StringBuilder();
+        final StringCharacterIterator iterator = new StringCharacterIterator(inTxt);
+        char character =  iterator.current();
 
-	/*
-	 * Escape an HTML string
-	 * @param String
-	 */
-	private static String escapeHTML(String inTxt) {
-		if (inTxt == null || inTxt.length() == 0)
-			return inTxt;
+        // Scan through strings and escape as necessary...
+        while (character != CharacterIterator.DONE ) {
+            if (character == '<') {
+                outTxt.append("&lt;");
+            }
+            else if (character == '>') {
+                outTxt.append("&gt;");
+            }
+            else if (character == '\"') {
+                outTxt.append("&quot;");
+            }
+            else if (character == '\'') {
+                outTxt.append("&#039;");
+            }
+            else if (character == '&') {
+                outTxt.append("&amp;");
+            }
+            else {
+                outTxt.append(character);
+            }
+            character = iterator.next();
+        }
+        return outTxt.toString();
+    }
 
-		final StringBuilder outTxt = new StringBuilder();
-		final StringCharacterIterator iterator = new StringCharacterIterator(inTxt);
-		char character =  iterator.current();
+    /*
+     * Escape an HTML string
+     * @param String
+     */
+    private static String escapeHTML(String inTxt) {
+        if (inTxt == null || inTxt.length() == 0)
+            return inTxt;
 
-		// Scan through strings and escape as necessary...
-		while (character != CharacterIterator.DONE ) {
-	  		if (character == '<') {
-				outTxt.append("&lt;");
-	  		}
-	  		else if (character == '>') {
-				outTxt.append("&gt;");
-	  		}
-	  		else if (character == '\"') {
-				outTxt.append("&quot;");
-	  		}
-	  		else if (character == '\'') {
-				outTxt.append("&#039;");
-	  		}
-	  		else if (character == '&') {
-				outTxt.append("&amp;");
-	  		}
-	  		else if (character == ' ') {
-				outTxt.append("&nbsp;");
-	  		}
-	  		else {
-				outTxt.append(character);
-	  		}
-	  		character = iterator.next();
-		}
-		return outTxt.toString();	}
+        final StringBuilder outTxt = new StringBuilder();
+        final StringCharacterIterator iterator = new StringCharacterIterator(inTxt);
+        char character =  iterator.current();
+
+        // Scan through strings and escape as necessary...
+        while (character != CharacterIterator.DONE ) {
+            if (character == '<') {
+                outTxt.append("&lt;");
+            }
+            else if (character == '>') {
+                outTxt.append("&gt;");
+            }
+            else if (character == '\"') {
+                outTxt.append("&quot;");
+            }
+            else if (character == '\'') {
+                outTxt.append("&#039;");
+            }
+            else if (character == '&') {
+                outTxt.append("&amp;");
+            }
+            else if (character == ' ') {
+                outTxt.append("&nbsp;");
+            }
+            else {
+                outTxt.append(character);
+            }
+            character = iterator.next();
+        }
+        return outTxt.toString();   }
 }

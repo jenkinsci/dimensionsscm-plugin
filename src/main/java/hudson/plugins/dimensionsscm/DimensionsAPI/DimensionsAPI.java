@@ -102,13 +102,20 @@ import hudson.plugins.dimensionsscm.Logger;
 import com.serena.dmclient.api.Filter;
 import com.serena.dmclient.api.ItemRevision;
 import com.serena.dmclient.api.Project;
+import com.serena.dmclient.api.Baseline;
+import com.serena.dmclient.api.Request;
+
 import com.serena.dmclient.api.DimensionsRelatedObject;
 import com.serena.dmclient.api.SystemAttributes;
+import com.serena.dmclient.api.SystemRelationship;
 
 import com.serena.dmclient.api.DimensionsNetworkException;
 import com.serena.dmclient.api.DimensionsRuntimeException;
 import com.serena.dmclient.api.DimensionsResult;
 import com.serena.dmclient.api.DimensionsObjectFactory;
+
+import com.serena.dmclient.objects.DimensionsObject;
+import com.serena.dmclient.objects.RequestRelationshipType;
 
 import com.serena.dmclient.api.DimensionsDatabaseAdmin.CommandFailedException;
 import com.serena.dmclient.api.DimensionsConnection;
@@ -153,6 +160,8 @@ public class DimensionsAPI
 {
     private static final String MISSING_SOURCE_PATH = "The nested element needs a valid 'srcpath' attribute"; //$NON-NLS-1$
     private static final String MISSING_PROJECT = "The nested element needs a valid project to work on"; //$NON-NLS-1$
+    private static final String MISSING_BASELINE = "The nested element needs a valid baseline to work on"; //$NON-NLS-1$
+    private static final String MISSING_REQUEST = "The nested element needs a valid request to work on"; //$NON-NLS-1$
     private static final String BAD_BASE_DATABASE_SPEC = "The <dimensions> task needs a valid 'database' attribute, in the format 'dbname@dbconn'"; //$NON-NLS-1$
     private static final String NO_COMMAND_LINE = "The <run> nested element need a valid 'cmd' attribute"; //$NON-NLS-1$
     private static final String SRCITEM_SRCPATH_CONFLICT = "The <getcopy> nested element needs exactly one of the 'srcpath' or 'srcitem' attributes"; //$NON-NLS-1$
@@ -398,7 +407,7 @@ public class DimensionsAPI
 
         try
         {
-            List items = calcRepositoryDiffs(projectName,workspace,fromDate,toDate, tz);
+            List items = calcRepositoryDiffs(projectName,null,null,workspace,fromDate,toDate, tz);
             if (items != null)
                 bChanged = (items.size() > 0);
         }
@@ -429,6 +438,8 @@ public class DimensionsAPI
      *      @param final TimeZone tz
      *      @param StringBuffer cmdOutput
      *      @param final String url
+     *      @param final String baseline
+     *      @param final String requests
      *      @param final boolean doFullUpdate
      *      @param final boolean doRevert
      *  Return:
@@ -444,6 +455,8 @@ public class DimensionsAPI
                             final TimeZone tz,
                             StringBuffer cmdOutput,
                             final String url,
+                            final String baseline,
+                            final String requests,
                             final boolean doFullUpdate,
                             final boolean doRevert)
                     throws IOException, InterruptedException
@@ -498,7 +511,7 @@ public class DimensionsAPI
             if (version == 10)
                 coCmd = "DOWNLOAD ";
 
-            List items = calcRepositoryDiffs(projectName,projectDir,fromDate,toDate,tz);
+            List items = calcRepositoryDiffs(projectName,baseline,requests,projectDir,fromDate,toDate,tz);
             if (items != null || doFullUpdate)
             {
                 File logFile = new File("a");
@@ -534,12 +547,21 @@ public class DimensionsAPI
                 if (!doFullUpdate && tmpFile != null)
                     cmd += "/USER_ITEMLIST=\"" + tmpFile.getPath() + "\"";
                 else {
-                    if (projDir != null && !projDir.equals("\\") && !projDir.equals("/"))
+                    if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null)
                         cmd += "/DIR=\"" + projDir + "\"";
                 }
 
-                cmd += "/WORKSET=\"" + projectName + "\" /USER_DIR=\"" +
-                             workspaceName.getRemote() + "\"";
+                if (requests != null) {
+                    cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+                    cmd += "/WORKSET=\"" + projectName + "\" ";
+                }
+                else if (baseline != null) {
+                    cmd += "/BASELINE=\"" + baseline + "\"";
+                } else {
+                    cmd += "/WORKSET=\"" + projectName + "\" ";
+                }
+
+                cmd += "/USER_DIR=\"" + workspaceName.getRemote() + "\" ";
 
                 if (doRevert)
                     cmd += " /OVERWRITE";
@@ -551,8 +573,7 @@ public class DimensionsAPI
                     String outputStr = new String(cmdOutput.toString());
                     Logger.Debug(outputStr);
 
-                    if (items != null)
-                    {
+                    if (items != null) {
                         if (tmpFile != null)
                             tmpFile.delete();
                         // Process the changesets...
@@ -561,7 +582,11 @@ public class DimensionsAPI
                         DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
                         write.writeLog(changes,changelogFile);
                     }
-
+                    else {
+                        // No changes - just fake a log
+                        DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
+                        write.writeLog(null,changelogFile);
+                    }
                     bRet = true;
 
                     // Check if any conflicts were identified
@@ -593,6 +618,8 @@ public class DimensionsAPI
      *      Calculate any repository changes made during a certain time
      * Parameters:
      *      @param final String projectName
+     *      @param final String baselineName
+     *      @param final String requests
      *      @param final FilePath workspace
      *      @param final Calendar fromDate
      *      @param final Calendar toDate
@@ -602,6 +629,8 @@ public class DimensionsAPI
      *-----------------------------------------------------------------
      */
     private List calcRepositoryDiffs(final String projectName,
+                               final String baselineName,
+                               final String requests,
                                final FilePath workspace,
                                final Calendar fromDate,
                                final Calendar toDate,
@@ -630,9 +659,56 @@ public class DimensionsAPI
             filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
 
             Logger.Debug("Looking between " + dateAfter + " -> " + dateBefore);
-            String projName = projectName.toUpperCase();
-            Project projectObj = getCon().getObjectFactory().getProject(projName);
-            List items = queryItems(getCon(), projectObj, workspace.getRemote(), filter, attrs, true, !allRevisions);
+            String projName;
+
+            if (baselineName != null && requests == null) {
+                projName = baselineName.toUpperCase();
+            } else {
+                projName = projectName.toUpperCase();
+            }
+
+            List items = null;
+
+            if (requests != null) {
+                // setup filter for requests Name
+                List requestList = new ArrayList(1);
+                Request requestObj = connection.getObjectFactory().findRequest(requests.toUpperCase());
+
+                if (requestObj != null) {
+                    // Get all the children for this request
+                    if (!getDmChildRequests(requestObj, requestList))
+                        throw new IOException("Could not process request \""+requestObj.getName()+"\" children in repository");
+
+                    for (int i=0; i<requestList.size(); i++) {
+                        Request req = (Request)requestList.get(i);
+                        Logger.Debug("Request "+i+" is \"" + req.getName() + "\"");
+                        if (!queryItems(getCon(), req, "/", items, filter, true, !allRevisions))
+                            throw new IOException("Could not process items for request \""+req.getName()+"\"");
+                    }
+                    if (items != null) {
+						BulkOperator bo = getCon().getObjectFactory().getBulkOperator(items);
+						bo.queryAttribute(attrs);
+					}
+                }
+            } else if (baselineName != null) {
+                // setup filter for baseline Name
+                Filter baselineFilter = new Filter();
+                baselineFilter.criteria().add(new Filter.Criterion(SystemAttributes.OBJECT_SPEC,baselineName.toUpperCase(),Filter.Criterion.EQUALS));
+
+                List<Baseline> baselineObjects = connection.getObjectFactory().getBaselines(baselineFilter);
+                Logger.Debug("Baseline query for \"" + baselineName + "\" returned " + baselineObjects.size() + " baselines");
+                for (int i=0; i<baselineObjects.size(); i++) {
+                    Logger.Debug("Baseline "+i+" is \"" + baselineObjects.get(i).getName() + "\"");
+                }
+
+                if (baselineObjects.size() == 0) throw new IOException("Could not find baseline \""+baselineName+"\" in repository");
+                if (baselineObjects.size() > 1) throw new IOException("Found more than one baseline named \""+baselineName+"\" in repository");
+
+                items = queryItems(getCon(), baselineObjects.get(0), workspace.getRemote(), filter, attrs, true, !allRevisions);
+            } else {
+                Project projectObj = getCon().getObjectFactory().getProject(projName);
+                items = queryItems(getCon(), projectObj, workspace.getRemote(), filter, attrs, true, !allRevisions);
+            }
             return items;
         }
         catch(Exception e)
@@ -641,6 +717,7 @@ public class DimensionsAPI
             throw new IOException("Unable to run calcRepositoryDiffs - " + e.getMessage());
         }
     }
+
 
     /**
      * Construct the change list
@@ -906,6 +983,159 @@ public class DimensionsAPI
         }
     }
 
+    // find items given a baseline/directory spec
+    static List queryItems(DimensionsConnection connection, Baseline srcBaseline,
+            String srcPath, Filter filter, int[] attrs, boolean isRecursive, boolean isLatest) {
+        // check srcPath validity check srcPath trailing slash do query
+        if (srcPath == null) {
+            throw new IllegalArgumentException(MISSING_SOURCE_PATH);
+        }
+        if (srcBaseline == null) {
+            throw new IllegalArgumentException(MISSING_BASELINE);
+        }
+
+        String path = preProcessSrcPath(srcPath);
+        if (!(isRecursive && path.equals(""))) { //$NON-NLS-1$
+            filter.criteria().add(
+                    new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
+                            (isRecursive ? path + '%' : path), 0));
+        }
+
+        if (isLatest) {
+            filter.criteria().add(
+                    new Filter.Criterion(SystemAttributes.IS_LATEST_REV,
+                            Boolean.TRUE, 0));
+        }
+
+        //
+        // Catch any exceptions that may be thrown by the Java API and
+        // for now return no changes. Going forward it would be good to
+        // trap all the possible exception types and do something about them
+        //
+        try {
+            Logger.Debug("Looking for changed files in '" + path + "' in project: " + srcBaseline.getName());
+            List rels = srcBaseline.getChildItems(filter);
+            Logger.Debug("Found " + rels.size());
+            if (rels.size()==0)
+                return null;
+
+            List items = new ArrayList(rels.size());
+            for (int i = 0; i < rels.size(); ++i) {
+                DimensionsRelatedObject rel = (DimensionsRelatedObject) rels.get(i);
+                items.add(rel.getObject());
+            }
+            BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
+            bo.queryAttribute(attrs);
+            return items;
+        } catch (Exception e) {
+            // e.printStackTrace();
+            Logger.Debug("Exception detected from the Java API: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // find items given a request/directory spec
+    static boolean queryItems(DimensionsConnection connection, Request request,
+            String srcPath, List items, Filter filter, boolean isRecursive, boolean isLatest) {
+        // check srcPath validity check srcPath trailing slash do query
+        if (srcPath == null) {
+            throw new IllegalArgumentException(MISSING_SOURCE_PATH);
+        }
+        if (request == null) {
+            throw new IllegalArgumentException(MISSING_REQUEST);
+        }
+
+		
+        String path = preProcessSrcPath((srcPath.equals("") ? "/" : srcPath));
+        if (!(isRecursive && path.equals(""))) { //$NON-NLS-1$
+            filter.criteria().add(
+                    new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
+                            (isRecursive ? path + '%' : path), 0));
+        }
+
+        if (isLatest) {
+            filter.criteria().add(
+                    new Filter.Criterion(SystemAttributes.IS_LATEST_REV,
+                            Boolean.TRUE, 0));
+        }
+
+        //
+        // Catch any exceptions that may be thrown by the Java API and
+        // for now return no changes. Going forward it would be good to
+        // trap all the possible exception types and do something about them
+        //
+        try {
+            Logger.Debug("Looking for changed files in '" + path + "' in request: " + request.getName());
+            request.flushRelatedObjects(ItemRevision.class, true);
+			request.queryChildItems(null);
+            List rels = request.getChildItems(filter);
+            request.flushRelatedObjects(ItemRevision.class, true);
+            Logger.Debug("Found " + rels.size());
+            if (rels.size()==0)
+                return true;
+
+            for (int i = 0; i < rels.size(); ++i) {
+				Logger.Debug("Processing " + i + "/" + rels.size());
+				DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
+				if (child != null && child.getObject() instanceof ItemRevision) {
+					Logger.Debug("Found an item");
+					DimensionsObject relType = child.getRelationship();
+					if (SystemRelationship.IN_RESPONSE.equals(relType)) {
+						items.add(child.getObject());
+					}
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            // e.printStackTrace();
+            Logger.Debug("Exception detected from the Java API: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    /**
+     * Flatten the list of related requests
+     *
+     * @param Request
+     * @param List
+     * @return boolean
+     * @throws DimensionsRuntimeException
+     */
+     private boolean getDmChildRequests(Request request, List requestList)
+                            throws DimensionsRuntimeException {
+		try {
+			request.flushRelatedObjects(Request.class, true);
+			request.queryChildRequests(null);
+			List rels = request.getChildRequests(null);
+			request.flushRelatedObjects(Request.class, true);
+			Logger.Debug("Found " + rels.size());
+			if (rels.size()==0)
+				return true;
+
+			for (int i=0; i<rels.size(); i++) {
+				Logger.Debug("Processing " + i + "/" + rels.size());
+				DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
+				if (child != null && child.getObject() instanceof Request) {
+					Logger.Debug("Found a request");
+					DimensionsObject relType = child.getRelationship();
+					if (SystemRelationship.DEPENDENT.equals(relType)) {
+						Logger.Debug("Found a dependent request");
+						requestList.add(child.getObject());
+						if (!getDmChildRequests((Request)child.getObject(), requestList))
+							return false;
+					}
+				} else {
+					Logger.Debug("Related object was null or not a request " + (child != null));
+				}
+			}
+			return true;
+		} catch (Exception e) {
+            // e.printStackTrace();
+            Logger.Debug("Exception detected from the Java API: " + e.getMessage());
+			throw new DimensionsRuntimeException("getDmChildRequests - encountered a Java API exception");
+		}
+    }
 
     /**
      * Runs a Dimensions command.
