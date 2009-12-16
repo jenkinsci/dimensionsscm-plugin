@@ -640,7 +640,7 @@ public class DimensionsAPI
         if (connection == null)
             throw new IOException("Not connected to an SCM repository");
 
-        if (fromDate == null)
+        if (fromDate == null && baselineName == null && requests == null)
             return null;
 
         try
@@ -657,6 +657,8 @@ public class DimensionsAPI
             filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
             filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
             filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
+            filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
+            filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
 
             Logger.Debug("Looking between " + dateAfter + " -> " + dateBefore);
             String projName;
@@ -673,22 +675,29 @@ public class DimensionsAPI
                 // setup filter for requests Name
                 List requestList = new ArrayList(1);
                 Request requestObj = connection.getObjectFactory().findRequest(requests.toUpperCase());
+                items = new ArrayList(1);
 
                 if (requestObj != null) {
+                    Logger.Debug("Request to process is \"" + requestObj.getName() + "\"");
+                    requestList.add(requestObj);
                     // Get all the children for this request
                     if (!getDmChildRequests(requestObj, requestList))
                         throw new IOException("Could not process request \""+requestObj.getName()+"\" children in repository");
 
+                    Logger.Debug("Request has "+requestList.size()+" elements to process");
+                    Project projectObj = getCon().getObjectFactory().getProject(projName);
                     for (int i=0; i<requestList.size(); i++) {
                         Request req = (Request)requestList.get(i);
                         Logger.Debug("Request "+i+" is \"" + req.getName() + "\"");
-                        if (!queryItems(getCon(), req, "/", items, filter, true, !allRevisions))
+                        if (!queryItems(getCon(), req, "/", items, filter, projectObj, true, allRevisions))
                             throw new IOException("Could not process items for request \""+req.getName()+"\"");
                     }
+
                     if (items != null) {
-						BulkOperator bo = getCon().getObjectFactory().getBulkOperator(items);
-						bo.queryAttribute(attrs);
-					}
+                        Logger.Debug("Request has "+items.size()+" items to process");
+                        BulkOperator bo = getCon().getObjectFactory().getBulkOperator(items);
+                        bo.queryAttribute(attrs);
+                    }
                 }
             } else if (baselineName != null) {
                 // setup filter for baseline Name
@@ -761,6 +770,8 @@ public class DimensionsAPI
             String urlString = constructURL(spec,url,getSCMDsn(),getSCMBaseDb());
             if (urlString == null)
                 urlString = "";
+            if (comment == null)
+                comment = "(None)";
             Logger.Debug("Change set details -" + comment + " " + revision + " " + fileName + " " + author +
                          " " + spec  + " " + date + " " + operation + " " + urlString);
             Calendar opDate = Calendar.getInstance();
@@ -1036,7 +1047,7 @@ public class DimensionsAPI
 
     // find items given a request/directory spec
     static boolean queryItems(DimensionsConnection connection, Request request,
-            String srcPath, List items, Filter filter, boolean isRecursive, boolean isLatest) {
+            String srcPath, List items, Filter filter, Project srcProject, boolean isRecursive, boolean isLatest) {
         // check srcPath validity check srcPath trailing slash do query
         if (srcPath == null) {
             throw new IllegalArgumentException(MISSING_SOURCE_PATH);
@@ -1045,7 +1056,8 @@ public class DimensionsAPI
             throw new IllegalArgumentException(MISSING_REQUEST);
         }
 
-		
+        Logger.Debug("Looking for items against request "+request.getName());
+
         String path = preProcessSrcPath((srcPath.equals("") ? "/" : srcPath));
         if (!(isRecursive && path.equals(""))) { //$NON-NLS-1$
             filter.criteria().add(
@@ -1066,23 +1078,21 @@ public class DimensionsAPI
         //
         try {
             Logger.Debug("Looking for changed files in '" + path + "' in request: " + request.getName());
-            request.flushRelatedObjects(ItemRevision.class, true);
-			request.queryChildItems(null);
+            request.queryChildItems(filter,srcProject);
             List rels = request.getChildItems(filter);
-            request.flushRelatedObjects(ItemRevision.class, true);
             Logger.Debug("Found " + rels.size());
             if (rels.size()==0)
                 return true;
 
             for (int i = 0; i < rels.size(); ++i) {
-				Logger.Debug("Processing " + i + "/" + rels.size());
-				DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
-				if (child != null && child.getObject() instanceof ItemRevision) {
-					Logger.Debug("Found an item");
-					DimensionsObject relType = child.getRelationship();
-					if (SystemRelationship.IN_RESPONSE.equals(relType)) {
-						items.add(child.getObject());
-					}
+                Logger.Debug("Processing " + i + "/" + rels.size());
+                DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
+                if (child != null && child.getObject() instanceof ItemRevision) {
+                    Logger.Debug("Found an item");
+                    DimensionsObject relType = child.getRelationship();
+                    if (SystemRelationship.IN_RESPONSE.equals(relType)) {
+                        items.add(child.getObject());
+                    }
                 }
             }
             return true;
@@ -1104,37 +1114,36 @@ public class DimensionsAPI
      */
      private boolean getDmChildRequests(Request request, List requestList)
                             throws DimensionsRuntimeException {
-		try {
-			request.flushRelatedObjects(Request.class, true);
-			request.queryChildRequests(null);
-			List rels = request.getChildRequests(null);
-			request.flushRelatedObjects(Request.class, true);
-			Logger.Debug("Found " + rels.size());
-			if (rels.size()==0)
-				return true;
+        try {
+            request.flushRelatedObjects(Request.class, true);
+            request.queryChildRequests(null);
+            List rels = request.getChildRequests(null);
+            Logger.Debug("Found " + rels.size());
+            if (rels.size()==0)
+                return true;
 
-			for (int i=0; i<rels.size(); i++) {
-				Logger.Debug("Processing " + i + "/" + rels.size());
-				DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
-				if (child != null && child.getObject() instanceof Request) {
-					Logger.Debug("Found a request");
-					DimensionsObject relType = child.getRelationship();
-					if (SystemRelationship.DEPENDENT.equals(relType)) {
-						Logger.Debug("Found a dependent request");
-						requestList.add(child.getObject());
-						if (!getDmChildRequests((Request)child.getObject(), requestList))
-							return false;
-					}
-				} else {
-					Logger.Debug("Related object was null or not a request " + (child != null));
-				}
-			}
-			return true;
-		} catch (Exception e) {
+            for (int i=0; i<rels.size(); i++) {
+                Logger.Debug("Processing " + i + "/" + rels.size());
+                DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
+                if (child != null && child.getObject() instanceof Request) {
+                    Logger.Debug("Found a request");
+                    DimensionsObject relType = child.getRelationship();
+                    if (SystemRelationship.DEPENDENT.equals(relType)) {
+                        Logger.Debug("Found a dependent request");
+                        requestList.add(child.getObject());
+                        if (!getDmChildRequests((Request)child.getObject(), requestList))
+                            return false;
+                    }
+                } else {
+                    Logger.Debug("Related object was null or not a request " + (child != null));
+                }
+            }
+            return true;
+        } catch (Exception e) {
             // e.printStackTrace();
             Logger.Debug("Exception detected from the Java API: " + e.getMessage());
-			throw new DimensionsRuntimeException("getDmChildRequests - encountered a Java API exception");
-		}
+            throw new DimensionsRuntimeException("getDmChildRequests - encountered a Java API exception");
+        }
     }
 
     /**
