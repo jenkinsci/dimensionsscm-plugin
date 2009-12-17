@@ -128,7 +128,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
     private String identifier;
     private Calendar date;
     private String version;
-    Collection<DmFiles> items = new HashSet<DmFiles>();
+    private Collection<DmFiles> items = new HashSet<DmFiles>();
 
     // Digester class seems to need a default or null constructor else it crashes
     public DimensionsChangeSet() {
@@ -181,39 +181,9 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
 
     public Collection<DmFiles> getFiles() {
-        // ArrayList files = new ArrayList(items);
-        // files = sortFiles(files);
-        // return files;
         return this.items;
     }
 
-    private static ArrayList sortFiles(ArrayList files)
-                            throws DimensionsRuntimeException {
-        Collections.sort(files, new Comparator()
-        {
-            public int compare(Object oa1, Object oa2)
-            {
-                int result = 0;
-                try
-                {
-                    DmFiles o1 = (DmFiles)oa1;
-                    DmFiles o2 = (DmFiles)oa2;
-
-                    String a1 = (String)o1.getFile();
-                    String a2 = (String)o2.getFile();
-
-                    result = a1.compareTo(a2);
-                }
-                catch (Exception e)
-                {
-                    //e.printStackTrace();
-                    throw new DimensionsRuntimeException("Unable to sort file list - " + e.getMessage());
-                }
-                return result;
-            }
-        });
-        return files;
-    }
 
     @Override
     public Collection<String> getAffectedPaths() {

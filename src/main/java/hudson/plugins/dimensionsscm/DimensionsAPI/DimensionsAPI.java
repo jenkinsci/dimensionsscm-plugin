@@ -657,6 +657,7 @@ public class DimensionsAPI
             filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
             filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
             filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
+            filter.orders().add(new Filter.Order(SystemAttributes.REVISION_COMMENT, Filter.ORDER_ASCENDING));
             filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
             filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
 
@@ -1160,15 +1161,20 @@ public class DimensionsAPI
      *
      */
     static DimensionsResult run(DimensionsConnection connection, String cmd)
-            throws CommandFailedException {
+            throws IllegalArgumentException, DimensionsRuntimeException {
         if (cmd == null || cmd.equals("")) { //$NON-NLS-1$
             throw new IllegalArgumentException(NO_COMMAND_LINE);
         }
         Logger.Debug("Running the command '" + cmd + "'...");
 
-        DimensionsObjectFactory dof = connection.getObjectFactory();
-        DimensionsResult res = dof.runCommand(cmd);
-        return res;
+        try {
+            DimensionsObjectFactory dof = connection.getObjectFactory();
+            DimensionsResult res = dof.runCommand(cmd);
+            return res;
+        } catch (Exception e) {
+            Logger.Debug("Command failed to run");
+            throw new DimensionsRuntimeException("Dimension command failed - " + e.getMessage());
+        }
     }
 
 
