@@ -98,103 +98,136 @@ import hudson.plugins.dimensionsscm.Logger;
 
 // Hudson imports
 import hudson.Launcher;
-import hudson.util.FormFieldValidator;
-import hudson.model.Build;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Descriptor.FormException;
 import hudson.model.Descriptor;
-import hudson.tasks.Builder;
+import hudson.tasks.BuildWrapper.Environment;
+import hudson.tasks.BuildWrapper;
+import hudson.tasks.BuildWrapperDescriptor;
+import hudson.util.FormFieldValidator;
+import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
-import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.Map;
 
-public class DimensionsBuilder extends Builder {
-
-    private final String name;
-
-    @DataBoundConstructor
-    public DimensionsBuilder(String name) {
-        this.name = name;
-    }
-
-    /**
-     * We'll use this from the <tt>config.jelly</tt>.
-     */
-    public String getName() {
-        return name;
-    }
-
-    public boolean perform(Build build, Launcher launcher, BuildListener listener) {
-        // this is where you 'build' the project
-        // since this is a dummy, we just say 'hello world' and call that a build
-
-        return true;
-    }
-
-    public Descriptor<Builder> getDescriptor() {
-        // see Descriptor javadoc for more about what a descriptor is.
-        return DESCRIPTOR;
-    }
+public class DimensionsBuildWrapper extends BuildWrapper {
 
     /**
      * Descriptor should be singleton.
      */
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
-    /**
-     * Descriptor for {@link DimensionsBuilder}. Used as a singleton.
-     * The class is marked as public so that it can be accessed from views.
-     *
-     */
-    public static final class DescriptorImpl extends Descriptor<Builder> {
-        /**
-         * To persist global configuration information,
-         * simply store it in a field and call save().
-         *
-         * <p>
-         * If you don't want fields to be persisted, use <tt>transient</tt>.
-         */
+    public Descriptor<BuildWrapper> getDescriptor() {
+        // see Descriptor javadoc for more about what a descriptor is.
+        return DESCRIPTOR;
+    }
 
+    /**
+     * Default constructor.
+     */
+    public DimensionsBuildWrapper() {
+    }
+
+    /**
+     * Default environment setup.
+     */
+    @Override
+    public Environment setUp(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException {
+        return new EnvironmentImpl(build);
+    }
+
+
+    /*
+     * Implementation class for Dimensions plugin
+     */
+    public static class DescriptorImpl extends BuildWrapperDescriptor {
+
+        /*
+         * Loads the descriptor
+         */
         DescriptorImpl() {
-            super(DimensionsBuilder.class);
+            super(DimensionsBuildWrapper.class);
+            load();
             Logger.Debug("Loading " + this.getClass().getName());
         }
 
         /**
-         * Performs on-the-fly validation of the form field 'name'.
-         *
-         * @param value
-         *      This receives the current value of the field.
+         * Default constructor.
          */
-        public void doCheckName(StaplerRequest req, StaplerResponse rsp, @QueryParameter final String value) throws IOException, ServletException {
-            new FormFieldValidator(req,rsp,null) {
-                /**
-                 * The real check goes here. In the end, depending on which
-                 * method you call, the browser shows text differently.
-                 */
-                protected void check() throws IOException, ServletException {
-                    ok();
-                }
-            }.process();
+        @Override
+        public DimensionsBuildWrapper newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            DimensionsBuildWrapper buildWrapper = new DimensionsBuildWrapper();
+            req.bindParameters(buildWrapper,"Dimensions");
+            return buildWrapper;
         }
 
-        /**
-         * This human readable name is used in the configuration screen.
-         */
         public String getDisplayName() {
             return "Dimensions";
         }
 
-        public boolean configure(StaplerRequest req, JSONObject o) throws FormException {
-            // to persist global configuration information,
-            // set that to properties and call save().
+
+        /*
+         * Save the descriptor configuration
+         */
+        @Override
+        public boolean isApplicable(AbstractProject<?,?> item) {
+            return true;
+        }
+
+        /*
+         * Save the descriptor configuration
+         */
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+            req.bindParameters(this,"Dimensions");
             save();
-            return super.configure(req);
+            return true;
+        }
+
+        /*
+         * Get help file
+         */
+        @Override
+        public String getHelpFile() {
+            return "/plugin/dimensionsscm/help-dimensionsscmwrapper.html";
+        }
+    }
+
+    /*
+     * Implementation class for Dimensions environment plugin
+     */
+    class EnvironmentImpl extends Environment {
+
+        AbstractBuild<?,?> build;
+
+        /**
+         * Default constructor.
+         */
+        EnvironmentImpl(AbstractBuild<?,?> build) {
+            this.build = build;
+        }
+
+        /**
+         * Build environment
+         */
+        @Override
+        public void buildEnvVars(Map<String, String> env) {
+        }
+
+        /**
+         * Post build step - always called
+         */
+        @Override
+        public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException {
+            return true;
         }
     }
 }
-
