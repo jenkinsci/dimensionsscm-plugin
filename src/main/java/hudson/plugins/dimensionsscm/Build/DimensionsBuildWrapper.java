@@ -97,6 +97,7 @@ import hudson.plugins.dimensionsscm.DimensionsAPI;
 import hudson.plugins.dimensionsscm.Logger;
 
 // Hudson imports
+import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -123,16 +124,18 @@ public class DimensionsBuildWrapper extends BuildWrapper {
     /**
      * Descriptor should be singleton.
      */
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
     public Descriptor<BuildWrapper> getDescriptor() {
-        // see Descriptor javadoc for more about what a descriptor is.
-        return DESCRIPTOR;
+        return DMWBLD_DESCRIPTOR;
     }
+
+    @Extension
+    public static final DescriptorImpl DMWBLD_DESCRIPTOR = new DescriptorImpl();
+
 
     /**
      * Default constructor.
      */
+    @DataBoundConstructor
     public DimensionsBuildWrapper() {
     }
 
@@ -140,7 +143,8 @@ public class DimensionsBuildWrapper extends BuildWrapper {
      * Default environment setup.
      */
     @Override
-    public Environment setUp(AbstractBuild build, Launcher launcher, BuildListener listener) throws IOException {
+    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
+        Logger.Debug("Invoking build setup callout " + this.getClass().getName());
         return new EnvironmentImpl(build);
     }
 
@@ -148,34 +152,24 @@ public class DimensionsBuildWrapper extends BuildWrapper {
     /*
      * Implementation class for Dimensions plugin
      */
-    public static class DescriptorImpl extends BuildWrapperDescriptor {
+    public static final class DescriptorImpl extends BuildWrapperDescriptor {
 
         /*
          * Loads the descriptor
          */
-        DescriptorImpl() {
+        public DescriptorImpl() {
             super(DimensionsBuildWrapper.class);
             load();
             Logger.Debug("Loading " + this.getClass().getName());
         }
 
-        /**
-         * Default constructor.
-         */
-        @Override
-        public DimensionsBuildWrapper newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            DimensionsBuildWrapper buildWrapper = new DimensionsBuildWrapper();
-            req.bindParameters(buildWrapper,"Dimensions");
-            return buildWrapper;
-        }
-
         public String getDisplayName() {
-            return "Dimensions";
+            return "Tag successful builds in Dimensions as a project baseline";
         }
 
 
         /*
-         * Save the descriptor configuration
+         *  This builder can be used with all project types
          */
         @Override
         public boolean isApplicable(AbstractProject<?,?> item) {
@@ -227,6 +221,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          */
         @Override
         public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException {
+            Logger.Debug("Invoking build tearDown callout " + this.getClass().getName());
             return true;
         }
     }

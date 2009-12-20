@@ -298,6 +298,9 @@ public class DimensionsSCM extends SCM implements Serializable
         return this.canJobRevert;
     }
 
+    @Extension
+    public static final DescriptorImpl DM_DESCRIPTOR = new DescriptorImpl();
+
     /*
      *-----------------------------------------------------------------
      *  FUNCTION SPECIFICATION
@@ -776,7 +779,7 @@ public class DimensionsSCM extends SCM implements Serializable
     @Override
     public DescriptorImpl getDescriptor()
     {
-        return PluginImpl.DM_DESCRIPTOR;
+        return DM_DESCRIPTOR;
     }
 
 
@@ -784,8 +787,7 @@ public class DimensionsSCM extends SCM implements Serializable
      * Implementation class for Dimensions plugin
      */
     public static class
-    DescriptorImpl extends SCMDescriptor<DimensionsSCM>
-    {
+    DescriptorImpl extends SCMDescriptor<DimensionsSCM> implements ModelObject {
 
         DimensionsAPI connectionCheck = null;
 
@@ -847,7 +849,7 @@ public class DimensionsSCM extends SCM implements Serializable
             if (webUrl != null)
                 webUrl = Util.fixNull(req.getParameter("dimensionsscm.webUrl").trim());
 
-            req.bindJSON(PluginImpl.DM_DESCRIPTOR, jobj);
+            req.bindJSON(DM_DESCRIPTOR, jobj);
 
             this.save();
             return super.configure(req, jobj);

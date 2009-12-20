@@ -97,6 +97,7 @@ import hudson.plugins.dimensionsscm.DimensionsAPI;
 import hudson.plugins.dimensionsscm.Logger;
 
 // Hudson imports
+import hudson.Extension;
 import hudson.Launcher;
 import hudson.util.FormFieldValidator;
 import hudson.model.Build;
@@ -114,7 +115,8 @@ import java.io.IOException;
 
 public class DimensionsBuilder extends Builder {
 
-    private final String name;
+    private String name = null;
+
 
     @DataBoundConstructor
     public DimensionsBuilder(String name) {
@@ -131,19 +133,21 @@ public class DimensionsBuilder extends Builder {
     public boolean perform(Build build, Launcher launcher, BuildListener listener) {
         // this is where you 'build' the project
         // since this is a dummy, we just say 'hello world' and call that a build
+        Logger.Debug("Invoking build callout " + this.getClass().getName());
 
         return true;
     }
 
     public Descriptor<Builder> getDescriptor() {
         // see Descriptor javadoc for more about what a descriptor is.
-        return DESCRIPTOR;
+        return DMBLD_DESCRIPTOR;
     }
 
     /**
      * Descriptor should be singleton.
      */
-    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+    @Extension
+    public static final DescriptorImpl DMBLD_DESCRIPTOR = new DescriptorImpl();
 
     /**
      * Descriptor for {@link DimensionsBuilder}. Used as a singleton.
@@ -159,7 +163,7 @@ public class DimensionsBuilder extends Builder {
          * If you don't want fields to be persisted, use <tt>transient</tt>.
          */
 
-        DescriptorImpl() {
+        public DescriptorImpl() {
             super(DimensionsBuilder.class);
             Logger.Debug("Loading " + this.getClass().getName());
         }
