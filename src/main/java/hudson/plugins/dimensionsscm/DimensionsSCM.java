@@ -185,6 +185,14 @@ public class DimensionsSCM extends SCM implements Serializable
     DimensionsAPI dmSCM;
     DimensionsSCMRepositoryBrowser browser;
 
+    public DimensionsSCM getSCM() {
+        return this;
+    }
+
+    public DimensionsAPI getAPI() {
+        return this.dmSCM;
+    }
+
     /*
      * Gets the project ID for the connection.
      * @return the project ID

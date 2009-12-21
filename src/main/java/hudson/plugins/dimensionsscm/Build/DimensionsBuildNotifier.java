@@ -107,95 +107,93 @@ import hudson.model.BuildListener;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Descriptor;
 import hudson.model.Result;
-import hudson.tasks.BuildWrapper.Environment;
-import hudson.tasks.BuildWrapper;
-import hudson.tasks.BuildWrapperDescriptor;
-import hudson.util.FormFieldValidator;
+import hudson.model.TaskListener;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.Notifier;
+import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import javax.servlet.ServletException;
+// General imports
 import java.io.IOException;
-import java.util.Map;
+import java.io.Serializable;
 
-public class DimensionsBuildWrapper extends BuildWrapper {
+import javax.servlet.ServletException;
+
+public class DimensionsBuildNotifier extends Notifier implements Serializable {
 
     private static DimensionsSCM scm = null;
-
-    /**
-     * Descriptor should be singleton.
-     */
-    public Descriptor<BuildWrapper> getDescriptor() {
-        return DMWBLD_DESCRIPTOR;
-    }
-
-    @Extension
-    public static final DescriptorImpl DMWBLD_DESCRIPTOR = new DescriptorImpl();
-
 
     /**
      * Default constructor.
      */
     @DataBoundConstructor
-    public DimensionsBuildWrapper() {
+    public DimensionsBuildNotifier() {
     }
 
-    /**
-     * Default environment setup.
-     */
+
     @Override
-    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
-        Logger.Debug("Invoking build setup callout " + this.getClass().getName());
-        if (scm == null)
-            scm = (DimensionsSCM)build.getProject().getScm();
-        Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
+                           BuildListener listener) throws IOException, InterruptedException {
+        Logger.Debug("Invoking perform callout " + this.getClass().getName());
         try {
-            if (scm.getAPI().login(scm.getJobUserName(),
-                                   scm.getJobPasswd(),
-                                   scm.getJobDatabase(),
-                                   scm.getJobServer()))
-            {
-                DimensionsResult res = scm.getAPI().lockProject(scm.getProject());
-                if (res==null) {
-                    listener.getLogger().println("Locking the project in Dimensions failed");
-                    listener.getLogger().flush();
-                }
-                else {
-                    listener.getLogger().println("Dimensions project was successfully locked");
-                    listener.getLogger().flush();
+            if (build.getResult() == Result.SUCCESS) {
+                if (scm == null)
+                    scm = (DimensionsSCM)build.getProject().getScm();
+                Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+                if (scm.getAPI().login(scm.getJobUserName(),
+                                       scm.getJobPasswd(),
+                                       scm.getJobDatabase(),
+                                       scm.getJobServer()))
+                {
+                    DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
+                    if (res==null) {
+                        listener.getLogger().println("The build failed to be tagged in Dimensions");
+                        listener.getLogger().flush();
+                    }
+                    else {
+                        listener.getLogger().println("Build was successfully tagged in Dimensions as a baseline");
+                        listener.getLogger().println("("+res.getMessage()+")");
+                        listener.getLogger().flush();
+                    }
                 }
             }
         } catch(Exception e) {
-            listener.fatalError("Unable to lock Dimensions project - " + e.getMessage());
+            listener.fatalError("Unable to tag build in Dimensions - " + e.getMessage());
+            return false;
         }
         finally
         {
-            scm.getAPI().logout();
+            if (scm != null)
+                scm.getAPI().logout();
         }
-        return new EnvironmentImpl(build);
+        return true;
     }
 
-
-    /*
-     * Implementation class for Dimensions plugin
+    /**
+     * The DimensionsBuildNotifier Descriptor class.
      */
-    public static final class DescriptorImpl extends BuildWrapperDescriptor {
+    @Extension
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         /*
          * Loads the descriptor
          */
         public DescriptorImpl() {
-            super(DimensionsBuildWrapper.class);
+            super(DimensionsBuildNotifier.class);
             load();
             Logger.Debug("Loading " + this.getClass().getName());
         }
 
         public String getDisplayName() {
-            return "Lock Dimensions project while build in progress";
+            return "Tag successful builds in Dimensions as a project baseline";
         }
 
 
@@ -203,7 +201,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          *  This builder can be used with all project types
          */
         @Override
-        public boolean isApplicable(AbstractProject<?,?> item) {
+        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
         }
 
@@ -223,63 +221,6 @@ public class DimensionsBuildWrapper extends BuildWrapper {
         @Override
         public String getHelpFile() {
             return "/plugin/dimensionsscm/help-dimensionsscmwrapper.html";
-        }
-    }
-
-    /*
-     * Implementation class for Dimensions environment plugin
-     */
-    class EnvironmentImpl extends Environment {
-
-        AbstractBuild<?,?> elbuild;
-
-        /**
-         * Default constructor.
-         */
-        EnvironmentImpl(AbstractBuild<?,?> build) {
-            this.elbuild = build;
-        }
-
-        /**
-         * Build environment
-         */
-        @Override
-        public void buildEnvVars(Map<String, String> env) {
-        }
-
-        /**
-         * Post build step - always called
-         */
-        @Override
-        public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException {
-            Logger.Debug("Invoking build tearDown callout " + this.getClass().getName());
-            Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
-            try {
-                if (scm.getAPI().login(scm.getJobUserName(),
-                                       scm.getJobPasswd(),
-                                       scm.getJobDatabase(),
-                                       scm.getJobServer()))
-                {
-                    Logger.Debug("Unlocking the project");
-                    DimensionsResult res = scm.getAPI().unlockProject(scm.getProject());
-                    if (res==null) {
-                        listener.getLogger().println("Unlocking the project in Dimensions failed");
-                        listener.getLogger().flush();
-                    }
-                    else {
-                        listener.getLogger().println("Dimensions project was successfully unlocked");
-                        listener.getLogger().flush();
-                    }
-                }
-            } catch(Exception e) {
-                listener.fatalError("Unable to unlock Dimensions project - " + e.getMessage());
-                return false;
-            }
-            finally
-            {
-                scm.getAPI().logout();
-            }
-            return true;
         }
     }
 }

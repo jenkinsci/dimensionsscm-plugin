@@ -125,6 +125,10 @@ import com.serena.dmclient.api.BulkOperator;
 import com.serena.dmclient.api.ItemRevisionHistoryRec;
 import com.serena.dmclient.api.ActionHistoryRec;
 
+// Hudson imports
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+
 // General imports
 import java.io.File;
 import java.io.FileWriter;
@@ -269,7 +273,7 @@ public class DimensionsAPI
      */
     public final boolean login(String userID, String password,
             String database, String server)
-            throws IllegalArgumentException, ParseException
+            throws IllegalArgumentException, DimensionsRuntimeException
     {
 
         if (connection == null)
@@ -283,7 +287,7 @@ public class DimensionsAPI
             dmPasswd = password;
 
 
-            Logger.Debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dmDb);
+            Logger.Debug("Checking Dimensions login parameters...");
 
             if (dmServer == null || dmServer.length() == 0 ||
                 dmDb == null || dmDb.length() == 0 ||
@@ -291,20 +295,30 @@ public class DimensionsAPI
                 dmPasswd  == null || dmPasswd.length() == 0)
                 throw new IllegalArgumentException("Invalid or not parameters have been specified");
 
-            // check if we need to pre-process the login details
-            String[] dbCompts = parseDatabaseString(dmDb);
-            dbName = dbCompts[0];
-            dbConn = dbCompts[1];
+            try {
+                // check if we need to pre-process the login details
+                String[] dbCompts = parseDatabaseString(dmDb);
+                dbName = dbCompts[0];
+                dbConn = dbCompts[1];
 
-            DimensionsConnectionDetails details = new DimensionsConnectionDetails();
-            details.setUsername(dmUser);
-            details.setPassword(dmPasswd);
-            details.setDbName(dbName);
-            details.setDbConn(dbConn);
-            details.setServer(dmServer);
-            connection = DimensionsConnectionManager.getConnection(details);
-            if (connection!=null)
-                DimensionsConnectionManager.registerThreadConnection(connection);
+                Logger.Debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dmDb);
+
+                DimensionsConnectionDetails details = new DimensionsConnectionDetails();
+                details.setUsername(dmUser);
+                details.setPassword(dmPasswd);
+                details.setDbName(dbName);
+                details.setDbConn(dbConn);
+                details.setServer(dmServer);
+                Logger.Debug("Getting Dimensions connection...");
+                connection = DimensionsConnectionManager.getConnection(details);
+                if (connection!=null) {
+                    Logger.Debug("Registering connection...");
+                    DimensionsConnectionManager.registerThreadConnection(connection);
+                    Logger.Debug("Registered connection...");
+                }
+            } catch(Exception e) {
+                throw new DimensionsRuntimeException("Login to Dimensions failed - " + e.getMessage());
+            }
         }
         return (connection != null);
     }
@@ -316,6 +330,11 @@ public class DimensionsAPI
     {
         if (connection != null) {
             try {
+                if (DimensionsConnectionManager.getThreadConnection() != null) {
+                    Logger.Debug("Unregistering connection...");
+                    DimensionsConnectionManager.unregisterThreadConnection();
+                }
+                Logger.Debug("Closing connection to Dimensions...");
                 connection.close();
             } catch (DimensionsNetworkException dne) {
                 /* do nothing */
@@ -728,6 +747,85 @@ public class DimensionsAPI
         }
     }
 
+    /**
+     * Lock a project
+     *
+     * @param String
+     * @return DimensionsResult
+     * @throws DimensionsRuntimeException
+     */
+    public DimensionsResult lockProject(String projectId)
+                            throws DimensionsRuntimeException
+    {
+        try {
+            String cmd = "LCK WORKSET ";
+            if (projectId != null) {
+                cmd += "\""+projectId+"\"";
+                DimensionsResult res = run(connection,cmd);
+                if (res != null ) {
+                    Logger.Debug("Locking project - "+res.getMessage());
+                    return res;
+                }
+            }
+            return null;
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException(e.getMessage());
+        }
+    }
+
+    /**
+     * UnLock a project
+     *
+     * @param String
+     * @return DimensionsResult
+     * @throws DimensionsRuntimeException
+     */
+    public DimensionsResult unlockProject(String projectId)
+                            throws DimensionsRuntimeException
+    {
+        try {
+            String cmd = "ULCK WORKSET ";
+            if (projectId != null) {
+                cmd += "\""+projectId+"\"";
+                DimensionsResult res = run(connection,cmd);
+                if (res != null ) {
+                    Logger.Debug("Unlocking project - "+res.getMessage());
+                    return res;
+                }
+            }
+            return null;
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException(e.getMessage());
+        }
+    }
+
+    /**
+     * Create a project tag
+     *
+     * @param String
+     * @param AbstractBuild
+     * @return DimensionsResult
+     * @throws DimensionsRuntimeException
+     */
+    public DimensionsResult createBaseline(String projectId, AbstractBuild build)
+                            throws DimensionsRuntimeException
+    {
+        try {
+            String cmd = "CBL ";
+            if (projectId != null && build != null) {
+                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                cmd += " /SCOPE=WORKSET /WORKSET=\""+projectId+"\"";
+                DimensionsResult res = run(connection,cmd);
+                if (res != null ) {
+                    Logger.Debug("Locking project - "+res.getMessage());
+                    return res;
+                }
+            }
+            return null;
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException(e.getMessage());
+        }
+    }
 
     /**
      * Construct the change list
