@@ -149,32 +149,34 @@ public class DimensionsBuildWrapper extends BuildWrapper {
      */
     @Override
     public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
-        Logger.Debug("Invoking build setup callout " + this.getClass().getName());
-        if (scm == null)
-            scm = (DimensionsSCM)build.getProject().getScm();
-        Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
-        try {
-            if (scm.getAPI().login(scm.getJobUserName(),
-                                   scm.getJobPasswd(),
-                                   scm.getJobDatabase(),
-                                   scm.getJobServer()))
-            {
-                DimensionsResult res = scm.getAPI().lockProject(scm.getProject());
-                if (res==null) {
-                    listener.getLogger().println("[DIMENSIONS] Locking the project in Dimensions failed");
-                    listener.getLogger().flush();
+        if (build.getProject().getScm() instanceof DimensionsSCM) {
+            Logger.Debug("Invoking build setup callout " + this.getClass().getName());
+            if (scm == null)
+                scm = (DimensionsSCM)build.getProject().getScm();
+            Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+            try {
+                if (scm.getAPI().login(scm.getJobUserName(),
+                                       scm.getJobPasswd(),
+                                       scm.getJobDatabase(),
+                                       scm.getJobServer()))
+                {
+                    DimensionsResult res = scm.getAPI().lockProject(scm.getProject());
+                    if (res==null) {
+                        listener.getLogger().println("[DIMENSIONS] Locking the project in Dimensions failed");
+                        listener.getLogger().flush();
+                    }
+                    else {
+                        listener.getLogger().println("[DIMENSIONS] Dimensions project was successfully locked");
+                        listener.getLogger().flush();
+                    }
                 }
-                else {
-                    listener.getLogger().println("[DIMENSIONS] Dimensions project was successfully locked");
-                    listener.getLogger().flush();
-                }
+            } catch(Exception e) {
+                listener.fatalError("Unable to lock Dimensions project - " + e.getMessage());
             }
-        } catch(Exception e) {
-            listener.fatalError("Unable to lock Dimensions project - " + e.getMessage());
-        }
-        finally
-        {
-            scm.getAPI().logout();
+            finally
+            {
+                scm.getAPI().logout();
+            }
         }
         return new EnvironmentImpl(build);
     }
@@ -195,7 +197,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
         }
 
         public String getDisplayName() {
-            return "Lock Dimensions project while build in progress";
+            return "Lock Dimensions project while the build is in progress";
         }
 
 
@@ -252,32 +254,34 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          */
         @Override
         public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException {
-            Logger.Debug("Invoking build tearDown callout " + this.getClass().getName());
-            Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
-            try {
-                if (scm.getAPI().login(scm.getJobUserName(),
-                                       scm.getJobPasswd(),
-                                       scm.getJobDatabase(),
-                                       scm.getJobServer()))
-                {
-                    Logger.Debug("Unlocking the project");
-                    DimensionsResult res = scm.getAPI().unlockProject(scm.getProject());
-                    if (res==null) {
-                        listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");
-                        listener.getLogger().flush();
+            if (scm != null) {
+                Logger.Debug("Invoking build tearDown callout " + this.getClass().getName());
+                Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+                try {
+                    if (scm.getAPI().login(scm.getJobUserName(),
+                                           scm.getJobPasswd(),
+                                           scm.getJobDatabase(),
+                                           scm.getJobServer()))
+                    {
+                        Logger.Debug("Unlocking the project");
+                        DimensionsResult res = scm.getAPI().unlockProject(scm.getProject());
+                        if (res==null) {
+                            listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");
+                            listener.getLogger().flush();
+                        }
+                        else {
+                            listener.getLogger().println("[DIMENSIONS] Dimensions project was successfully unlocked");
+                            listener.getLogger().flush();
+                        }
                     }
-                    else {
-                        listener.getLogger().println("[DIMENSIONS] Dimensions project was successfully unlocked");
-                        listener.getLogger().flush();
-                    }
+                } catch(Exception e) {
+                    listener.fatalError("Unable to unlock Dimensions project - " + e.getMessage());
+                    return false;
                 }
-            } catch(Exception e) {
-                listener.fatalError("Unable to unlock Dimensions project - " + e.getMessage());
-                return false;
-            }
-            finally
-            {
-                scm.getAPI().logout();
+                finally
+                {
+                    scm.getAPI().logout();
+                }
             }
             return true;
         }

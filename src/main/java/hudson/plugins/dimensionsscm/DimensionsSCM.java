@@ -98,12 +98,17 @@ import hudson.plugins.dimensionsscm.DimensionsAPI;
 import hudson.plugins.dimensionsscm.DimensionsSCMRepositoryBrowser;
 import hudson.plugins.dimensionsscm.Logger;
 import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
+import hudson.plugins.dimensionsscm.DimensionsBuildWrapper;
+import hudson.plugins.dimensionsscm.DimensionsBuildNotifier;
+import hudson.plugins.dimensionsscm.DimensionsChecker;
+
 
 // Hudson imports
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
+import hudson.model.Hudson;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
@@ -523,6 +528,19 @@ public class DimensionsSCM extends SCM implements Serializable
 
         try
         {
+            // Load other Dimensions plugins if set
+            DimensionsBuildWrapper.DescriptorImpl bwplugin = (DimensionsBuildWrapper.DescriptorImpl)
+                                Hudson.getInstance().getDescriptor(DimensionsBuildWrapper.class);
+            DimensionsBuildNotifier.DescriptorImpl bnplugin = (DimensionsBuildNotifier.DescriptorImpl)
+                                Hudson.getInstance().getDescriptor(DimensionsBuildNotifier.class);
+
+            if (DimensionsChecker.isValidPluginCombination(build)) {
+                Logger.Debug("Plugins are ok");
+            } else {
+                listener.fatalError("\n[DIMENSIONS] If you intend to tag this build, then you must set the\n[DIMENSIONS] 'Lock Dimensions project while the build is in progress' option");
+                return false;
+            }
+
             // When are we building files for?
             // Looking for the last successful build and then going forward from there - could use the last build as well
             //
@@ -631,6 +649,7 @@ public class DimensionsSCM extends SCM implements Serializable
                 if (cmdLog.length() > 0 && listener.getLogger() != null) {
                     Logger.Debug("Found command output to log to the build logger");
                     listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
+                    cmdLog = cmdLog.replaceAll("\n\n","\n");
                     listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS]") + ")");
                     listener.getLogger().flush();
                 }
