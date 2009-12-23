@@ -161,11 +161,11 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             {
                 DimensionsResult res = scm.getAPI().lockProject(scm.getProject());
                 if (res==null) {
-                    listener.getLogger().println("Locking the project in Dimensions failed");
+                    listener.getLogger().println("[DIMENSIONS] Locking the project in Dimensions failed");
                     listener.getLogger().flush();
                 }
                 else {
-                    listener.getLogger().println("Dimensions project was successfully locked");
+                    listener.getLogger().println("[DIMENSIONS] Dimensions project was successfully locked");
                     listener.getLogger().flush();
                 }
             }
@@ -263,11 +263,11 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                     Logger.Debug("Unlocking the project");
                     DimensionsResult res = scm.getAPI().unlockProject(scm.getProject());
                     if (res==null) {
-                        listener.getLogger().println("Unlocking the project in Dimensions failed");
+                        listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");
                         listener.getLogger().flush();
                     }
                     else {
-                        listener.getLogger().println("Dimensions project was successfully unlocked");
+                        listener.getLogger().println("[DIMENSIONS] Dimensions project was successfully unlocked");
                         listener.getLogger().flush();
                     }
                 }

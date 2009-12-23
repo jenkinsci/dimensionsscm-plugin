@@ -155,12 +155,12 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 {
                     DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
                     if (res==null) {
-                        listener.getLogger().println("The build failed to be tagged in Dimensions");
+                        listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
                         listener.getLogger().flush();
                     }
                     else {
-                        listener.getLogger().println("Build was successfully tagged in Dimensions as a baseline");
-                        listener.getLogger().println("("+res.getMessage()+")");
+                        listener.getLogger().println("[DIMENSIONS] Build was successfully tagged in Dimensions as a baseline");
+                        listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS]")+")");
                         listener.getLogger().flush();
                     }
                 }

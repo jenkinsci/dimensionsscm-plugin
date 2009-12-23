@@ -563,7 +563,7 @@ public class DimensionsSCM extends SCM implements Serializable
                 //
                 if (bFreshBuild) {
                     if (listener.getLogger() != null) {
-                        listener.getLogger().println("Checking out a fresh workspace because this project has not been built before...");
+                        listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
                         listener.getLogger().flush();
                     }
                 }
@@ -589,11 +589,11 @@ public class DimensionsSCM extends SCM implements Serializable
 
                 if (listener.getLogger() != null) {
                     if (requests != null)
-                        listener.getLogger().println("Checking out request(s) \"" + requests + "\" - ignoring project folders...");
+                        listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
                     else if (baseline != null)
-                        listener.getLogger().println("Checking out baseline \"" + baseline + "\"...");
+                        listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
                     else
-                        listener.getLogger().println("Checking out project \"" + getProject() + "\"...");
+                        listener.getLogger().println("[DIMENSIONS] Checking out project \"" + getProject() + "\"...");
                     listener.getLogger().flush();
                 }
 
@@ -630,17 +630,17 @@ public class DimensionsSCM extends SCM implements Serializable
 
                 if (cmdLog.length() > 0 && listener.getLogger() != null) {
                     Logger.Debug("Found command output to log to the build logger");
-                    listener.getLogger().println("(Note: Dimensions command output was - ");
-                    listener.getLogger().println(cmdLog + ")");
+                    listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
+                    listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS]") + ")");
                     listener.getLogger().flush();
                 }
 
                 if (!bRet) {
-                    listener.getLogger().println("==========================================================");
-                    listener.getLogger().println("The Dimensions checkout command returned a failure status.");
-                    listener.getLogger().println("Please review the command output and correct any issues");
-                    listener.getLogger().println("that may have been detected.");
-                    listener.getLogger().println("==========================================================");
+                    listener.getLogger().println("[DIMENSIONS] ==========================================================");
+                    listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
+                    listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
+                    listener.getLogger().println("[DIMENSIONS] that may have been detected.");
+                    listener.getLogger().println("[DIMENSIONS] ==========================================================");
                     listener.getLogger().flush();
                 }
             }
