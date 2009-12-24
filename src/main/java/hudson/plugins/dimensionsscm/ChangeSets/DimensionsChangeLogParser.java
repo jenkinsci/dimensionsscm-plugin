@@ -119,43 +119,48 @@ public class DimensionsChangeLogParser extends ChangeLogParser
 {
     @Override
     public DimensionsChangeSetList parse(AbstractBuild build, File changelogFile) throws IOException, SAXException {
-		Logger.Debug("Looking for '" + changelogFile.getPath() + "'");
-		if (!changelogFile.exists())
-		{
-			Logger.Debug("Change log file does not exist");
-			throw new IOException("Specified change log file does not exist - " + changelogFile.getPath());
-		}
-		else
-		{
-			FileReader reader = new FileReader(changelogFile);
-			try {
-				return parse(build, reader);
-			} finally {
-				IOUtils.closeQuietly(reader);
-			}
-		}
+        Logger.Debug("Looking for '" + changelogFile.getPath() + "'");
+        if (!changelogFile.exists())
+        {
+            Logger.Debug("Change log file does not exist");
+            throw new IOException("Specified change log file does not exist - " + changelogFile.getPath());
+        }
+        else
+        {
+            FileReader reader = new FileReader(changelogFile);
+            try {
+                return parse(build, reader);
+            } finally {
+                IOUtils.closeQuietly(reader);
+            }
+        }
     }
 
-	public DimensionsChangeSetList parse(AbstractBuild build, FileReader reader)
-											throws IOException, SAXException
-	{
-		List<DimensionsChangeSet> changesetList = new ArrayList<DimensionsChangeSet>();
-		Digester digester = new Digester2();
-		digester.push(changesetList);
+    public DimensionsChangeSetList parse(AbstractBuild build, FileReader reader)
+                                            throws IOException, SAXException
+    {
+        List<DimensionsChangeSet> changesetList = new ArrayList<DimensionsChangeSet>();
+        Digester digester = new Digester2();
+        digester.push(changesetList);
 
-		digester.addObjectCreate("*/changeset", DimensionsChangeSet.class);
-		digester.addSetProperties("*/changeset");
-		digester.addBeanPropertySetter("*/changeset/date", "dateString");
-		digester.addBeanPropertySetter("*/changeset/user");
-		digester.addBeanPropertySetter("*/changeset/comment");
-		digester.addSetNext("*/changeset", "add");
+        digester.addObjectCreate("*/changeset", DimensionsChangeSet.class);
+        digester.addSetProperties("*/changeset");
+        digester.addBeanPropertySetter("*/changeset/date", "dateString");
+        digester.addBeanPropertySetter("*/changeset/user");
+        digester.addBeanPropertySetter("*/changeset/comment");
+        digester.addSetNext("*/changeset", "add");
 
-		digester.addObjectCreate("*/changeset/items/item", DimensionsChangeSet.DmFiles.class);
-		digester.addSetProperties("*/changeset/items/item");
-		digester.addBeanPropertySetter("*/changeset/items/item", "file");
-		digester.addSetNext("*/changeset/items/item", "add");
+        digester.addObjectCreate("*/changeset/items/item", DimensionsChangeSet.DmFiles.class);
+        digester.addSetProperties("*/changeset/items/item");
+        digester.addBeanPropertySetter("*/changeset/items/item", "file");
+        digester.addSetNext("*/changeset/items/item", "add");
 
-		digester.parse(reader);
-		return new DimensionsChangeSetList(build,changesetList);
-	}
+        digester.addObjectCreate("*/changeset/requests/request", DimensionsChangeSet.DmRequests.class);
+        digester.addSetProperties("*/changeset/requests/request");
+        digester.addBeanPropertySetter("*/changeset/requests/request", "identifier");
+        digester.addSetNext("*/changeset/requests/request", "addRequest");
+
+        digester.parse(reader);
+        return new DimensionsChangeSetList(build,changesetList);
+    }
 }

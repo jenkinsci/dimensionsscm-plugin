@@ -127,7 +127,9 @@ import com.serena.dmclient.api.ActionHistoryRec;
 
 // Hudson imports
 import hudson.model.AbstractBuild;
+import com.serena.dmclient.api.Request;
 import hudson.model.AbstractProject;
+import com.serena.dmclient.api.DimensionsRelatedObject;
 
 // General imports
 import java.io.File;
@@ -889,6 +891,22 @@ public class DimensionsAPI
                     changeSet.add(cs);
                 }
             }
+
+            // at this point we have a valid DimensionsChangeSet (cs) that has already been added
+            // to the list (changeSet).  So now we will add all requests to the DimensionsChangeSet.
+              List itemRequests = item.getChildRequests(null);
+
+              for (int j = 0; j < itemRequests.size(); ++j) {
+                  DimensionsRelatedObject obj = (DimensionsRelatedObject) itemRequests.get(j);
+                  Request req = (Request) obj.getObject();
+                  String objectId = (String)req.getAttribute(SystemAttributes.OBJECT_SPEC);
+                  String requestUrl = constructRequestURL(objectId,url,getSCMDsn(),getSCMBaseDb());
+                  cs.addRequest(objectId,requestUrl);
+
+                  Logger.Debug("Child Request Details -" + objectId + " " + requestUrl);
+              }
+
+
         }
 
         return changeSet;
@@ -1014,6 +1032,39 @@ public class DimensionsAPI
                 Logger.Debug("Host URL - " + host + " " + page + " " + urlQuery);
                 String urlStr = encodeUrl(host,page,urlQuery);
                 Logger.Debug("Change URL - " + urlStr);
+                urlString = urlStr;
+            }   catch (Exception e) {
+                //e.printStackTrace();
+                return null;
+            }
+        }
+
+        return urlString;
+    }
+
+    // URL encode a webclient path + spec for opening
+    private static String constructRequestURL(String spec, String url, String dsn, String db) {
+        String urlString = "";
+        if (spec != null && spec.length() > 0 &&
+            url != null && url.length() > 0) {
+            String host = url;
+            if (host.endsWith("/"))
+                host = host.substring(0,host.length()-1);
+
+            if (host.startsWith("http:"))
+                host = host.substring(7,host.length());
+
+            String page = "/dimensions/";
+            String urlQuery = "jsp=api&command=opencd&object_id=";
+            urlQuery += spec;
+            urlQuery += "&DB_CONN=";
+            urlQuery += dsn;
+            urlQuery += "&DB_NAME=";
+            urlQuery += db;
+            try {
+                Logger.Debug("Request Host URL - " + host + " " + page + " " + urlQuery);
+                String urlStr = encodeUrl(host,page,urlQuery);
+                Logger.Debug("Request Change URL - " + urlStr);
                 urlString = urlStr;
             }   catch (Exception e) {
                 //e.printStackTrace();

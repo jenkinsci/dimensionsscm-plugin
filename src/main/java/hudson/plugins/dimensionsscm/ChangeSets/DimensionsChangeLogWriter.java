@@ -165,6 +165,13 @@ public class DimensionsChangeLogWriter
                                     escapeXML(item.getFile())));
                 }
                 writer.println("\t\t</items>");
+                writer.println("\t\t<requests>");
+                for (DimensionsChangeSet.DmRequests req : changeSet.getRequests()) {
+                    writer.println(String.format("\t\t\t<request url=\"%s\">%s</request>",
+                                    escapeHTML(req.getUrl()),
+                                    escapeXML(req.getIdentifier())));
+                }
+                writer.println("\t\t</requests>");
                 writer.println("\t</changeset>");
             }
         }

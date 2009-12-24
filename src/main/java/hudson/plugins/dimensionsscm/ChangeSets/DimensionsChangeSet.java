@@ -129,6 +129,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
     private Calendar date;
     private String version;
     private Collection<DmFiles> items = new HashSet<DmFiles>();
+    private Collection<DmRequests> requests = new HashSet<DmRequests>();
 
     // Digester class seems to need a default or null constructor else it crashes
     public DimensionsChangeSet() {
@@ -154,6 +155,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
         this.version = revision;
         this.items = new HashSet<DmFiles>();
         this.items.add(new DmFiles(file,op,url));
+        this.requests = new HashSet<DmRequests>();
     }
 
 
@@ -184,6 +186,9 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
         return this.items;
     }
 
+    public Collection<DmRequests> getRequests() {
+        return this.requests;
+    }
 
     @Override
     public Collection<String> getAffectedPaths() {
@@ -243,7 +248,28 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
     public void add(String file, String operation, String url) {
         DimensionsChangeSet.DmFiles x = new DmFiles(file,operation,url);
         items.add(x);
+        x.setParent(this);
     }
+
+    public void addRequest(DimensionsChangeSet.DmRequests newreq) {
+        for (DmRequests req : requests) {
+                if (req.getIdentifier().equals(newreq.getIdentifier()) && req.getUrl().equals(newreq.getUrl())) return;
+        }
+
+        requests.add(newreq);
+        newreq.setParent(this);
+    }
+
+    public void addRequest(String objectId, String url) {
+        for (DmRequests req : requests) {
+                if (req.getIdentifier().equals(objectId) && req.getUrl().equals(url)) return;
+        }
+
+        DimensionsChangeSet.DmRequests x = new DmRequests(objectId,url);
+        requests.add(x);
+        x.setParent(this);
+    }
+
 
     /*
      * List of changes made in the repository for this changeset
@@ -312,6 +338,50 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
         public void setFile(String fileName) {
             this.fileName = fileName;
+        }
+
+        public void setParent(DimensionsChangeSet parent) {
+            this.parent = parent;
+        }
+    }
+
+    @ExportedBean(defaultVisibility=999)
+    public static class DmRequests {
+        private String identifier;
+        private String url;
+        private DimensionsChangeSet parent;
+
+        public DmRequests() {
+            this("","");
+        }
+
+        public DmRequests(String objectID, String url) {
+            this.identifier = objectID;
+            this.url = url;
+        }
+
+        @Exported
+        public String getUrl() {
+            if (this.url.length() == 0)
+                return null;
+            else
+                return this.url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        @Exported
+        public String getIdentifier() {
+            if (this.identifier.length() == 0)
+                return null;
+            else
+                return this.identifier;
+        }
+
+        public void setIdentifier(String id) {
+            this.identifier = id;
         }
 
         public void setParent(DimensionsChangeSet parent) {

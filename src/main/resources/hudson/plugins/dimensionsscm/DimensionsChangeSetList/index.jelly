@@ -18,19 +18,38 @@
           </div>
         </td>
       </tr>
-      <j:forEach var="item" items="${cs.files}">
-        <tr>
-      	  <j:if test="${item.file!=null}">
-              <td><t:editTypeIcon type="${item.editType}" /></td>
-	      <j:if test="${item.url!=null}">
-	          <td><a href="${item.url}">${item.file}</a></td>
-	      </j:if>
-	      <j:if test="${item.url==null}">
-	          <td>${item.file}</td>
-	      </j:if>
-          </j:if>
-        </tr>
-      </j:forEach>
+      <f:section title="Files that changed in this Commit">
+        <f:advanced>
+          <j:forEach var="item" items="${cs.files}">
+            <tr>
+              <j:if test="${item.file!=null}">
+                  <td><t:editTypeIcon type="${item.editType}" /></td>
+                  <j:if test="${item.url!=null}">
+                      <td><a href="${item.url}">${item.file}</a></td>
+                  </j:if>
+                  <j:if test="${item.url==null}">
+                      <td>${item.file}</td>
+                  </j:if>
+              </j:if>
+            </tr>
+          </j:forEach>
+        </f:advanced>
+      </f:section>
+      <f:section title="Requests used against this Commit">
+        <f:advanced>
+          <j:forEach var="req" items="${cs.requests}">
+            <tr>
+              <td></td>
+              <j:if test="${req.url!=null}">
+                  <td><a href="${req.url}">${req.identifier}</a></td>
+              </j:if>
+              <j:if test="${req.url==null}">
+                  <td>${req.identifier}</td>
+              </j:if>
+            </tr>
+          </j:forEach>
+        </f:advanced>
+      </f:section>
     </j:forEach>
   </table>
 </j:jelly>

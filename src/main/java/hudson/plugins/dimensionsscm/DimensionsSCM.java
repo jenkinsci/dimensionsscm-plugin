@@ -650,7 +650,7 @@ public class DimensionsSCM extends SCM implements Serializable
                     Logger.Debug("Found command output to log to the build logger");
                     listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
                     cmdLog = cmdLog.replaceAll("\n\n","\n");
-                    listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS]") + ")");
+                    listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
                     listener.getLogger().flush();
                 }
 
@@ -675,7 +675,6 @@ public class DimensionsSCM extends SCM implements Serializable
         {
             dmSCM.logout();
         }
-
         return bRet;
     }
 
