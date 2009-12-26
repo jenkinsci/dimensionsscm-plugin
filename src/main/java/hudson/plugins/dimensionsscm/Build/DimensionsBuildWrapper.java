@@ -224,7 +224,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          */
         @Override
         public String getHelpFile() {
-            return "/plugin/dimensionsscm/help-dimensionsscmwrapper.html";
+            return "/plugin/dimensionsscm/helpbwrapper.html";
         }
     }
 

@@ -220,7 +220,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
          */
         @Override
         public String getHelpFile() {
-            return "/plugin/dimensionsscm/help-dimensionsscmwrapper.html";
+            return "/plugin/dimensionsscm/helpbnotifier.html";
         }
     }
 }
