@@ -253,7 +253,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
     public void addRequest(DimensionsChangeSet.DmRequests newreq) {
         for (DmRequests req : requests) {
-                if (req.getIdentifier().equals(newreq.getIdentifier()) && req.getUrl().equals(newreq.getUrl())) return;
+                if (req.getIdentifier().equals(newreq.getIdentifier())) return;
         }
 
         requests.add(newreq);
@@ -262,7 +262,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
     public void addRequest(String objectId, String url) {
         for (DmRequests req : requests) {
-                if (req.getIdentifier().equals(objectId) && req.getUrl().equals(url)) return;
+                if (req.getIdentifier().equals(objectId)) return;
         }
 
         DimensionsChangeSet.DmRequests x = new DmRequests(objectId,url);
@@ -270,6 +270,15 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
         x.setParent(this);
     }
 
+    public void addRequest(String objectId, String url, String title) {
+        for (DmRequests req : requests) {
+                if (req.getIdentifier().equals(objectId)) return;
+        }
+
+        DimensionsChangeSet.DmRequests x = new DmRequests(objectId,url,title);
+        requests.add(x);
+        x.setParent(this);
+    }
 
     /*
      * List of changes made in the repository for this changeset
@@ -349,20 +358,28 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
     public static class DmRequests {
         private String identifier;
         private String url;
+        private String title;
         private DimensionsChangeSet parent;
 
         public DmRequests() {
-            this("","");
+            this("","","");
         }
 
         public DmRequests(String objectID, String url) {
             this.identifier = objectID;
             this.url = url;
+            this.title = "";
+        }
+
+        public DmRequests(String objectID, String url, String title) {
+            this.identifier = objectID;
+            this.url = url;
+            this.title = title;
         }
 
         @Exported
         public String getUrl() {
-            if (this.url.length() == 0)
+            if (this.url == null || this.url.length() == 0)
                 return null;
             else
                 return this.url;
@@ -374,7 +391,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
         @Exported
         public String getIdentifier() {
-            if (this.identifier.length() == 0)
+            if (this.identifier == null || this.identifier.length() == 0)
                 return null;
             else
                 return this.identifier;
@@ -382,6 +399,18 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
         public void setIdentifier(String id) {
             this.identifier = id;
+        }
+
+        @Exported
+        public String getTitle() {
+            if (this.title == null || this.title.length() == 0)
+                return null;
+            else
+                return this.title;
+        }
+
+        public void setTitle(String id) {
+            this.title = id;
         }
 
         public void setParent(DimensionsChangeSet parent) {

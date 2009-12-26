@@ -588,6 +588,8 @@ public class DimensionsSCM extends SCM implements Serializable
 
                 if (wa.exists() && (canJobDelete || bFreshBuild)) {
                     Logger.Debug("Deleting '" + wa.toURI() + "'...");
+                    listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
+                    listener.getLogger().flush();
                     wa.deleteRecursive();
                 }
 

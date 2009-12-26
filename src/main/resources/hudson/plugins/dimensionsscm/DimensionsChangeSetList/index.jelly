@@ -8,7 +8,7 @@
   <table class="pane" style="border:none">
     <j:forEach var="cs" items="${it.items}" varStatus="loop">
       <tr class="pane">
-        <td colspan="2" class="changeset">
+        <td colspan="3" class="changeset">
           <a name="detail${loop.index}"></a>
           <div class="changeset-message">
             <b>
@@ -31,6 +31,7 @@
                       <td>${item.file}</td>
                   </j:if>
               </j:if>
+              <td></td>
             </tr>
           </j:forEach>
         </f:advanced>
@@ -45,6 +46,12 @@
               </j:if>
               <j:if test="${req.url==null}">
                   <td>${req.identifier}</td>
+              </j:if>
+              <j:if test="${req.title==null}">
+                  <td></td>
+              </j:if>
+              <j:if test="${req.title!=null}">
+                  <td>${req.title}</td>
               </j:if>
             </tr>
           </j:forEach>

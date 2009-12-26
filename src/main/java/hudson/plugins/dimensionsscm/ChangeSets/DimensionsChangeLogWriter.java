@@ -167,8 +167,9 @@ public class DimensionsChangeLogWriter
                 writer.println("\t\t</items>");
                 writer.println("\t\t<requests>");
                 for (DimensionsChangeSet.DmRequests req : changeSet.getRequests()) {
-                    writer.println(String.format("\t\t\t<request url=\"%s\">%s</request>",
+                    writer.println(String.format("\t\t\t<request url=\"%s\" title=\"%s\">%s</request>",
                                     escapeHTML(req.getUrl()),
+                                    escapeXML(req.getTitle()),
                                     escapeXML(req.getIdentifier())));
                 }
                 writer.println("\t\t</requests>");

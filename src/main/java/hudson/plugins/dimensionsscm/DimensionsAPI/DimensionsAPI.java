@@ -866,17 +866,22 @@ public class DimensionsAPI
             String author = (String)item.getAttribute(SystemAttributes.LAST_UPDATED_USER);
             String comment = (String)item.getAttribute(SystemAttributes.REVISION_COMMENT);
             String date = (String)item.getAttribute(getDateTypeAttribute(operation));
+
             if (date == null)
                 date = (String)item.getAttribute(getDateTypeAttribute("edit"));
+
             String urlString = constructURL(spec,url,getSCMDsn(),getSCMBaseDb());
             if (urlString == null)
                 urlString = "";
             if (comment == null)
                 comment = "(None)";
+
             Logger.Debug("Change set details -" + comment + " " + revision + " " + fileName + " " + author +
                          " " + spec  + " " + date + " " + operation + " " + urlString);
+
             Calendar opDate = Calendar.getInstance();
             opDate.setTime(DateUtils.parse(date,tz));
+
             if (key == null) {
                 cs = new DimensionsChangeSet(fileName,author,operation,revision,comment,urlString,opDate);
                 key = comment + author;
@@ -894,19 +899,19 @@ public class DimensionsAPI
 
             // at this point we have a valid DimensionsChangeSet (cs) that has already been added
             // to the list (changeSet).  So now we will add all requests to the DimensionsChangeSet.
-              List itemRequests = item.getChildRequests(null);
+            List itemRequests = item.getChildRequests(null);
 
-              for (int j = 0; j < itemRequests.size(); ++j) {
-                  DimensionsRelatedObject obj = (DimensionsRelatedObject) itemRequests.get(j);
-                  Request req = (Request) obj.getObject();
-                  String objectId = (String)req.getAttribute(SystemAttributes.OBJECT_SPEC);
-                  String requestUrl = constructRequestURL(objectId,url,getSCMDsn(),getSCMBaseDb());
-                  cs.addRequest(objectId,requestUrl);
+            for (int j = 0; j < itemRequests.size(); ++j) {
+                DimensionsRelatedObject obj = (DimensionsRelatedObject) itemRequests.get(j);
+                Request req = (Request) obj.getObject();
+                req.queryAttribute(new int[]{SystemAttributes.TITLE,SystemAttributes.DESCRIPTION,SystemAttributes.OBJECT_SPEC});
+                String objectId = (String)req.getAttribute(SystemAttributes.OBJECT_SPEC);
+                String titlex = (String)req.getAttribute(SystemAttributes.TITLE);
+                String requestUrl = constructRequestURL(objectId,url,getSCMDsn(),getSCMBaseDb());
+                cs.addRequest(objectId,requestUrl,titlex);
 
-                  Logger.Debug("Child Request Details -" + objectId + " " + requestUrl);
-              }
-
-
+                Logger.Debug("Child Request Details -" + objectId + " " + requestUrl + " " + titlex);
+            }
         }
 
         return changeSet;
