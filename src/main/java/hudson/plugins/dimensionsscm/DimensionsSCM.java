@@ -597,6 +597,11 @@ public class DimensionsSCM extends SCM implements Serializable
                 String baseline = myResolver.resolve("DM_BASELINE");
                 String requests = myResolver.resolve("DM_REQUEST");
 
+                baseline = baseline.trim();
+                baseline = baseline.toUpperCase();
+                requests = requests.replaceAll(" ","");
+                requests = requests.toUpperCase();
+
                 Logger.Debug("Extra parameters - " + baseline + " " + requests);
 
                 String[] folders = getFolders();

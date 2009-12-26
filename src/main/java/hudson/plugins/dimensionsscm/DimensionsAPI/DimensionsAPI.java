@@ -573,7 +573,11 @@ public class DimensionsAPI
                 }
 
                 if (requests != null) {
-                    cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+                    if (requests.indexOf(",")==0) {
+                        cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+                    } else {
+                        cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                    }
                     cmd += "/WORKSET=\"" + projectName + "\" ";
                 }
                 else if (baseline != null) {
@@ -694,31 +698,47 @@ public class DimensionsAPI
             List items = null;
 
             if (requests != null) {
+                String[] reqStr = null;
+                if (requests.indexOf(",")>0) {
+                    reqStr = requests.split(",");
+                    Logger.Debug("User specified " + reqStr.length + " requests");
+                }
+                else {
+                    reqStr = new String[1];
+                    reqStr[0] = requests;
+                }
+
                 // setup filter for requests Name
                 List requestList = new ArrayList(1);
-                Request requestObj = connection.getObjectFactory().findRequest(requests.toUpperCase());
                 items = new ArrayList(1);
 
-                if (requestObj != null) {
-                    Logger.Debug("Request to process is \"" + requestObj.getName() + "\"");
-                    requestList.add(requestObj);
-                    // Get all the children for this request
-                    if (!getDmChildRequests(requestObj, requestList))
-                        throw new IOException("Could not process request \""+requestObj.getName()+"\" children in repository");
+                for(int ii=0;ii<reqStr.length;ii++) {
+                    String xStr = reqStr[ii];
+                    xStr.trim();
+                    Logger.Debug("Request to process is \"" + xStr + "\"");
+                    Request requestObj = connection.getObjectFactory().findRequest(xStr.toUpperCase());
 
-                    Logger.Debug("Request has "+requestList.size()+" elements to process");
-                    Project projectObj = getCon().getObjectFactory().getProject(projName);
-                    for (int i=0; i<requestList.size(); i++) {
-                        Request req = (Request)requestList.get(i);
-                        Logger.Debug("Request "+i+" is \"" + req.getName() + "\"");
-                        if (!queryItems(getCon(), req, "/", items, filter, projectObj, true, allRevisions))
-                            throw new IOException("Could not process items for request \""+req.getName()+"\"");
-                    }
+                    if (requestObj != null) {
+                        Logger.Debug("Request to process is \"" + requestObj.getName() + "\"");
+                        requestList.add(requestObj);
+                        // Get all the children for this request
+                        if (!getDmChildRequests(requestObj, requestList))
+                            throw new IOException("Could not process request \""+requestObj.getName()+"\" children in repository");
 
-                    if (items != null) {
-                        Logger.Debug("Request has "+items.size()+" items to process");
-                        BulkOperator bo = getCon().getObjectFactory().getBulkOperator(items);
-                        bo.queryAttribute(attrs);
+                        Logger.Debug("Request has "+requestList.size()+" elements to process");
+                        Project projectObj = getCon().getObjectFactory().getProject(projName);
+                        for (int i=0; i<requestList.size(); i++) {
+                            Request req = (Request)requestList.get(i);
+                            Logger.Debug("Request "+i+" is \"" + req.getName() + "\"");
+                            if (!queryItems(getCon(), req, "/", items, filter, projectObj, true, allRevisions))
+                                throw new IOException("Could not process items for request \""+req.getName()+"\"");
+                        }
+
+                        if (items != null) {
+                            Logger.Debug("Request has "+items.size()+" items to process");
+                            BulkOperator bo = getCon().getObjectFactory().getBulkOperator(items);
+                            bo.queryAttribute(attrs);
+                        }
                     }
                 }
             } else if (baselineName != null) {
@@ -848,6 +868,11 @@ public class DimensionsAPI
         for (int i = 0; i < items.size(); ++i) {
             ItemRevision item = (ItemRevision) items.get(i);
             int x = 0;
+
+            if (item.getAttribute(SystemAttributes.FULL_PATH_NAME)==null) {
+                // Came from another project or something - not in here
+                continue;
+            }
 
             Integer fileVersion = (Integer)item.getAttribute(SystemAttributes.FILE_VERSION);
             String operation;
