@@ -1,24 +1,24 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    
+
     <f:entry title="Project Name" help="/plugin/dimensionsscm/project.html">
         <f:textbox name="dimensionsscm.project" value="${h.defaulted(scm.project, 'Enter your projectId here')}"
-	     checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
-	<i>(the format used must be PRODUCT_ID:PROJECT_NAME even for streams)</i>
+         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
+    <i>(the format used must be PRODUCT_ID:PROJECT_NAME even for streams)</i>
     </f:entry>
 
     <f:entry title="${%Folders To Montor}">
        <f:repeatable var="folders" items="${scm.folders}" noAddButton="true" minimum="1">
-	 <table width="98%" cellpadding="2" cellspacing="2">
+     <table width="98%" cellpadding="2" cellspacing="2">
             <f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
               <f:textbox name="dimensionsscm.folders" value="${h.defaulted(folders, scm.directory)}"/>
             </f:entry>
-	    <f:entry>
+        <f:entry>
               <div align="right">
                 <input type="button" value="${%Add folder...}" class="repeatable-add show-if-last" />
                 <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
               </div>
-	    </f:entry>
-	 </table>
+        </f:entry>
+     </table>
        </f:repeatable>
     </f:entry>
 
@@ -26,17 +26,17 @@
        <f:textbox name="dimensionsscm.workarea" value="${scm.workarea}"/>
        <i>(this folder name is optional)</i>
     </f:entry>
-    
+
     <f:entry title="${%Clear the contents of the workspace}" help="/plugin/dimensionsscm/candelete.html">
-	<f:checkbox name="dimensionsscm.canJobDelete" default="false" checked="${scm.canJobDelete}"/>
+    <f:checkbox name="dimensionsscm.canJobDelete" default="false" checked="${scm.canJobDelete}"/>
     </f:entry>
 
     <f:entry title="${%Always force a build to occur}" help="/plugin/dimensionsscm/canforce.html">
-	<f:checkbox name="dimensionsscm.canJobForce" default="false" checked="${scm.canJobForce}"/>
+    <f:checkbox name="dimensionsscm.canJobForce" default="false" checked="${scm.canJobForce}"/>
     </f:entry>
 
     <f:entry title="${%Overwrite any locally modified files in workspace}" help="/plugin/dimensionsscm/canrevert.html">
-	<f:checkbox name="dimensionsscm.canJobRevert" default="false" checked="${scm.canJobRevert}"/>
+    <f:checkbox name="dimensionsscm.canJobRevert" default="false" checked="${scm.canJobRevert}"/>
     </f:entry>
 
     <f:advanced>
@@ -45,47 +45,47 @@
             The installation details provided below will override the default Dimensions SCM repository that may have
             been configured. This installation will only be used with this job.
             </p>
-	    </f:entry>
-	    <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-		<f:textbox name="dimensionsscm.jobUserName" value="${scm.jobUserName}"/>
-	    </f:entry>
+        </f:entry>
+        <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
+        <f:textbox name="dimensionsscm.jobUserName" value="${scm.jobUserName}"/>
+        </f:entry>
 
-	    <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-		<input type="password" class="setting-input" name="dimensionsscm.jobPasswd" value="${scm.jobPasswd}"/>
-	    </f:entry>
+        <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
+        <input type="password" class="setting-input" name="dimensionsscm.jobPasswd" value="${scm.jobPasswd}"/>
+        </f:entry>
 
-	    <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-		<f:textbox name="dimensionsscm.jobServer" value="${scm.jobServer}"/>
-	    </f:entry>
+        <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+        <f:textbox name="dimensionsscm.jobServer" value="${scm.jobServer}"/>
+        </f:entry>
 
-	    <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-		<f:textbox name="dimensionsscm.jobDatabase" value="${scm.jobDatabase}"/>
-		<i>(the format used must be database@dsn)</i>
-	    </f:entry>
+        <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+        <f:textbox name="dimensionsscm.jobDatabase" value="${scm.jobDatabase}"/>
+        <i>(the format used must be database@dsn)</i>
+        </f:entry>
 
-            <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer" 
+            <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
                   with="dimensionsscm.jobUserName,dimensionsscm.jobPasswd,dimensionsscm.jobServer,dimensionsscm.jobDatabase"/>
 
-	    <f:entry title="${%Use update}">
-		<f:checkbox name="dimensionsscm.canJobUpdate" default="true" checked="${scm.canJobUpdate}"/>
-		<p>
-		If this option is checked, then the workspace will be automatically populated with the changed
-		code from Dimensions. This option should only be used if you intend Hudson to populate the workspace
-		for you.
-		</p>
-	    </f:entry>
+        <f:entry title="${%Use update}">
+        <f:checkbox name="dimensionsscm.canJobUpdate" default="true" checked="${scm.canJobUpdate}"/>
+        <p>
+        If this option is checked, then the workspace will be automatically populated with the changed
+        code from Dimensions using the UPDATE or DOWNLOAD command. This option should only be used if
+        you intend Hudson to populate the workspace for you.
+        </p>
+        </f:entry>
 
-	    <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
-		<f:textbox name="dimensionsscm.jobTimeZone" value="${scm.jobTimeZone}"/>
-	    </f:entry>
+        <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
+        <f:textbox name="dimensionsscm.jobTimeZone" value="${scm.jobTimeZone}"/>
+        </f:entry>
 
-            <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz" 
+            <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
                   with="dimensionsscm.jobTimeZone"/>
 
-	    <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
-		<f:textbox name="dimensionsscm.jobWebUrl" value="${scm.jobWebUrl}"/>
-	    </f:entry>
+        <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
+        <f:textbox name="dimensionsscm.jobWebUrl" value="${scm.jobWebUrl}"/>
+        </f:entry>
 
     </f:advanced>
-    
+
 </j:jelly>
