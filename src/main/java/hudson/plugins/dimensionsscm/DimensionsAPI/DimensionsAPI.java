@@ -837,6 +837,7 @@ public class DimensionsAPI
             if (projectId != null && build != null) {
                 cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
                 cmd += " /SCOPE=WORKSET /WORKSET=\""+projectId+"\"";
+                cmd += " /DESCRIPTION=\"Project Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
                     Logger.Debug("Locking project - "+res.getMessage());
