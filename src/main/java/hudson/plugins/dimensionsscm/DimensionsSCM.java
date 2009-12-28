@@ -566,6 +566,7 @@ public class DimensionsSCM extends SCM implements Serializable
                             jobDatabase,
                             jobServer))
             {
+                Logger.Debug("Login worked.");
                 StringBuffer cmdOutput = new StringBuffer();
                 FilePath wa = null;
                 if (workarea != null)
@@ -597,10 +598,14 @@ public class DimensionsSCM extends SCM implements Serializable
                 String baseline = myResolver.resolve("DM_BASELINE");
                 String requests = myResolver.resolve("DM_REQUEST");
 
-                baseline = baseline.trim();
-                baseline = baseline.toUpperCase();
-                requests = requests.replaceAll(" ","");
-                requests = requests.toUpperCase();
+                if (baseline != null) {
+                    baseline = baseline.trim();
+                    baseline = baseline.toUpperCase();
+                }
+                if (requests != null) {
+                    requests = requests.replaceAll(" ","");
+                    requests = requests.toUpperCase();
+                }
 
                 Logger.Debug("Extra parameters - " + baseline + " " + requests);
 
