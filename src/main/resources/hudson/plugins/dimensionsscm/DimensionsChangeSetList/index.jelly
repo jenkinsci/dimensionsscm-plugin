@@ -36,7 +36,7 @@
           </j:forEach>
         </f:advanced>
       </f:section>
-      <f:section title="Requests used against this Commit">
+      <f:section title="Requests used for this Commit">
         <f:advanced>
           <j:forEach var="req" items="${cs.requests}">
             <tr>
