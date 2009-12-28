@@ -929,14 +929,19 @@ public class DimensionsAPI
 
             for (int j = 0; j < itemRequests.size(); ++j) {
                 DimensionsRelatedObject obj = (DimensionsRelatedObject) itemRequests.get(j);
-                Request req = (Request) obj.getObject();
-                req.queryAttribute(new int[]{SystemAttributes.TITLE,SystemAttributes.DESCRIPTION,SystemAttributes.OBJECT_SPEC});
-                String objectId = (String)req.getAttribute(SystemAttributes.OBJECT_SPEC);
-                String titlex = (String)req.getAttribute(SystemAttributes.TITLE);
-                String requestUrl = constructRequestURL(objectId,url,getSCMDsn(),getSCMBaseDb());
-                cs.addRequest(objectId,requestUrl,titlex);
+                DimensionsObject relType = obj.getRelationship();
+                if (SystemRelationship.IN_RESPONSE.equals(relType)) {
+                    Request req = (Request) obj.getObject();
+                    req.queryAttribute(new int[]{SystemAttributes.TITLE,SystemAttributes.DESCRIPTION,SystemAttributes.OBJECT_SPEC});
+                    String objectId = (String)req.getAttribute(SystemAttributes.OBJECT_SPEC);
+                    String titlex = (String)req.getAttribute(SystemAttributes.TITLE);
+                    String requestUrl = constructRequestURL(objectId,url,getSCMDsn(),getSCMBaseDb());
+                    cs.addRequest(objectId,requestUrl,titlex);
+                    Logger.Debug("Child Request Details IRT -" + objectId + " " + requestUrl + " " + titlex);
+                } else {
+                    Logger.Debug("Child Request Details Ignored");
+                }
 
-                Logger.Debug("Child Request Details -" + objectId + " " + requestUrl + " " + titlex);
             }
         }
 
