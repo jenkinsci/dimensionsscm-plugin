@@ -92,13 +92,16 @@
 
 package hudson.plugins.dimensionsscm;
 
+// Dimensions plugin imports
 import hudson.plugins.dimensionsscm.DimensionsChangeSet;
 import hudson.plugins.dimensionsscm.DimensionsChangeSetList;
 import hudson.plugins.dimensionsscm.DateUtils;
+import hudson.plugins.dimensionsscm.Logger;
 
+// General Hudson imports
 import hudson.Util;
 
-
+// Java imports
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -125,10 +128,16 @@ public class DimensionsChangeLogWriter
                                             throws IOException
     {
         boolean bRet = false;
+        boolean appendFile = false;
         FileWriter logFile = null;
+        if (changelogFile.exists()) {
+            if (changelogFile.length()>0) {
+                appendFile=true;
+            }
+        }
         try {
-            logFile = new FileWriter(changelogFile);
-            write(changeSets,logFile);
+            logFile = new FileWriter(changelogFile,appendFile);
+            write(changeSets,logFile,appendFile);
             logFile.flush();
             bRet=true;
         } catch (Exception e) {
@@ -146,38 +155,47 @@ public class DimensionsChangeLogWriter
      * Save the change list to the changelogFile
      * @param List<DimensionsChangeSet> changeSets
      * @param File changelogFile
+     * @param boolean appendFile
      */
-    private void write(List<DimensionsChangeSet> changeSets,Writer logFile)
+    private void write(List<DimensionsChangeSet> changeSets,Writer logFile, boolean appendFile)
     {
+        Logger.Debug("Writing logfile in append mode = " + appendFile);
+        String logStr = "";
         PrintWriter writer = new PrintWriter(logFile);
-        writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        writer.println("<changelog>");
+        if (!appendFile) {
+            writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            writer.println("<changelog>");
+        }
         if (changeSets != null) {
             for (DimensionsChangeSet changeSet : changeSets) {
-                writer.println(String.format("\t<changeset version=\"%s\">", escapeXML(changeSet.getVersion())));
-                writer.println(String.format("\t\t<date>%s</date>", Util.XS_DATETIME_FORMATTER.format(changeSet.getDate())));
-                writer.println(String.format("\t\t<user>%s</user>", escapeXML(changeSet.getDeveloper())));
-                writer.println(String.format("\t\t<comment>%s</comment>", escapeXML(changeSet.getSCMComment())));
-                writer.println("\t\t<items>");
+                logStr += String.format("\t<changeset version=\"%s\">\n", escapeXML(changeSet.getVersion()));
+                logStr += String.format("\t\t<date>%s</date>\n", Util.XS_DATETIME_FORMATTER.format(changeSet.getDate()));
+                logStr += String.format("\t\t<user>%s</user>\n", escapeXML(changeSet.getDeveloper()));
+                logStr += String.format("\t\t<comment>%s</comment>\n", escapeXML(changeSet.getSCMComment()));
+                logStr += "\t\t<items>\n";
                 for (DimensionsChangeSet.DmFiles item : changeSet.getFiles()) {
-                    writer.println(String.format("\t\t\t<item operation=\"%s\" url=\"%s\">%s</item>", item.getOperation(),
+                    logStr += String.format("\t\t\t<item operation=\"%s\" url=\"%s\">%s</item>\n", item.getOperation(),
                                     escapeHTML(item.getUrl()),
-                                    escapeXML(item.getFile())));
+                                    escapeXML(item.getFile()));
                 }
-                writer.println("\t\t</items>");
-                writer.println("\t\t<requests>");
+                logStr += "\t\t</items>\n";
+                logStr += "\t\t<requests>\n";
                 for (DimensionsChangeSet.DmRequests req : changeSet.getRequests()) {
-                    writer.println(String.format("\t\t\t<request url=\"%s\" title=\"%s\">%s</request>",
+                    logStr += String.format("\t\t\t<request url=\"%s\" title=\"%s\">%s</request>\n",
                                     escapeHTML(req.getUrl()),
                                     escapeXML(req.getTitle()),
-                                    escapeXML(req.getIdentifier())));
+                                    escapeXML(req.getIdentifier()));
                 }
-                writer.println("\t\t</requests>");
-                writer.println("\t</changeset>");
+                logStr += "\t\t</requests>\n";
+                logStr += "\t</changeset>\n";
             }
         }
-        writer.println("</changelog>");
-
+        Logger.Debug("Writing to logfile '" + logStr + "'");
+        if (appendFile) {
+            writer.append(logStr);
+        } else {
+            writer.print(logStr);
+        }
         return;
     }
 

@@ -112,30 +112,91 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import hudson.Util;
+import hudson.FilePath;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 // General imports
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.Vector;
+import java.util.regex.*;
 
 import javax.servlet.ServletException;
 
-public class DimensionsBuildNotifier extends Notifier implements Serializable {
+public class ArtifactUploader extends Notifier implements Serializable {
+
+    /**
+     * File pattern matcher class.
+     */
+    public class ArtifactFilter implements FilenameFilter {
+        private TreeSet<String> artifactFilter = new TreeSet<String>() ;
+
+        public ArtifactFilter(String[] extensions) {
+          Iterator<String> artifactList = Arrays.asList(extensions).iterator();
+          while (artifactList.hasNext()) {
+            artifactFilter.add(artifactList.next().trim());
+          }
+          artifactFilter.remove("");
+        }
+
+        public boolean accept(File dir, String name) {
+          final Iterator<String> artifactList = artifactFilter.iterator();
+          while (artifactList.hasNext()) {
+            if (Pattern.matches(artifactList.next(),name)) {
+              return true;
+            }
+          }
+          return false;
+        }
+    }
 
     private static DimensionsSCM scm = null;
+    private String[] patterns = new String[0];
 
     /**
      * Default constructor.
      */
     @DataBoundConstructor
-    public DimensionsBuildNotifier() {
+    public ArtifactUploader(String[] patterns) {
+        // Check the folders specified have data specified
+        if (patterns != null) {
+            Logger.Debug("patterns are populated");
+            Vector<String> x = new Vector<String>();
+            for(int t=0;t<patterns.length;t++) {
+                if (StringUtils.isNotEmpty(patterns[t]))
+                    x.add(patterns[t]);
+            }
+            this.patterns = (String[])x.toArray(new String[1]);
+        }
+        else {
+            this.patterns[0] = ".*";
+        }
+    }
+
+    /*
+     * Gets the patterns to upload
+     * @return patterns
+     */
+    public String[] getPatterns() {
+        return this.patterns;
     }
 
 
@@ -145,6 +206,16 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         try {
             if (build.getResult() == Result.SUCCESS) {
+                ArtifactFilter af = new ArtifactFilter(patterns);
+                FilePath wd = build.getProject().getWorkspace();
+                Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
+                File dir = new File (wd.getRemote());
+                String[] validFiles = dir.list(af);
+                for (int i = 0; i < validFiles.length; i++) {
+                    Logger.Debug("Found file '"+ validFiles[i] + "'");
+                }
+
+                /*
                 if (scm == null)
                     scm = (DimensionsSCM)build.getProject().getScm();
                 Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
@@ -155,18 +226,19 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 {
                     DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
                     if (res==null) {
-                        listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
+                        listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
                         listener.getLogger().flush();
                     }
                     else {
-                        listener.getLogger().println("[DIMENSIONS] Build was successfully tagged in Dimensions as a baseline");
+                        listener.getLogger().println("[DIMENSIONS] Build artifacts were successfully loaded into Dimensions");
                         listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS]")+")");
                         listener.getLogger().flush();
                     }
                 }
+                */
             }
         } catch(Exception e) {
-            listener.fatalError("Unable to tag build in Dimensions - " + e.getMessage());
+            listener.fatalError("Unable to load build artifacts into Dimensions - " + e.getMessage());
             return false;
         }
         finally
@@ -178,7 +250,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     }
 
     /**
-     * The DimensionsBuildNotifier Descriptor class.
+     * The ArtifactUploader Descriptor class.
      */
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
@@ -187,13 +259,13 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
          * Loads the descriptor
          */
         public DescriptorImpl() {
-            super(DimensionsBuildNotifier.class);
+            super(ArtifactUploader.class);
             load();
             Logger.Debug("Loading " + this.getClass().getName());
         }
 
         public String getDisplayName() {
-            return "Tag successful builds in Dimensions as a project baseline";
+            return "Load build artifacts into Dimensions repository";
         }
 
 
@@ -210,9 +282,19 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
          */
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindParameters(this,"DimensionsBuildNotifier");
-            save();
-            return true;
+            req.bindParameters(this,"ArtifactUploader");
+            return super.configure(req, formData);
+        }
+
+
+        @Override
+        public Notifier newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            // Get variables and then construct a new object
+            String[] patterns = req.getParameterValues("artifactuploader.patterns");
+
+            ArtifactUploader artifactor = new ArtifactUploader(patterns);
+
+            return artifactor;
         }
 
         /*
@@ -220,7 +302,9 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
          */
         @Override
         public String getHelpFile() {
-            return "/plugin/dimensionsscm/helpbnotifier.html";
+            return "/plugin/dimensionsscm/helpbuploaded.html";
         }
     }
 }
+
+
