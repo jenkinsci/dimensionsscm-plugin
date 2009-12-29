@@ -126,16 +126,18 @@ import hudson.util.VariableResolver;
 // General imports
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.Iterator;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Vector;
 
 import javax.servlet.ServletException;
@@ -656,6 +658,22 @@ public class DimensionsSCM extends SCM implements Serializable
                     cmdLog += cmdOutput;
                     cmdOutput.setLength(0);
                     cmdLog += "\n";
+                }
+
+                // Close the changes log file
+                {
+                    FileWriter logFile = null;
+                    try {
+                        logFile = new FileWriter(changelogFile,true);
+                        PrintWriter fmtWriter = new PrintWriter(logFile);
+                        fmtWriter.println("</changelog>");
+                        logFile.flush();
+                        bRet=true;
+                    } catch (Exception e) {
+                        throw new IOException("Unable to write change log - " + e.getMessage());
+                    } finally {
+                        logFile.close();
+                    }
                 }
 
                 if (cmdLog.length() > 0 && listener.getLogger() != null) {

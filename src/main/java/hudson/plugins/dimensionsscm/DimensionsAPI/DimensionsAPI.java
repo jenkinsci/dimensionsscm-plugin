@@ -867,6 +867,7 @@ public class DimensionsAPI
         String key = null;
         DimensionsChangeSet cs = null;
         for (int i = 0; i < items.size(); ++i) {
+            Logger.Debug("Processing change set " + i + "/" + items.size());
             ItemRevision item = (ItemRevision) items.get(i);
             int x = 0;
 
@@ -880,7 +881,7 @@ public class DimensionsAPI
             if (fileVersion != null)
                 x = fileVersion.intValue();
 
-            Logger.Debug("Creating a change set (" + x + ")");
+            Logger.Debug("Creating a change set (" + x + ") " + i);
             if (x < 2)
                 operation = "add";
             else
