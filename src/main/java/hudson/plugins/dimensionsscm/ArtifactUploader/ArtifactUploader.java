@@ -283,7 +283,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 File[] validFiles = fs.toArray();
 
                 if (fs.getFiles().size() > 0) {
-                    listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions...");
+                    if (scm == null)
+                        scm = (DimensionsSCM)build.getProject().getScm();
+
+                    listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+scm.getProject()+"\"...");
                     listener.getLogger().flush();
 
                     Calendar nowDateCal = Calendar.getInstance();
@@ -308,8 +311,6 @@ public class ArtifactUploader extends Notifier implements Serializable {
                         fmtWriter.close();
                     }
 
-                    if (scm == null)
-                        scm = (DimensionsSCM)build.getProject().getScm();
                     Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
                     if (scm.getAPI().login(scm.getJobUserName(),
                                            scm.getJobPasswd(),
