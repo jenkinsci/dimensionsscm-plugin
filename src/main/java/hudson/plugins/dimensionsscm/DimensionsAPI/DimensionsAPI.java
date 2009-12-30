@@ -191,6 +191,7 @@ public class DimensionsAPI
 
     private String dateType = "edit";
     private boolean allRevisions = false;
+    private int version = -1;
 
     private DimensionsConnection connection = null;
 
@@ -200,6 +201,17 @@ public class DimensionsAPI
      */
     public final String getSCMUserID() {
         return this.dmUser;
+    }
+
+    /*
+     * Gets the Dimensions version if set.
+     * @return version
+     */
+    public final int getDmVersion() {
+        if (version > 0)
+            return this.version;
+        else
+            return 0;
     }
 
     /*
@@ -483,49 +495,51 @@ public class DimensionsAPI
                     throws IOException, InterruptedException
     {
         boolean bRet = false;
-        int version = 2009;
 
         if (connection == null)
             throw new IOException("Not connected to an SCM repository");
 
         try
         {
-            // Get the server version
-            List inf = getCon().getObjectFactory().getServerVersion(2);
-            if (inf == null)
-                Logger.Debug("Detection of server information failed");
+            if (version < 0) {
+                version = 2009;
+                // Get the server version
+                List inf = getCon().getObjectFactory().getServerVersion(2);
+                if (inf == null)
+                    Logger.Debug("Detection of server information failed");
 
-            if (inf != null)
-            {
-                Logger.Debug("Server information detected -" + inf.size());
-                for (int i = 0; i < inf.size(); ++i) {
-                    String prop = (String) inf.get(i);
-                    Logger.Debug(i + " - " + prop);
-                }
-
-                // Try and locate the server version.
-                // If not found, then get the schema version and use that
-                String server = (String)inf.get(2);
-                if (server == null)
-                    server = (String)inf.get(0);
-
-                if (server != null)
+                if (inf != null)
                 {
-                    Logger.Debug("Detected server version: " + server);
-                    String[] tokens = server.split(" ");
-                    server = tokens[0];
-                    if (server.startsWith("10."))
-                        version = 10;
-                    else if (server.startsWith("2009"))
-                        version = 2009;
-                    else if (server.startsWith("201"))
-                        version = 2010;
+                    Logger.Debug("Server information detected -" + inf.size());
+                    for (int i = 0; i < inf.size(); ++i) {
+                        String prop = (String) inf.get(i);
+                        Logger.Debug(i + " - " + prop);
+                    }
+
+                    // Try and locate the server version.
+                    // If not found, then get the schema version and use that
+                    String server = (String)inf.get(2);
+                    if (server == null)
+                        server = (String)inf.get(0);
+
+                    if (server != null)
+                    {
+                        Logger.Debug("Detected server version: " + server);
+                        String[] tokens = server.split(" ");
+                        server = tokens[0];
+                        if (server.startsWith("10."))
+                            version = 10;
+                        else if (server.startsWith("2009"))
+                            version = 2009;
+                        else if (server.startsWith("201"))
+                            version = 2010;
+                        else
+                            version = 2009;
+                        Logger.Debug("Version to process set to " + version);
+                    }
                     else
-                        version = 2009;
-                    Logger.Debug("Version to process set to " + version);
+                        Logger.Debug("No server information found");
                 }
-                else
-                    Logger.Debug("No server information found");
             }
 
             String coCmd = "UPDATE /BRIEF ";
@@ -821,6 +835,42 @@ public class DimensionsAPI
         }
     }
 
+
+
+    /**
+     * Upload files
+     *
+     * @param String
+     * @param File
+     * @param AbstractBuild
+     * @return DimensionsResult
+     * @throws DimensionsRuntimeException
+     */
+    public DimensionsResult UploadFiles(String projectId, File cmdFile, AbstractBuild build)
+                            throws DimensionsRuntimeException
+    {
+        try {
+            String ciCmd = "DELIVER /BRIEF ";
+            if (version == 10)
+                ciCmd = "UPLOAD ";
+
+            if (projectId != null && build != null) {
+                ciCmd += " /USER_FILELIST=\""+cmdFile.getAbsolutePath()+"\"";
+                ciCmd += " /WORKSET=\""+projectId+"\"";
+                ciCmd += " /COMMENT=\"Build artifacts saved by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+
+                DimensionsResult res = run(connection,ciCmd);
+                if (res != null ) {
+                    Logger.Debug("Saving artifacts - "+res.getMessage());
+                    return res;
+                }
+            }
+            return null;
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException(e.getMessage());
+        }
+    }
+
     /**
      * Create a project tag
      *
@@ -840,7 +890,7 @@ public class DimensionsAPI
                 cmd += " /DESCRIPTION=\"Project Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
-                    Logger.Debug("Locking project - "+res.getMessage());
+                    Logger.Debug("Tagging project - "+res.getMessage());
                     return res;
                 }
             }

@@ -126,20 +126,24 @@ import org.kohsuke.stapler.StaplerResponse;
 
 // General imports
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.*;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.Calendar;
 
 import javax.servlet.ServletException;
 
@@ -278,15 +282,32 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 FileScanner fs = new FileScanner(dir,af,-1);
                 File[] validFiles = fs.toArray();
 
-                for (File f : validFiles) {
-                    Logger.Debug("Found file '"+ f.getAbsolutePath() + "'");
-                }
-
                 if (fs.getFiles().size() > 0) {
                     listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions...");
                     listener.getLogger().flush();
 
-                    /*
+                    Calendar nowDateCal = Calendar.getInstance();
+                    File logFile = new File("a");
+                    FileWriter logFileWriter = null;
+                    PrintWriter fmtWriter = null;
+                    File tmpFile = null;
+
+                    try {
+                        tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+                        logFileWriter = new FileWriter(tmpFile);
+                        fmtWriter = new PrintWriter(logFileWriter,true);
+
+                        for (File f : validFiles) {
+                            Logger.Debug("Found file '"+ f.getAbsolutePath() + "'");
+                            fmtWriter.println(f.getAbsolutePath());
+                        }
+                        fmtWriter.flush();
+                    } catch (Exception e) {
+                        throw new IOException("Unable to write command log - " + e.getMessage());
+                    } finally {
+                        fmtWriter.close();
+                    }
+
                     if (scm == null)
                         scm = (DimensionsSCM)build.getProject().getScm();
                     Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
@@ -295,7 +316,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                                            scm.getJobDatabase(),
                                            scm.getJobServer()))
                     {
-                        DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
+                        DimensionsResult res = scm.getAPI().UploadFiles(scm.getProject(),tmpFile,build);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
                             listener.getLogger().flush();
@@ -306,7 +327,8 @@ public class ArtifactUploader extends Notifier implements Serializable {
                             listener.getLogger().flush();
                         }
                     }
-                    */
+                    if (tmpFile != null)
+                        tmpFile.delete();
                 } else {
                     listener.getLogger().println("[DIMENSIONS] No build artifacts were detected");
                     listener.getLogger().flush();
