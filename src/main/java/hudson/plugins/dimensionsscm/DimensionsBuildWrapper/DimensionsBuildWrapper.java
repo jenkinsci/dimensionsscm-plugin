@@ -218,7 +218,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          */
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindParameters(this,"Dimensions");
+            req.bindParameters(this,"DimensionsBuildWrapper");
             save();
             return true;
         }

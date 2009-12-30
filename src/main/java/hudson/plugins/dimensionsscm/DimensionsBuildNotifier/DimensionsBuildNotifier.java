@@ -112,6 +112,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
+import hudson.Util;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -130,12 +131,54 @@ import javax.servlet.ServletException;
 public class DimensionsBuildNotifier extends Notifier implements Serializable {
 
     private static DimensionsSCM scm = null;
+    private boolean canBaselineDeploy = false;
+    private boolean canBaselineAction = false;
+
+    private String  actionState = null;
+    private String  deployState = null;
+
+    /*
+     * Gets the action .
+     * @return the action
+     */
+    public boolean isCanBaselineAction() {
+        return this.canBaselineAction;
+    }
+
+    /*
+     * Gets the deploy .
+     * @return the deploy
+     */
+    public boolean isCanBaselineDeploy() {
+        return this.canBaselineDeploy;
+    }
+
+    /*
+     * Gets the action state .
+     * @return String
+     */
+    public String getActionState() {
+        return this.actionState;
+    }
+
+    /*
+     * Gets the deploy state .
+     * @return String
+     */
+    public String getDeployState() {
+        return this.deployState;
+    }
 
     /**
      * Default constructor.
      */
     @DataBoundConstructor
-    public DimensionsBuildNotifier() {
+    public DimensionsBuildNotifier(boolean canDeploy, String deployState, boolean canAction, String actionState) {
+        this.canBaselineDeploy = canDeploy;
+        this.canBaselineAction = canAction;
+
+        this.actionState = actionState;
+        this.deployState = deployState;
     }
 
     // Run this one last
@@ -162,15 +205,43 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                        scm.getJobDatabase(),
                                        scm.getJobServer()))
                 {
-                    DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
-                    if (res==null) {
-                        listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
-                        listener.getLogger().flush();
+                    {
+                        DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
+                        if (res==null) {
+                            listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
+                            listener.getLogger().flush();
+                            canBaselineDeploy = canBaselineAction = false;
+                        }
+                        else {
+                            listener.getLogger().println("[DIMENSIONS] Build was successfully tagged in Dimensions as a baseline");
+                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
+                            listener.getLogger().flush();
+                        }
                     }
-                    else {
-                        listener.getLogger().println("[DIMENSIONS] Build was successfully tagged in Dimensions as a baseline");
-                        listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
-                        listener.getLogger().flush();
+                    if (canBaselineDeploy) {
+                        DimensionsResult res = scm.getAPI().deployBaseline(scm.getProject(),build,deployState);
+                        if (res==null) {
+                            listener.getLogger().println("[DIMENSIONS] The build baseline failed to be deployed in Dimensions");
+                            listener.getLogger().flush();
+                            canBaselineAction=false;
+                        }
+                        else {
+                            listener.getLogger().println("[DIMENSIONS] Build baseline was successfully deployed in Dimensions");
+                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
+                            listener.getLogger().flush();
+                        }
+                    }
+                    if (canBaselineAction) {
+                        DimensionsResult res = scm.getAPI().actionBaseline(scm.getProject(),build,actionState);
+                        if (res==null) {
+                            listener.getLogger().println("[DIMENSIONS] The build baseline failed to be actioned in Dimensions");
+                            listener.getLogger().flush();
+                        }
+                        else {
+                            listener.getLogger().println("[DIMENSIONS] Build baseline was successfully actioned in Dimensions");
+                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
+                            listener.getLogger().flush();
+                        }
                     }
                 }
             }
@@ -219,9 +290,18 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
          */
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindParameters(this,"DimensionsBuildNotifier");
-            save();
-            return true;
+            // Get the values and check them
+            String deploy = req.getParameter("dimensionsbuildnotifier.deployState");
+            String action = req.getParameter("dimensionsbuildnotifier.actionState");
+
+            if (deploy != null)
+                deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
+
+            if (action != null)
+                action = Util.fixNull(req.getParameter("dimensionsbuildnotifier.actionState").trim());
+
+            this.save();
+            return super.configure(req, formData);
         }
 
         /*
