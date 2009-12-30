@@ -902,6 +902,72 @@ public class DimensionsAPI
     }
 
     /**
+     * Deploy a baseline
+     *
+     * @param String
+     * @param String
+     * @param AbstractBuild
+     * @return DimensionsResult
+     * @throws DimensionsRuntimeException
+     */
+    public DimensionsResult deployBaseline(String projectId, AbstractBuild build, String state)
+                            throws DimensionsRuntimeException
+    {
+        try {
+            String cmd = "DPB ";
+            if (projectId != null && build != null) {
+                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                cmd += " /WORKSET=\""+projectId+"\"";
+                if (state != null && state.length() > 0) {
+                    cmd += " /STAGE=\""+state+"\"";
+                }
+                cmd += " /COMMENT=\"Project Baseline deployed by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                DimensionsResult res = run(connection,cmd);
+                if (res != null ) {
+                    Logger.Debug("Deploying baseline - "+res.getMessage());
+                    return res;
+                }
+            }
+            return null;
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException(e.getMessage());
+        }
+    }
+
+    /**
+     * Action a baseline
+     *
+     * @param String
+     * @param String
+     * @param AbstractBuild
+     * @return DimensionsResult
+     * @throws DimensionsRuntimeException
+     */
+    public DimensionsResult actionBaseline(String projectId, AbstractBuild build, String state)
+                            throws DimensionsRuntimeException
+    {
+        try {
+            String cmd = "ABL ";
+            if (projectId != null && build != null) {
+                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                cmd += " /WORKSET=\""+projectId+"\"";
+                if (state != null && state.length() > 0) {
+                    cmd += " /STATUS=\""+state+"\"";
+                }
+                cmd += " /COMMENT=\"Project Baseline action by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                DimensionsResult res = run(connection,cmd);
+                if (res != null ) {
+                    Logger.Debug("Actioning baseline - "+res.getMessage());
+                    return res;
+                }
+            }
+            return null;
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException(e.getMessage());
+        }
+    }
+
+    /**
      * Construct the change list
      *
      * @param List
