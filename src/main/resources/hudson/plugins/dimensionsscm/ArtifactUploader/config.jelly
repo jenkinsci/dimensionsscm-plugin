@@ -1,10 +1,9 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
     xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:u="/util">
-
-    <f:entry title="${%Patterns to use}">
+    <f:entry title="${%Patterns to use}" help="/plugin/dimensionsscm/helpbuploaded.html">
        <f:repeatable var="patterns" items="${instance.patterns}" noAddButton="true" minimum="1">
          <table width="98%" cellpadding="2" cellspacing="2">
-            <f:entry title="Pattern" help="/plugin/dimensionsscm/patterns.html">
+            <f:entry title="Pattern">
               <f:textbox name="artifactuploader.patterns" value="${h.defaulted(patterns, '.*')}"/>
             </f:entry>
             <f:entry>

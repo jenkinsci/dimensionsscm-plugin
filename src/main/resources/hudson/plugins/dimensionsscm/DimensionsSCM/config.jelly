@@ -40,7 +40,7 @@
     </f:entry>
 
     <f:advanced>
-            <f:entry>
+        <f:entry>
             <p>
             The installation details provided below will override the default Dimensions SCM repository that may have
             been configured. This installation will only be used with this job.

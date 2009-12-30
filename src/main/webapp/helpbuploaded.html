@@ -1,17 +1,26 @@
-<P>You can specify any Java style regular expression pattern match
-to specify the types of build artifacts that you wish to save back
-to your Dimensions project.<BR>
-<BR>
-Some examples of valid patterns are shown below.
+<P>
+The above allows you to save assets that got created to changed as a result of the
+build process to your Dimensions project. You can specify one or more Java style regular
+expression patterns that will then be used to scan the build workspace for files
+that will saved to your Dimensions project.<BR><BR>
+If files have not been changed or created as a result of your build, then they will be
+ignored. This saving process will <i>not</i> store any build dependency information
+in Dimensions - just the files.
+<BR><BR>
+Some examples of valid patterns are shown below. If you use the "<b>\</b>" character, this must
+be protected using "<b>\\</b>", so "<b>.*\.exe</b>" becomes "<b>.*\\.exe</b>" instead.
 <BR><BR>
 <i>.*.exe</i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will match any .exe files<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will match any .exe files<BR>
 <i>.*.obj</i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will match any .obj files<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This will match any .obj files<BR>
 <i>src/.*.h</i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;This will match any .h files in the src/ directory<BR>
+&nbsp;&nbsp;This will match any .h files in the src/ directory<BR>
 <i>src/.*[A-z]*.h</i>&nbsp;&nbsp;&nbsp;&nbsp;This will match any alpha-numeric .h files in the src/ directory<BR>
 <i>src\\.*[A-z]*.h</i>&nbsp;&nbsp;&nbsp;This will match any alpha-numeric .h files in the src\ directory<BR>
 <BR>
 Directory separators in the patterns <b>are</b> OS specific.<BR>
+<BR>
+More information on regular expressions in Java can be found
+<a href="http://java.sun.com/docs/books/tutorial/essential/regex/char_classes.html">here</a>
 </P>

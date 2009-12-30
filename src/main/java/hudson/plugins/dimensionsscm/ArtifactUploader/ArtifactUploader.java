@@ -393,14 +393,6 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
             return artifactor;
         }
-
-        /*
-         * Get help file
-         */
-        @Override
-        public String getHelpFile() {
-            return "/plugin/dimensionsscm/helpbuploaded.html";
-        }
     }
 }
 
