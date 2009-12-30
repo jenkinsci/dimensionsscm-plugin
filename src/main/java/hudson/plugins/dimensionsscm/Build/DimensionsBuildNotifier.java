@@ -160,7 +160,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     }
                     else {
                         listener.getLogger().println("[DIMENSIONS] Build was successfully tagged in Dimensions as a baseline");
-                        listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS]")+")");
+                        listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
                         listener.getLogger().flush();
                     }
                 }

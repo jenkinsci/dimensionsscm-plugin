@@ -316,14 +316,14 @@ public class ArtifactUploader extends Notifier implements Serializable {
                                            scm.getJobDatabase(),
                                            scm.getJobServer()))
                     {
-                        DimensionsResult res = scm.getAPI().UploadFiles(scm.getProject(),tmpFile,build);
+                        DimensionsResult res = scm.getAPI().UploadFiles(wd,scm.getProject(),tmpFile,build);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
                             listener.getLogger().flush();
                         }
                         else {
                             listener.getLogger().println("[DIMENSIONS] Build artifacts were successfully loaded into Dimensions");
-                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS]")+")");
+                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
                             listener.getLogger().flush();
                         }
                     }

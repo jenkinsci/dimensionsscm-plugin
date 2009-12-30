@@ -840,17 +840,18 @@ public class DimensionsAPI
     /**
      * Upload files
      *
+     * @param FilePath
      * @param String
      * @param File
      * @param AbstractBuild
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult UploadFiles(String projectId, File cmdFile, AbstractBuild build)
+    public DimensionsResult UploadFiles(FilePath rootDir, String projectId, File cmdFile, AbstractBuild build)
                             throws DimensionsRuntimeException
     {
         try {
-            String ciCmd = "DELIVER /BRIEF ";
+            String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
             if (version == 10)
                 ciCmd = "UPLOAD ";
 
@@ -858,7 +859,7 @@ public class DimensionsAPI
                 ciCmd += " /USER_FILELIST=\""+cmdFile.getAbsolutePath()+"\"";
                 ciCmd += " /WORKSET=\""+projectId+"\"";
                 ciCmd += " /COMMENT=\"Build artifacts saved by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
-
+                ciCmd += " /USER_DIRECTORY=\""+rootDir.getRemote()+"\"";
                 DimensionsResult res = run(connection,ciCmd);
                 if (res != null ) {
                     Logger.Debug("Saving artifacts - "+res.getMessage());
