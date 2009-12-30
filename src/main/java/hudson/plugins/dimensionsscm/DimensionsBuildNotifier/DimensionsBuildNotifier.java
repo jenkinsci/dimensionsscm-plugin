@@ -172,7 +172,6 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     /**
      * Default constructor.
      */
-    @DataBoundConstructor
     public DimensionsBuildNotifier(boolean canDeploy, String deployState, boolean canAction, String actionState) {
         this.canBaselineDeploy = canDeploy;
         this.canBaselineAction = canAction;
@@ -231,6 +230,8 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                             listener.getLogger().flush();
                         }
                     }
+
+                    // This will not be supported for now, but if wanted at a future date...
                     if (canBaselineAction) {
                         DimensionsResult res = scm.getAPI().actionBaseline(scm.getProject(),build,actionState);
                         if (res==null) {
@@ -257,6 +258,12 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         return true;
     }
 
+    @Override
+    public DescriptorImpl getDescriptor() {
+        // see Descriptor javadoc for more about what a descriptor is.
+        return (DescriptorImpl) super.getDescriptor();
+    }
+
     /**
      * The DimensionsBuildNotifier Descriptor class.
      */
@@ -276,6 +283,24 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             return "Tag successful builds in Dimensions as a project baseline";
         }
 
+        @Override
+        public Notifier newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            // Get variables and then construct a new object
+            String deploy = req.getParameter("dimensionsbuildnotifier.deployState");
+            String action = null;
+            if (deploy != null)
+                deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
+            if (action != null)
+                action = Util.fixNull(req.getParameter("dimensionsbuildnotifier.actionState").trim());
+
+
+            DimensionsBuildNotifier notif = new DimensionsBuildNotifier(req.getParameter("dimensionsbuildnotifier.canBaselineDeploy")!=null,
+                                                                        deploy,
+                                                                        false,
+                                                                        null);
+
+            return notif;
+        }
 
         /*
          *  This builder can be used with all project types
@@ -292,7 +317,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
             // Get the values and check them
             String deploy = req.getParameter("dimensionsbuildnotifier.deployState");
-            String action = req.getParameter("dimensionsbuildnotifier.actionState");
+            String action = null;
 
             if (deploy != null)
                 deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
