@@ -362,7 +362,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
         }
 
         public String getDisplayName() {
-            return "Load build artifacts into Dimensions repository";
+            return "Load any build artifacts into the Dimensions repository";
         }
 
 
