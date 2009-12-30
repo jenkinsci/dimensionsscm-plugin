@@ -138,6 +138,8 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.*;
+import java.util.Collection;
+import java.util.Collections;
 
 import javax.servlet.ServletException;
 
@@ -160,11 +162,73 @@ public class ArtifactUploader extends Notifier implements Serializable {
         public boolean accept(File dir, String name) {
           final Iterator<String> artifactList = artifactFilter.iterator();
           while (artifactList.hasNext()) {
-            if (Pattern.matches(artifactList.next(),name)) {
-              return true;
+            String filter = artifactList.next();
+            if (Pattern.matches(filter,name)) {
+                Logger.Debug("Matched '"+filter+"' against '"+name+"'");
+                return true;
             }
           }
           return false;
+        }
+    }
+
+
+    /**
+     * File scanner class.
+     */
+    public class FileScanner {
+        private File[] arr = null;
+        private Collection<File> xfiles = null;
+        private File baseDir = null;
+
+        public FileScanner(File dirName, FilenameFilter filter, int depth) {
+             baseDir = dirName;
+             Logger.Debug("Scanning base directory for files that match patterns '" + baseDir.getAbsolutePath() + "'");
+             xfiles = scanFiles(dirName,filter,depth);
+        }
+
+        public Collection<File> getFiles() {
+            return xfiles;
+        }
+
+        public File[] toArray()
+        {
+            arr = new File[xfiles.size()];
+            return xfiles.toArray(arr);
+        }
+
+        private Collection<File> scanFiles(
+                File dirName,
+                FilenameFilter filter,
+                int depth)
+        {
+            if (dirName.isDirectory()) {
+                Logger.Debug("Scanning '"+dirName.getAbsolutePath()+"' " + depth);
+            }
+
+            Vector<File> files = new Vector<File>();
+            File[] entFiles = dirName.listFiles();
+
+            if (dirName.isDirectory() && dirName.getName().equals(".metadata")) {
+                Logger.Debug("Ignoring '"+dirName.getAbsolutePath()+"' " + depth);
+            } else {
+                if (entFiles != null) {
+                    for (File afile : entFiles) {
+                        String dname = afile.getAbsolutePath();
+                        dname = dname.substring(baseDir.getAbsolutePath().length()+1,afile.getAbsolutePath().length());
+
+                        if (filter == null || filter.accept(dirName, dname)) {
+                            files.add(afile);
+                        }
+                        if ((depth<=-1) || (depth>0 && afile.isDirectory())) {
+                            depth--;
+                            files.addAll(scanFiles(afile, filter, depth));
+                            depth++;
+                        }
+                    }
+                }
+            }
+            return files;
         }
     }
 
@@ -199,43 +263,54 @@ public class ArtifactUploader extends Notifier implements Serializable {
         return this.patterns;
     }
 
-
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws IOException, InterruptedException {
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         try {
             if (build.getResult() == Result.SUCCESS) {
+                listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
+                listener.getLogger().flush();
                 ArtifactFilter af = new ArtifactFilter(patterns);
                 FilePath wd = build.getProject().getWorkspace();
                 Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
                 File dir = new File (wd.getRemote());
-                String[] validFiles = dir.list(af);
-                for (int i = 0; i < validFiles.length; i++) {
-                    Logger.Debug("Found file '"+ validFiles[i] + "'");
+                FileScanner fs = new FileScanner(dir,af,-1);
+                File[] validFiles = fs.toArray();
+
+                for (File f : validFiles) {
+                    Logger.Debug("Found file '"+ f.getAbsolutePath() + "'");
                 }
 
-                /*
-                if (scm == null)
-                    scm = (DimensionsSCM)build.getProject().getScm();
-                Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
-                if (scm.getAPI().login(scm.getJobUserName(),
-                                       scm.getJobPasswd(),
-                                       scm.getJobDatabase(),
-                                       scm.getJobServer()))
-                {
-                    DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
-                    if (res==null) {
-                        listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
-                        listener.getLogger().flush();
+                if (fs.getFiles().size() > 0) {
+                    listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions...");
+                    listener.getLogger().flush();
+
+                    /*
+                    if (scm == null)
+                        scm = (DimensionsSCM)build.getProject().getScm();
+                    Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+                    if (scm.getAPI().login(scm.getJobUserName(),
+                                           scm.getJobPasswd(),
+                                           scm.getJobDatabase(),
+                                           scm.getJobServer()))
+                    {
+                        DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
+                        if (res==null) {
+                            listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
+                            listener.getLogger().flush();
+                        }
+                        else {
+                            listener.getLogger().println("[DIMENSIONS] Build artifacts were successfully loaded into Dimensions");
+                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS]")+")");
+                            listener.getLogger().flush();
+                        }
                     }
-                    else {
-                        listener.getLogger().println("[DIMENSIONS] Build artifacts were successfully loaded into Dimensions");
-                        listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS]")+")");
-                        listener.getLogger().flush();
-                    }
+                    */
+                } else {
+                    listener.getLogger().println("[DIMENSIONS] No build artifacts were detected");
+                    listener.getLogger().flush();
                 }
-                */
             }
         } catch(Exception e) {
             listener.fatalError("Unable to load build artifacts into Dimensions - " + e.getMessage());
