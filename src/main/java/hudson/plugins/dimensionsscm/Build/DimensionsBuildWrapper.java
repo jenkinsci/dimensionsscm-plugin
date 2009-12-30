@@ -177,7 +177,11 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             {
                 scm.getAPI().logout();
             }
+        } else {
+            listener.fatalError("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
+            throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
         }
+
         return new EnvironmentImpl(build);
     }
 

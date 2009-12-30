@@ -272,6 +272,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
                            BuildListener listener) throws IOException, InterruptedException {
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         try {
+            if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
+                listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
+                throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
+            }
             if (build.getResult() == Result.SUCCESS) {
                 listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
                 listener.getLogger().flush();

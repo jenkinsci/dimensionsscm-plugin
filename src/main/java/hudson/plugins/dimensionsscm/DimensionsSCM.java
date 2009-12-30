@@ -539,7 +539,8 @@ public class DimensionsSCM extends SCM implements Serializable
             if (DimensionsChecker.isValidPluginCombination(build)) {
                 Logger.Debug("Plugins are ok");
             } else {
-                listener.fatalError("\n[DIMENSIONS] If you intend to tag this build, then you must set the\n[DIMENSIONS] 'Lock Dimensions project while the build is in progress' option");
+                listener.fatalError("\n[DIMENSIONS] The plugin combinations you have selected are not valid.");
+                listener.fatalError("\n[DIMENSIONS] Please review online help to determine valid plugin uses.");
                 return false;
             }
 

@@ -138,12 +138,21 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     public DimensionsBuildNotifier() {
     }
 
+    // Run this one last
+    @Override
+    public boolean needsToRunAfterFinalized() {
+        return true;
+    }
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws IOException, InterruptedException {
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         try {
+            if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
+                listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
+                throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
+            }
             if (build.getResult() == Result.SUCCESS) {
                 if (scm == null)
                     scm = (DimensionsSCM)build.getProject().getScm();

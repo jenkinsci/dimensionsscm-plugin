@@ -127,8 +127,14 @@ public class DimensionsChecker {
      */
     public static boolean isValidPluginCombination(AbstractBuild build) {
         Project buildProject = (Project)build.getProject();
+        if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
+            Logger.Debug("Not using a DimensionsSCM engine - bye");
+            return false;
+        }
+
         DimensionsBuildWrapper bwplugin = (DimensionsBuildWrapper)buildProject.getBuildWrappers().get(hudson.plugins.dimensionsscm.DimensionsBuildWrapper.DMWBLD_DESCRIPTOR);
         DimensionsBuildNotifier bnplugin = (DimensionsBuildNotifier)build.getProject().getPublishersList().get(DimensionsBuildNotifier.class);
+        ArtifactUploader anplugin = (ArtifactUploader)build.getProject().getPublishersList().get(ArtifactUploader.class);
 
         if (bwplugin != null) {
             Logger.Debug("DimensionsBuildWrapper is activated");
@@ -137,9 +143,22 @@ public class DimensionsChecker {
             Logger.Debug("DimensionsBuildNotifier is activated");
         }
 
+        if (anplugin != null) {
+            Logger.Debug("ArtifactUploader is activated");
+        }
+
+        // Tagging plugin needs lock plugin
         if (bnplugin != null && bwplugin == null) {
             return false;
         }
+
+        // Uploader plugin can work with the others at the moment but in the future
+        // it may not be able to, so let it be for now, but have code to kill it if needed
+        // - The lock is released before the notifier plugins kick in
+        // - Baseline plugin kicks in after the uploader plugin
+        // if (anplugin != null && (bwplugin != null || bnplugin != null) {
+        //     return false;
+        // }
 
         return true;
     }
