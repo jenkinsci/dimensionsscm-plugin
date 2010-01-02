@@ -836,6 +836,85 @@ public class DimensionsAPI
     }
 
 
+    /**
+     * Build a baseline
+     *
+     * @param String area
+     * @param String projectId
+     * @param boolean batch
+     * @param boolean buildClean
+     * @param String buildConfig
+     * @param String options
+     * @param boolean capture
+     * @param String requests
+     * @param String targets
+     * @param AbstractBuild build
+     * @return DimensionsResult
+     * @throws DimensionsRuntimeException
+     */
+    public DimensionsResult buildBaseline(String area, String projectId, boolean batch,
+                                          boolean buildClean, String buildConfig,
+                                          String options, boolean capture,
+                                          String requests, String targets,
+                                          AbstractBuild build)
+                            throws DimensionsRuntimeException
+    {
+        try {
+            String cmd = "BLDB ";
+            if (projectId != null && build != null) {
+                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                if (area != null && area.length() > 0) {
+                    cmd += " /AREA=\""+area+"\"";
+                }
+                if (batch) {
+                    cmd += " /BATCH";
+                } else {
+                    cmd += " /NOBATCH";
+                }
+                if (capture) {
+                    cmd += " /CAPTURE";
+                } else {
+                    cmd += " /NOCAPTURE";
+                }
+                if (buildClean) {
+                    cmd += " /BUILD_CLEAN";
+                }
+                if (buildConfig != null && buildConfig.length() > 0) {
+                    cmd += " /BUILD_CONFIG=\""+buildConfig+"\"";
+                }
+                if (options != null && options.length() > 0) {
+                    if (options.indexOf(",")==0) {
+                        cmd += "/BUILD_OPTIONS=(\"" + options + "\") ";
+                    } else {
+                        cmd += "/BUILD_OPTIONS=("+ options +") ";
+                    }
+                }
+                if (requests != null && requests.length() > 0) {
+                    if (requests.indexOf(",")==0) {
+                        cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+                    } else {
+                        cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                    }
+                }
+                if (targets != null && targets.length() > 0) {
+                    if (targets.indexOf(",")==0) {
+                        cmd += "/TARGETS=(\"" + targets + "\") ";
+                    } else {
+                        cmd += "/TARGETS=("+ targets +") ";
+                    }
+                }
+                DimensionsResult res = run(connection,cmd);
+                if (res != null ) {
+                    Logger.Debug("Building baseline - "+res.getMessage());
+                    return res;
+                }
+            }
+            return null;
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException(e.getMessage());
+        }
+    }
+
 
     /**
      * Upload files
@@ -844,10 +923,11 @@ public class DimensionsAPI
      * @param String
      * @param File
      * @param AbstractBuild
+     * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult UploadFiles(FilePath rootDir, String projectId, File cmdFile, AbstractBuild build)
+    public DimensionsResult UploadFiles(FilePath rootDir, String projectId, File cmdFile, AbstractBuild build, String requests)
                             throws DimensionsRuntimeException
     {
         try {
@@ -860,6 +940,13 @@ public class DimensionsAPI
                 ciCmd += " /WORKSET=\""+projectId+"\"";
                 ciCmd += " /COMMENT=\"Build artifacts saved by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 ciCmd += " /USER_DIRECTORY=\""+rootDir.getRemote()+"\"";
+                if (requests != null && requests.length() > 0) {
+                    if (requests.indexOf(",")==0) {
+                        ciCmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+                    } else {
+                        ciCmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                    }
+                }
                 DimensionsResult res = run(connection,ciCmd);
                 if (res != null ) {
                     Logger.Debug("Saving artifacts - "+res.getMessage());

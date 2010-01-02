@@ -114,6 +114,7 @@ import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.Util;
 import hudson.FilePath;
+import hudson.util.VariableResolver;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -321,7 +322,15 @@ public class ArtifactUploader extends Notifier implements Serializable {
                                            scm.getJobDatabase(),
                                            scm.getJobServer()))
                     {
-                        DimensionsResult res = scm.getAPI().UploadFiles(wd,scm.getProject(),tmpFile,build);
+                        VariableResolver<String> myResolver = build.getBuildVariableResolver();
+                        String requests = myResolver.resolve("DM_TARGET_REQUEST");
+
+                        if (requests != null) {
+                            requests = requests.replaceAll(" ","");
+                            requests = requests.toUpperCase();
+                        }
+
+                        DimensionsResult res = scm.getAPI().UploadFiles(wd,scm.getProject(),tmpFile,build,requests);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
                             listener.getLogger().flush();

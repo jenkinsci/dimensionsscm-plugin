@@ -113,6 +113,7 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.Util;
+import hudson.util.VariableResolver;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -137,9 +138,28 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     private String  actionState = null;
     private String  deployState = null;
 
+    private boolean canBaselineBuild = false;
+
+    private String area = null;
+    private String buildConfig = null;
+    private String buildOptions = null;
+    private String buildTargets = null;
+
+    private boolean batch = false;
+    private boolean buildClean = false;
+    private boolean capture = false;
+
+    /*
+     * Gets the build .
+     * @return boolean
+     */
+    public boolean isCanBaselineBuild() {
+        return this.canBaselineBuild;
+    }
+
     /*
      * Gets the action .
-     * @return the action
+     * @return boolean
      */
     public boolean isCanBaselineAction() {
         return this.canBaselineAction;
@@ -147,11 +167,36 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
 
     /*
      * Gets the deploy .
-     * @return the deploy
+     * @return boolean
      */
     public boolean isCanBaselineDeploy() {
         return this.canBaselineDeploy;
     }
+
+    /*
+     * Gets the batch .
+     * @return boolean
+     */
+    public boolean isBatch() {
+        return this.batch;
+    }
+
+    /*
+     * Gets the buildClean .
+     * @return boolean
+     */
+    public boolean isBuildClean() {
+        return this.buildClean;
+    }
+
+    /*
+     * Gets the capture .
+     * @return boolean
+     */
+    public boolean isCapture() {
+        return this.capture;
+    }
+
 
     /*
      * Gets the action state .
@@ -169,15 +214,63 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         return this.deployState;
     }
 
+    /*
+     * Gets the area .
+     * @return String
+     */
+    public String getArea() {
+        return this.area;
+    }
+
+    /*
+     * Gets the build config .
+     * @return String
+     */
+    public String getBuildConfig() {
+        return this.buildConfig;
+    }
+
+    /*
+     * Gets the build options .
+     * @return String
+     */
+    public String getBuildOptions() {
+        return this.buildOptions;
+    }
+
+
+    /*
+     * Gets the build targets .
+     * @return String
+     */
+    public String getBuildTargets() {
+        return this.buildTargets;
+    }
+
+
     /**
      * Default constructor.
      */
-    public DimensionsBuildNotifier(boolean canDeploy, String deployState, boolean canAction, String actionState) {
+    public DimensionsBuildNotifier(boolean canDeploy, String deployState,
+                                   boolean canAction, String actionState,
+                                   boolean canBuild,
+                                   String area, String buildConfig,
+                                   String buildOptions, String buildTargets,
+                                   boolean batch, boolean buildClean, boolean capture) {
         this.canBaselineDeploy = canDeploy;
         this.canBaselineAction = canAction;
-
+        this.canBaselineBuild = canBuild;
         this.actionState = actionState;
         this.deployState = deployState;
+
+        this.area = area;
+        this.buildConfig = buildConfig;
+        this.buildOptions = buildOptions;
+        this.buildTargets = buildTargets;
+
+        this.batch = batch;
+        this.buildClean = buildClean;
+        this.capture = capture;
     }
 
     // Run this one last
@@ -204,6 +297,13 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                        scm.getJobDatabase(),
                                        scm.getJobServer()))
                 {
+                    VariableResolver<String> myResolver = build.getBuildVariableResolver();
+                    String requests = myResolver.resolve("DM_TARGET_REQUEST");
+
+                    if (requests != null) {
+                        requests = requests.replaceAll(" ","");
+                        requests = requests.toUpperCase();
+                    }
                     {
                         DimensionsResult res = scm.getAPI().createBaseline(scm.getProject(),build);
                         if (res==null) {
@@ -286,18 +386,39 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         @Override
         public Notifier newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             // Get variables and then construct a new object
+            Boolean canDeploy = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.canBaselineDeploy")));
+            Boolean canBuild = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.canBaselineBuild")));
+            Boolean canAction = false;
+            Boolean batch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.batch")));
+            Boolean buildClean = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.buildClean")));
+            Boolean capture = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.capture")));
+
             String deploy = req.getParameter("dimensionsbuildnotifier.deployState");
             String action = null;
+            String area = req.getParameter("dimensionsbuildnotifier.area");
+            String buildConfig = req.getParameter("dimensionsbuildnotifier.buildConfig");
+            String buildOptions = req.getParameter("dimensionsbuildnotifier.buildOptions");
+            String buildTargets = req.getParameter("dimensionsbuildnotifier.buildTargets");
+
             if (deploy != null)
                 deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
             if (action != null)
                 action = Util.fixNull(req.getParameter("dimensionsbuildnotifier.actionState").trim());
+            if (area != null)
+                area = Util.fixNull(req.getParameter("dimensionsbuildnotifier.area").trim());
+            if (buildConfig != null)
+                buildConfig = Util.fixNull(req.getParameter("dimensionsbuildnotifier.buildConfig").trim());
+            if (buildOptions != null)
+                buildOptions = Util.fixNull(req.getParameter("dimensionsbuildnotifier.buildOptions").trim());
+            if (buildTargets != null)
+                buildTargets = Util.fixNull(req.getParameter("dimensionsbuildnotifier.buildTargets").trim());
 
 
-            DimensionsBuildNotifier notif = new DimensionsBuildNotifier(req.getParameter("dimensionsbuildnotifier.canBaselineDeploy")!=null,
-                                                                        deploy,
-                                                                        false,
-                                                                        null);
+            DimensionsBuildNotifier notif = new DimensionsBuildNotifier(canDeploy,deploy,
+                                                                        canAction, action, canBuild,
+                                                                        area,buildConfig,
+                                                                        buildOptions,buildTargets,
+                                                                        batch,buildClean,capture);
 
             return notif;
         }
