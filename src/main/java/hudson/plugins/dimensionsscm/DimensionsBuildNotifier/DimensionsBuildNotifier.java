@@ -309,7 +309,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
                             listener.getLogger().flush();
-                            canBaselineDeploy = canBaselineAction = false;
+                            canBaselineDeploy = canBaselineAction = canBaselineBuild = false;
                         }
                         else {
                             listener.getLogger().println("[DIMENSIONS] Build was successfully tagged in Dimensions as a baseline");
@@ -318,11 +318,13 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         }
                     }
                     if (canBaselineDeploy) {
+                        listener.getLogger().println("[DIMENSIONS] Submitting a deployment job to Dimensions...");
+                        listener.getLogger().flush();
                         DimensionsResult res = scm.getAPI().deployBaseline(scm.getProject(),build,deployState);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be deployed in Dimensions");
                             listener.getLogger().flush();
-                            canBaselineAction=false;
+                            canBaselineDeploy = canBaselineAction = canBaselineBuild = false;
                         }
                         else {
                             listener.getLogger().println("[DIMENSIONS] Build baseline was successfully deployed in Dimensions");
@@ -331,8 +333,27 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         }
                     }
 
-                    // This will not be supported for now, but if wanted at a future date...
+                    // This will active the build baseline functionality
+                    if (canBaselineBuild) {
+                        listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
+                        listener.getLogger().flush();
+                        DimensionsResult res = scm.getAPI().buildBaseline(area,scm.getProject(),batch,buildClean,buildConfig,buildOptions,
+                                                                          capture,requests,buildTargets,build);
+                        if (res==null) {
+                            listener.getLogger().println("[DIMENSIONS] The build baseline failed to be built in Dimensions");
+                            listener.getLogger().flush();
+                            canBaselineDeploy = canBaselineAction = canBaselineBuild = false;
+                        }
+                        else {
+                            listener.getLogger().println("[DIMENSIONS] Build baseline was successfully built in Dimensions");
+                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
+                            listener.getLogger().flush();
+                        }
+                    }
+
                     if (canBaselineAction) {
+                        listener.getLogger().println("[DIMENSIONS] Actioning the build baseline in Dimensions...");
+                        listener.getLogger().flush();
                         DimensionsResult res = scm.getAPI().actionBaseline(scm.getProject(),build,actionState);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be actioned in Dimensions");
@@ -388,13 +409,13 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             // Get variables and then construct a new object
             Boolean canDeploy = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.canBaselineDeploy")));
             Boolean canBuild = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.canBaselineBuild")));
-            Boolean canAction = false;
+            Boolean canAction = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.canBaselineAction")));
             Boolean batch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.batch")));
             Boolean buildClean = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.buildClean")));
             Boolean capture = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuildnotifier.capture")));
 
             String deploy = req.getParameter("dimensionsbuildnotifier.deployState");
-            String action = null;
+            String action = req.getParameter("dimensionsbuildnotifier.actionState");
             String area = req.getParameter("dimensionsbuildnotifier.area");
             String buildConfig = req.getParameter("dimensionsbuildnotifier.buildConfig");
             String buildOptions = req.getParameter("dimensionsbuildnotifier.buildOptions");

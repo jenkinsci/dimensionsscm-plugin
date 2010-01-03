@@ -33,6 +33,14 @@
              <f:textbox name="dimensionsbuildnotifier.deployState" value="${instance.deployState}" />
             </f:entry>
           </f:optionalBlock>
+
+          <f:optionalBlock name="dimensionsbuildnotifier.canBaselineAction" title="Automatically action the baseline"
+                               checked="${instance.canBaselineAction}" help="/plugin/dimensionsscm/canaction.html">
+            <f:entry title="Status" help="/plugin/dimensionsscm/state.html">
+             <f:textbox name="dimensionsbuildnotifier.actionState" value="${instance.actionState}" />
+            </f:entry>
+          </f:optionalBlock>
+
       </table>
     </f:block>
 </j:jelly>

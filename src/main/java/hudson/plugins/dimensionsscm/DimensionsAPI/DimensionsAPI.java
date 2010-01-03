@@ -867,9 +867,9 @@ public class DimensionsAPI
                     cmd += " /AREA=\""+area+"\"";
                 }
                 if (batch) {
-                    cmd += " /BATCH";
+                    cmd += " /NOWAIT";
                 } else {
-                    cmd += " /NOBATCH";
+                    cmd += " /WAIT";
                 }
                 if (capture) {
                     cmd += " /CAPTURE";
