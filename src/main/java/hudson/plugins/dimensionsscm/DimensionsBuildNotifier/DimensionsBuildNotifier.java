@@ -286,6 +286,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         try {
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
                 listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
+                build.setResult(Result.FAILURE);
                 throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
             }
             if (build.getResult() == Result.SUCCESS) {
@@ -309,6 +310,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
                             listener.getLogger().flush();
+                            build.setResult(Result.FAILURE);
                             canBaselineDeploy = canBaselineAction = canBaselineBuild = false;
                         }
                         else {
@@ -324,6 +326,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be deployed in Dimensions");
                             listener.getLogger().flush();
+                            build.setResult(Result.FAILURE);
                             canBaselineDeploy = canBaselineAction = canBaselineBuild = false;
                         }
                         else {
@@ -342,6 +345,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be built in Dimensions");
                             listener.getLogger().flush();
+                            build.setResult(Result.FAILURE);
                             canBaselineDeploy = canBaselineAction = canBaselineBuild = false;
                         }
                         else {
@@ -357,6 +361,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         DimensionsResult res = scm.getAPI().actionBaseline(scm.getProject(),build,actionState);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be actioned in Dimensions");
+                            build.setResult(Result.FAILURE);
                             listener.getLogger().flush();
                         }
                         else {
@@ -369,6 +374,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             }
         } catch(Exception e) {
             listener.fatalError("Unable to tag build in Dimensions - " + e.getMessage());
+            build.setResult(Result.FAILURE);
             return false;
         }
         finally

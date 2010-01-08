@@ -163,6 +163,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                     DimensionsResult res = scm.getAPI().lockProject(scm.getProject());
                     if (res==null) {
                         listener.getLogger().println("[DIMENSIONS] Locking the project in Dimensions failed");
+                        build.setResult(Result.FAILURE);
                         listener.getLogger().flush();
                     }
                     else {
@@ -179,6 +180,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             }
         } else {
             listener.fatalError("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
+            build.setResult(Result.FAILURE);
             throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
         }
 
@@ -271,6 +273,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                         DimensionsResult res = scm.getAPI().unlockProject(scm.getProject());
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");
+                            build.setResult(Result.FAILURE);
                             listener.getLogger().flush();
                         }
                         else {
@@ -280,6 +283,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                     }
                 } catch(Exception e) {
                     listener.fatalError("Unable to unlock Dimensions project - " + e.getMessage());
+                    build.setResult(Result.FAILURE);
                     return false;
                 }
                 finally

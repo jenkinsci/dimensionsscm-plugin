@@ -275,6 +275,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
         try {
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
                 listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
+                build.setResult(Result.FAILURE);
                 throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
             }
             if (build.getResult() == Result.SUCCESS) {
@@ -311,6 +312,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                         }
                         fmtWriter.flush();
                     } catch (Exception e) {
+                        build.setResult(Result.FAILURE);
                         throw new IOException("Unable to write command log - " + e.getMessage());
                     } finally {
                         fmtWriter.close();
@@ -334,6 +336,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
                             listener.getLogger().flush();
+                            build.setResult(Result.FAILURE);
                         }
                         else {
                             listener.getLogger().println("[DIMENSIONS] Build artifacts were successfully loaded into Dimensions");
@@ -350,6 +353,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
             }
         } catch(Exception e) {
             listener.fatalError("Unable to load build artifacts into Dimensions - " + e.getMessage());
+            build.setResult(Result.FAILURE);
             return false;
         }
         finally
