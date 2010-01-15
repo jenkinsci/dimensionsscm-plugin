@@ -779,7 +779,7 @@ public class DimensionsAPI
         catch(Exception e)
         {
             //e.printStackTrace();
-            throw new IOException("Unable to run calcRepositoryDiffs - " + e.getMessage());
+            throw new IOException("Unable to run calcRepositoryDiffs - " + ((e != null) ? e.getMessage() : "an unknown exception occurred."));
         }
     }
 
