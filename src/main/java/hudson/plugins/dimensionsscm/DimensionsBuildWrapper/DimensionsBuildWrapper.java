@@ -149,18 +149,20 @@ public class DimensionsBuildWrapper extends BuildWrapper {
      */
     @Override
     public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
+        long key=-1;
         if (build.getProject().getScm() instanceof DimensionsSCM) {
             Logger.Debug("Invoking build setup callout " + this.getClass().getName());
             if (scm == null)
                 scm = (DimensionsSCM)build.getProject().getScm();
             Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
             try {
-                if (scm.getAPI().login(scm.getJobUserName(),
+                key = scm.getAPI().login(scm.getJobUserName(),
                                        scm.getJobPasswd(),
                                        scm.getJobDatabase(),
-                                       scm.getJobServer()))
+                                       scm.getJobServer());
+                if (key>0)
                 {
-                    DimensionsResult res = scm.getAPI().lockProject(scm.getProject());
+                    DimensionsResult res = scm.getAPI().lockProject(key,scm.getProject());
                     if (res==null) {
                         listener.getLogger().println("[DIMENSIONS] Locking the project in Dimensions failed");
                         build.setResult(Result.FAILURE);
@@ -176,7 +178,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             }
             finally
             {
-                scm.getAPI().logout();
+                scm.getAPI().logout(key);
             }
         } else {
             listener.fatalError("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
@@ -260,17 +262,19 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          */
         @Override
         public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException {
+            long key=-1;
             if (scm != null) {
                 Logger.Debug("Invoking build tearDown callout " + this.getClass().getName());
                 Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
                 try {
-                    if (scm.getAPI().login(scm.getJobUserName(),
+                    key = scm.getAPI().login(scm.getJobUserName(),
                                            scm.getJobPasswd(),
                                            scm.getJobDatabase(),
-                                           scm.getJobServer()))
+                                           scm.getJobServer());
+                    if (key>0)
                     {
                         Logger.Debug("Unlocking the project");
-                        DimensionsResult res = scm.getAPI().unlockProject(scm.getProject());
+                        DimensionsResult res = scm.getAPI().unlockProject(key,scm.getProject());
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");
                             build.setResult(Result.FAILURE);
@@ -288,7 +292,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                 }
                 finally
                 {
-                    scm.getAPI().logout();
+                    scm.getAPI().logout(key);
                 }
             }
             return true;

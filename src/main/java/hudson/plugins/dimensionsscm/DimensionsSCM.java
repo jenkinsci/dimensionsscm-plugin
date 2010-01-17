@@ -527,6 +527,7 @@ public class DimensionsSCM extends SCM implements Serializable
 
         boolean bFreshBuild = (build.getPreviousBuild() == null);
         boolean bRet = true;
+        long key = -1;
 
         try
         {
@@ -563,11 +564,13 @@ public class DimensionsSCM extends SCM implements Serializable
                 dmSCM = new DimensionsAPI();
             }
 
+            dmSCM.setLogger(listener.getLogger());
             // Connect to Dimensions...
-            if (dmSCM.login(jobUserName,
+            key = dmSCM.login(jobUserName,
                             getJobPasswd(),
                             jobDatabase,
-                            jobServer))
+                            jobServer);
+            if (key>0)
             {
                 Logger.Debug("Login worked.");
                 StringBuffer cmdOutput = new StringBuffer();
@@ -642,7 +645,7 @@ public class DimensionsSCM extends SCM implements Serializable
                     Logger.Debug("Checking out '" + folderN + "'...");
 
                     // Checkout the folder
-                    bRet = dmSCM.checkout(getProject(),dname,wa,
+                    bRet = dmSCM.checkout(key,getProject(),dname,wa,
                                           lastBuildCal,nowDateCal,
                                           changelogFile, tz,
                                           cmdOutput,jobWebUrl,
@@ -708,7 +711,7 @@ public class DimensionsSCM extends SCM implements Serializable
         }
         finally
         {
-            dmSCM.logout();
+            dmSCM.logout(key);
         }
         return bRet;
     }
@@ -738,6 +741,7 @@ public class DimensionsSCM extends SCM implements Serializable
 
         Logger.Debug("Invoking pollChanges - " + this.getClass().getName() );
         Logger.Debug("Checking job - " + project.getName());
+        long key = -1;
 
         if (getProject() == null || getProject().length() == 0)
             return false;
@@ -767,11 +771,14 @@ public class DimensionsSCM extends SCM implements Serializable
                 dmSCM = new DimensionsAPI();
             }
 
+            dmSCM.setLogger(listener.getLogger());
+
             // Connect to Dimensions...
-            if (dmSCM.login(jobUserName,
+            key = dmSCM.login(jobUserName,
                             getJobPasswd(),
                             jobDatabase,
-                            jobServer))
+                            jobServer);
+            if (key>0)
             {
                 String[] folders = getFolders();
                 // Iterate through the project folders and process them in Dimensions
@@ -783,9 +790,10 @@ public class DimensionsSCM extends SCM implements Serializable
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
+                    Logger.Debug("Polling using key "+key);
                     Logger.Debug("Polling '" + folderN + "'...");
 
-                    bChanged = dmSCM.hasRepositoryBeenUpdated(getProject(),
+                    bChanged = dmSCM.hasRepositoryBeenUpdated(key,getProject(),
                                                               dname,lastBuildCal,
                                                               nowDateCal, tz);
                 }
@@ -804,7 +812,7 @@ public class DimensionsSCM extends SCM implements Serializable
         }
         finally
         {
-            dmSCM.logout();
+            dmSCM.logout(key);
         }
 
         return bChanged;
@@ -1194,20 +1202,21 @@ public class DimensionsSCM extends SCM implements Serializable
                         String xuser = (jobuser != null) ? jobuser : user;
                         String xpasswd = (jobPasswd != null) ? jobPasswd : passwd;
                         String xdatabase = (jobDatabase != null) ? jobDatabase : database;
-
+                        long key = -1;
                         String dmS = xserver + "-" + xuser + ":" + xdatabase;
                         Logger.Debug("Invoking serverCheck - " + dmS);
-                        if (!connectionCheck.login(xuser,
+                        key = connectionCheck.login(xuser,
                                                   xpasswd,
                                                   xdatabase,
-                                                  xserver))
+                                                  xserver);
+                        if (key<1)
                         {
                             error("Connection test failed");
                         }
                         else
                         {
                             ok("Connection test succeeded!");
-                            connectionCheck.logout();
+                            connectionCheck.logout(key);
                         }
                         return;
                     }

@@ -124,31 +124,34 @@ import com.serena.dmclient.api.DimensionsConnectionManager;
 import com.serena.dmclient.api.BulkOperator;
 import com.serena.dmclient.api.ItemRevisionHistoryRec;
 import com.serena.dmclient.api.ActionHistoryRec;
+import com.serena.dmclient.api.DimensionsRelatedObject;
+import com.serena.dmclient.api.Request;
 
 // Hudson imports
 import hudson.model.AbstractBuild;
-import com.serena.dmclient.api.Request;
 import hudson.model.AbstractProject;
-import com.serena.dmclient.api.DimensionsRelatedObject;
+import hudson.model.TaskListener;
 
 // General imports
 import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-
-import java.io.Serializable;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.text.ParseException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Serializable;
 import java.lang.IllegalArgumentException;
 import java.net.URLDecoder;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.Calendar;
-import java.util.Date;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.TimeZone;
+
 import java.text.Collator;
 
 import java.net.URI;
@@ -192,8 +195,40 @@ public class DimensionsAPI
     private String dateType = "edit";
     private boolean allRevisions = false;
     private int version = -1;
+    private HashMap conns = new HashMap();
+    private PrintStream listener;
 
-    private DimensionsConnection connection = null;
+    // Inline connection cache
+    class ConnectionCache {
+        private DimensionsConnection connection = null;
+
+        ConnectionCache(DimensionsConnection connection) {
+            this.connection = connection;
+        }
+
+        /*
+         * Gets the Dimensions connection.
+         * @return the connection
+         */
+        public final DimensionsConnection getCon() {
+            return this.connection;
+        }
+    }
+
+    /*
+     * Gets the logger
+     * @return the task logger
+     */
+    public final PrintStream getLogger() {
+        return this.listener;
+    }
+
+    /*
+     * Set the logger
+     */
+    public final void setLogger(PrintStream logger) {
+        this.listener = logger;
+    }
 
     /*
      * Gets the user ID for the connection.
@@ -266,9 +301,48 @@ public class DimensionsAPI
      * Gets the repository connection class
      * @return the SCM repository connection
      */
-    public final DimensionsConnection getCon() {
-        return this.connection;
+    public final DimensionsConnection getCon(long key) {
+        Logger.Debug("Looking for key "+key);
+        if (conns.containsKey(key)) {
+            ConnectionCache cc = (ConnectionCache)this.conns.get(key);
+            DimensionsConnection con = cc.getCon();
+            try {
+                DimensionsConnectionManager.unregisterThreadConnection();
+            } catch(Exception e) {
+            }
+            DimensionsConnectionManager.registerThreadConnection(con);
+            Logger.Debug("Found database");
+            return con;
+        }
+        Logger.Debug("Could not find database");
+        return null;
     }
+
+
+    /**
+     * Ping the server to see if it is alive
+     * @return a boolean
+     * @throws DimensionsNetworkException
+     */
+    public final boolean ping(long key)
+            throws DimensionsRuntimeException {
+
+        DimensionsConnection connection = getCon(key);
+        if (connection != null) {
+            try {
+                if (connection.getConnectionState(false) == DimensionsConnection.STATE_CONNECTED) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
 
     /**
      * Creates a Dimensions session using the supplied login credentials and
@@ -282,81 +356,76 @@ public class DimensionsAPI
      *            base database name
      * @param server
      *            hostname of the remote dimensions server
-     * @return a boolean
-     * @throws DimensionsNetworkException
+     * @return a long
+     * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final boolean login(String userID, String password,
+    public final long login(String userID, String password,
             String database, String server)
-            throws IllegalArgumentException, DimensionsRuntimeException
-    {
+            throws IllegalArgumentException, DimensionsRuntimeException {
 
-        if (connection == null)
-            connection = DimensionsConnectionManager.getThreadConnection();
+        DimensionsConnection connection = null;
+        long key = Calendar.getInstance().getTimeInMillis();
 
-        if (connection == null)
-        {
-            dmServer = server;
-            dmDb = database;
-            dmUser = userID;
-            dmPasswd = password;
+        dmServer = server;
+        dmDb = database;
+        dmUser = userID;
+        dmPasswd = password;
 
+        Logger.Debug("Checking Dimensions login parameters...");
 
-            Logger.Debug("Checking Dimensions login parameters...");
+        if (dmServer == null || dmServer.length() == 0 ||
+            dmDb == null || dmDb.length() == 0 ||
+            dmUser == null || dmUser.length() == 0 ||
+            dmPasswd  == null || dmPasswd.length() == 0)
+            throw new IllegalArgumentException("Invalid or not parameters have been specified");
 
-            if (dmServer == null || dmServer.length() == 0 ||
-                dmDb == null || dmDb.length() == 0 ||
-                dmUser == null || dmUser.length() == 0 ||
-                dmPasswd  == null || dmPasswd.length() == 0)
-                throw new IllegalArgumentException("Invalid or not parameters have been specified");
+        try {
+            // check if we need to pre-process the login details
+            String[] dbCompts = parseDatabaseString(dmDb);
+            dbName = dbCompts[0];
+            dbConn = dbCompts[1];
+            Logger.Debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dmDb);
 
-            try {
-                // check if we need to pre-process the login details
-                String[] dbCompts = parseDatabaseString(dmDb);
-                dbName = dbCompts[0];
-                dbConn = dbCompts[1];
-
-                Logger.Debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dmDb);
-
-                DimensionsConnectionDetails details = new DimensionsConnectionDetails();
-                details.setUsername(dmUser);
-                details.setPassword(dmPasswd);
-                details.setDbName(dbName);
-                details.setDbConn(dbConn);
-                details.setServer(dmServer);
-                Logger.Debug("Getting Dimensions connection...");
-                connection = DimensionsConnectionManager.getConnection(details);
-                if (connection!=null) {
-                    Logger.Debug("Registering connection...");
-                    DimensionsConnectionManager.registerThreadConnection(connection);
-                    Logger.Debug("Registered connection...");
-                }
-            } catch(Exception e) {
-                throw new DimensionsRuntimeException("Login to Dimensions failed - " + e.getMessage());
+            DimensionsConnectionDetails details = new DimensionsConnectionDetails();
+            details.setUsername(dmUser);
+            details.setPassword(dmPasswd);
+            details.setDbName(dbName);
+            details.setDbConn(dbConn);
+            details.setServer(dmServer);
+            Logger.Debug("Getting Dimensions connection...");
+            connection = DimensionsConnectionManager.getConnection(details);
+            if (connection!=null) {
+                Logger.Debug("Storing details for key "+key+"...");
+                conns.put(key, new ConnectionCache(connection));
             }
+
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException("Login to Dimensions failed - " + e.getMessage());
         }
-        return (connection != null);
+        if (conns.containsKey(key)) {
+            return key;
+        }
+        return -1;
     }
+
 
     /**
      * Disconnects from the Dimensions repository
      */
-    public final void logout()
-    {
+    public final void logout(long key) {
+
+        Logger.Debug("Currently have "+conns.size()+" connections in use...");
+        DimensionsConnection connection = getCon(key);
         if (connection != null) {
             try {
-                if (DimensionsConnectionManager.getThreadConnection() != null) {
-                    Logger.Debug("Unregistering connection...");
-                    DimensionsConnectionManager.unregisterThreadConnection();
-                }
                 Logger.Debug("Closing connection to Dimensions...");
                 connection.close();
             } catch (DimensionsNetworkException dne) {
-                /* do nothing */
             } catch (DimensionsRuntimeException dne) {
-                /* do nothing */
             }
+            this.conns.remove(key);
+            Logger.Debug("Now have "+conns.size()+" connections in use...");
         }
-        connection = null;
     }
 
 
@@ -414,6 +483,7 @@ public class DimensionsAPI
      *  Description:
      *      Has the repository had any changes made during a certain time?
      * Parameters:
+     *      @param final long key
      *      @param final String projectName
      *      @param final FilePath workspace
      *      @param final Calendar fromDate
@@ -423,7 +493,8 @@ public class DimensionsAPI
      *      @return boolean
      *-----------------------------------------------------------------
      */
-    public boolean hasRepositoryBeenUpdated(final String projectName,
+    public boolean hasRepositoryBeenUpdated(final long key,
+                               final String projectName,
                                final FilePath workspace,
                                final Calendar fromDate,
                                final Calendar toDate,
@@ -431,6 +502,7 @@ public class DimensionsAPI
                               throws IOException, InterruptedException
     {
         boolean bChanged = false;
+        DimensionsConnection connection = getCon(key);
 
         if (fromDate == null)
             return true;
@@ -440,7 +512,7 @@ public class DimensionsAPI
 
         try
         {
-            List items = calcRepositoryDiffs(projectName,null,null,workspace,fromDate,toDate, tz);
+            List items = calcRepositoryDiffs(key,projectName,null,null,workspace,fromDate,toDate, tz);
             if (items != null)
                 bChanged = (items.size() > 0);
         }
@@ -462,6 +534,7 @@ public class DimensionsAPI
      *  Description:
      *      Get a copy of the code
      * Parameters:
+     *      @param final long key
      *      @param final String projectName
      *      @param final FilePath projectDir
      *      @param final FilePath workspaceName
@@ -479,7 +552,8 @@ public class DimensionsAPI
      *      @return boolean
      *-----------------------------------------------------------------
      */
-    public boolean checkout(final String projectName,
+    public boolean checkout(final long key,
+                            final String projectName,
                             final FilePath projectDir,
                             final FilePath workspaceName,
                             final Calendar fromDate,
@@ -496,6 +570,8 @@ public class DimensionsAPI
     {
         boolean bRet = false;
 
+        DimensionsConnection connection = getCon(key);
+
         if (connection == null)
             throw new IOException("Not connected to an SCM repository");
 
@@ -504,7 +580,7 @@ public class DimensionsAPI
             if (version < 0) {
                 version = 2009;
                 // Get the server version
-                List inf = getCon().getObjectFactory().getServerVersion(2);
+                List inf = connection.getObjectFactory().getServerVersion(2);
                 if (inf == null)
                     Logger.Debug("Detection of server information failed");
 
@@ -546,7 +622,7 @@ public class DimensionsAPI
             if (version == 10)
                 coCmd = "DOWNLOAD ";
 
-            List items = calcRepositoryDiffs(projectName,baseline,requests,projectDir,fromDate,toDate,tz);
+            List items = calcRepositoryDiffs(key,projectName,baseline,requests,projectDir,fromDate,toDate,tz);
             if (items != null || doFullUpdate)
             {
                 File logFile = new File("a");
@@ -605,6 +681,8 @@ public class DimensionsAPI
                 if (doRevert)
                     cmd += " /OVERWRITE";
 
+                getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
+                getLogger().flush();
                 DimensionsResult res = run(connection,cmd);
                 if (res != null )
                 {
@@ -613,6 +691,8 @@ public class DimensionsAPI
                     Logger.Debug(outputStr);
 
                     if (items != null) {
+                        getLogger().println("[DIMENSIONS] Calculating change set for directory '"+((projDir!=null) ? projDir : "/")+"'...");
+                        getLogger().flush();
                         if (tmpFile != null)
                             tmpFile.delete();
                         // Process the changesets...
@@ -656,6 +736,7 @@ public class DimensionsAPI
      *  Description:
      *      Calculate any repository changes made during a certain time
      * Parameters:
+     *      @param final long key
      *      @param final String projectName
      *      @param final String baselineName
      *      @param final String requests
@@ -667,7 +748,8 @@ public class DimensionsAPI
      *      @return boolean
      *-----------------------------------------------------------------
      */
-    private List calcRepositoryDiffs(final String projectName,
+    private List calcRepositoryDiffs(final long key,
+                               final String projectName,
                                final String baselineName,
                                final String requests,
                                final FilePath workspace,
@@ -676,6 +758,8 @@ public class DimensionsAPI
                                final TimeZone tz)
                               throws IOException, InterruptedException
     {
+        DimensionsConnection connection = getCon(key);
+
         if (connection == null)
             throw new IOException("Not connected to an SCM repository");
 
@@ -740,17 +824,17 @@ public class DimensionsAPI
                             throw new IOException("Could not process request \""+requestObj.getName()+"\" children in repository");
 
                         Logger.Debug("Request has "+requestList.size()+" elements to process");
-                        Project projectObj = getCon().getObjectFactory().getProject(projName);
+                        Project projectObj = connection.getObjectFactory().getProject(projName);
                         for (int i=0; i<requestList.size(); i++) {
                             Request req = (Request)requestList.get(i);
                             Logger.Debug("Request "+i+" is \"" + req.getName() + "\"");
-                            if (!queryItems(getCon(), req, "/", items, filter, projectObj, true, allRevisions))
+                            if (!queryItems(connection, req, "/", items, filter, projectObj, true, allRevisions))
                                 throw new IOException("Could not process items for request \""+req.getName()+"\"");
                         }
 
                         if (items != null) {
                             Logger.Debug("Request has "+items.size()+" items to process");
-                            BulkOperator bo = getCon().getObjectFactory().getBulkOperator(items);
+                            BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
                             bo.queryAttribute(attrs);
                         }
                     }
@@ -769,10 +853,10 @@ public class DimensionsAPI
                 if (baselineObjects.size() == 0) throw new IOException("Could not find baseline \""+baselineName+"\" in repository");
                 if (baselineObjects.size() > 1) throw new IOException("Found more than one baseline named \""+baselineName+"\" in repository");
 
-                items = queryItems(getCon(), baselineObjects.get(0), workspace.getRemote(), filter, attrs, true, !allRevisions);
+                items = queryItems(connection, baselineObjects.get(0), workspace.getRemote(), filter, attrs, true, !allRevisions);
             } else {
-                Project projectObj = getCon().getObjectFactory().getProject(projName);
-                items = queryItems(getCon(), projectObj, workspace.getRemote(), filter, attrs, true, !allRevisions);
+                Project projectObj = connection.getObjectFactory().getProject(projName);
+                items = queryItems(connection, projectObj, workspace.getRemote(), filter, attrs, true, !allRevisions);
             }
             return items;
         }
@@ -785,14 +869,18 @@ public class DimensionsAPI
 
     /**
      * Lock a project
-     *
+     * @param long
      * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult lockProject(String projectId)
+    public DimensionsResult lockProject(long key, String projectId)
                             throws DimensionsRuntimeException
     {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
         try {
             String cmd = "LCK WORKSET ";
             if (projectId != null) {
@@ -812,13 +900,18 @@ public class DimensionsAPI
     /**
      * UnLock a project
      *
+     * @param long
      * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult unlockProject(String projectId)
+    public DimensionsResult unlockProject(long key, String projectId)
                             throws DimensionsRuntimeException
     {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
         try {
             String cmd = "ULCK WORKSET ";
             if (projectId != null) {
@@ -839,6 +932,7 @@ public class DimensionsAPI
     /**
      * Build a baseline
      *
+     * @param long
      * @param String area
      * @param String projectId
      * @param boolean batch
@@ -852,13 +946,17 @@ public class DimensionsAPI
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult buildBaseline(String area, String projectId, boolean batch,
+    public DimensionsResult buildBaseline(long key, String area, String projectId, boolean batch,
                                           boolean buildClean, String buildConfig,
                                           String options, boolean capture,
                                           String requests, String targets,
                                           AbstractBuild build)
                             throws DimensionsRuntimeException
     {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
         try {
             String cmd = "BLDB ";
             if (projectId != null && build != null) {
@@ -919,6 +1017,7 @@ public class DimensionsAPI
     /**
      * Upload files
      *
+     * @param long
      * @param FilePath
      * @param String
      * @param File
@@ -927,9 +1026,13 @@ public class DimensionsAPI
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult UploadFiles(FilePath rootDir, String projectId, File cmdFile, AbstractBuild build, String requests)
+    public DimensionsResult UploadFiles(long key, FilePath rootDir, String projectId, File cmdFile, AbstractBuild build, String requests)
                             throws DimensionsRuntimeException
     {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
         try {
             String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
             if (version == 10)
@@ -962,14 +1065,19 @@ public class DimensionsAPI
     /**
      * Create a project tag
      *
+     * @param long
      * @param String
      * @param AbstractBuild
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult createBaseline(String projectId, AbstractBuild build)
+    public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build)
                             throws DimensionsRuntimeException
     {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
         try {
             String cmd = "CBL ";
             if (projectId != null && build != null) {
@@ -991,15 +1099,20 @@ public class DimensionsAPI
     /**
      * Deploy a baseline
      *
+     * @param long
      * @param String
      * @param String
      * @param AbstractBuild
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult deployBaseline(String projectId, AbstractBuild build, String state)
+    public DimensionsResult deployBaseline(long key, String projectId, AbstractBuild build, String state)
                             throws DimensionsRuntimeException
     {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
         try {
             String cmd = "DPB ";
             if (projectId != null && build != null) {
@@ -1024,15 +1137,20 @@ public class DimensionsAPI
     /**
      * Action a baseline
      *
+     * @param long
      * @param String
      * @param String
      * @param AbstractBuild
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult actionBaseline(String projectId, AbstractBuild build, String state)
+    public DimensionsResult actionBaseline(long key, String projectId, AbstractBuild build, String state)
                             throws DimensionsRuntimeException
     {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
         try {
             String cmd = "ABL ";
             if (projectId != null && build != null) {
@@ -1163,6 +1281,7 @@ public class DimensionsAPI
     private static List getSortedItemList(List items)
                             throws DimensionsRuntimeException
     {
+
         Collections.sort(items, new Comparator()
         {
             public int compare(Object oa1, Object oa2)
@@ -1205,17 +1324,20 @@ public class DimensionsAPI
      */
     private static void setCurrentProject(DimensionsConnection connection,
             String projectName) {
+
         connection.getObjectFactory().setCurrentProject(projectName, false, "",
                 "", null, true);
     }
 
     private static Project getCurrentProject(DimensionsConnection connection) {
+
         return connection.getObjectFactory().getCurrentUser()
                 .getCurrentProject();
     }
 
 
     static int[] getItemFileAttributes(boolean isDirectory) {
+
         if (isDirectory) {
             final int[] attrs = { SystemAttributes.OBJECT_SPEC,
                     SystemAttributes.PRODUCT_NAME, SystemAttributes.OBJECT_ID,
@@ -1252,6 +1374,7 @@ public class DimensionsAPI
 
     // URL encode a webclient path + spec for opening
     private static String constructURL(String spec, String url, String dsn, String db) {
+
         String urlString = "";
         if (spec != null && spec.length() > 0 &&
             url != null && url.length() > 0) {
@@ -1285,6 +1408,7 @@ public class DimensionsAPI
 
     // URL encode a webclient path + spec for opening
     private static String constructRequestURL(String spec, String url, String dsn, String db) {
+
         String urlString = "";
         if (spec != null && spec.length() > 0 &&
             url != null && url.length() > 0) {
@@ -1337,6 +1461,7 @@ public class DimensionsAPI
     // find items given a directory spec
     static List queryItems(DimensionsConnection connection, Project srcProject,
             String srcPath, Filter filter, int[] attrs, boolean isRecursive, boolean isLatest) {
+
         // check srcPath validity check srcPath trailing slash do query
         if (srcPath == null) {
             throw new IllegalArgumentException(MISSING_SOURCE_PATH);
@@ -1388,6 +1513,7 @@ public class DimensionsAPI
     // find items given a baseline/directory spec
     static List queryItems(DimensionsConnection connection, Baseline srcBaseline,
             String srcPath, Filter filter, int[] attrs, boolean isRecursive, boolean isLatest) {
+
         // check srcPath validity check srcPath trailing slash do query
         if (srcPath == null) {
             throw new IllegalArgumentException(MISSING_SOURCE_PATH);
@@ -1439,6 +1565,7 @@ public class DimensionsAPI
     // find items given a request/directory spec
     static boolean queryItems(DimensionsConnection connection, Request request,
             String srcPath, List items, Filter filter, Project srcProject, boolean isRecursive, boolean isLatest) {
+
         // check srcPath validity check srcPath trailing slash do query
         if (srcPath == null) {
             throw new IllegalArgumentException(MISSING_SOURCE_PATH);
@@ -1506,6 +1633,7 @@ public class DimensionsAPI
      private boolean getDmChildRequests(Request request, List requestList)
                             throws DimensionsRuntimeException {
         try {
+
             request.flushRelatedObjects(Request.class, true);
             request.queryChildRequests(null);
             List rels = request.getChildRequests(null);
@@ -1552,6 +1680,7 @@ public class DimensionsAPI
      */
     static DimensionsResult run(DimensionsConnection connection, String cmd)
             throws IllegalArgumentException, DimensionsRuntimeException {
+
         if (cmd == null || cmd.equals("")) { //$NON-NLS-1$
             throw new IllegalArgumentException(NO_COMMAND_LINE);
         }
@@ -1582,6 +1711,7 @@ public class DimensionsAPI
      *         {@link com.serena.dmclient.api.SystemAttributes}
      */
     static int getDateTypeAttribute(String dateType) {
+
         int ret = SystemAttributes.CREATION_DATE;
         if (dateType != null) {
             if (dateType.equalsIgnoreCase("edit")) { //$NON-NLS-1$
@@ -1599,11 +1729,13 @@ public class DimensionsAPI
 
     // database times are in Oracle format, in a specified timezone
     static String formatDatabaseDate(Date date, TimeZone timeZone) {
+
         return (timeZone == null) ? DateUtils.format(date) : DateUtils.format(date, timeZone);
     }
 
     // database times are in Oracle format, in a specified timezone
     static Date parseDatabaseDate(String date, TimeZone timeZone) {
+
         return (timeZone == null) ? DateUtils.parse(date) : DateUtils.parse(date, timeZone);
     }
 }

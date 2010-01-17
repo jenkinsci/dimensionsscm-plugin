@@ -271,6 +271,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws IOException, InterruptedException {
+        long key=-1;
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         try {
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
@@ -319,10 +320,11 @@ public class ArtifactUploader extends Notifier implements Serializable {
                     }
 
                     Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
-                    if (scm.getAPI().login(scm.getJobUserName(),
+                    key = scm.getAPI().login(scm.getJobUserName(),
                                            scm.getJobPasswd(),
                                            scm.getJobDatabase(),
-                                           scm.getJobServer()))
+                                           scm.getJobServer());
+                    if (key>0)
                     {
                         VariableResolver<String> myResolver = build.getBuildVariableResolver();
                         String requests = myResolver.resolve("DM_TARGET_REQUEST");
@@ -332,7 +334,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                             requests = requests.toUpperCase();
                         }
 
-                        DimensionsResult res = scm.getAPI().UploadFiles(wd,scm.getProject(),tmpFile,build,requests);
+                        DimensionsResult res = scm.getAPI().UploadFiles(key,wd,scm.getProject(),tmpFile,build,requests);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
                             listener.getLogger().flush();
@@ -359,7 +361,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
         finally
         {
             if (scm != null)
-                scm.getAPI().logout();
+                scm.getAPI().logout(key);
         }
         return true;
     }

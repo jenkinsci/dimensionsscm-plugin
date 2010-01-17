@@ -1,6 +1,13 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <f:block>
       <table width="100%" style="border:none" tooltip="Advanced options that maybe used on the tagged baseline">
+          <f:optionalBlock name="dimensionsbuildnotifier.canBaselineDeploy" title="Automatically deploy the baseline"
+                               checked="${instance.canBaselineDeploy}" help="/plugin/dimensionsscm/candeploy.html">
+            <f:entry title="Stage" help="/plugin/dimensionsscm/stage.html">
+             <f:textbox name="dimensionsbuildnotifier.deployState" value="${instance.deployState}" />
+            </f:entry>
+          </f:optionalBlock>
+
            <f:optionalBlock name="dimensionsbuildnotifier.canBaselineBuild" title="Automatically build the baseline"
                                checked="${instance.canBaselineBuild}" help="/plugin/dimensionsscm/canbuild.html">
             <f:entry title="Area" help="/plugin/dimensionsscm/area.html">
@@ -24,13 +31,6 @@
             </f:entry>
             <f:entry title="${%Capture build outputs}" help="/plugin/dimensionsscm/capture.html">
             <f:checkbox name="dimensionsbuildnotifier.capture" default="false" checked="${instance.capture}"/>
-            </f:entry>
-          </f:optionalBlock>
-
-          <f:optionalBlock name="dimensionsbuildnotifier.canBaselineDeploy" title="Automatically deploy the baseline"
-                               checked="${instance.canBaselineDeploy}" help="/plugin/dimensionsscm/candeploy.html">
-            <f:entry title="Stage" help="/plugin/dimensionsscm/stage.html">
-             <f:textbox name="dimensionsbuildnotifier.deployState" value="${instance.deployState}" />
             </f:entry>
           </f:optionalBlock>
 
