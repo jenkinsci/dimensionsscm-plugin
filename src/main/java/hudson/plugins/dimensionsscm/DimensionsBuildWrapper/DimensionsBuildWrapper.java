@@ -285,6 +285,11 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                             listener.getLogger().flush();
                         }
                     }
+                    else {
+                        listener.fatalError("[DIMENSIONS] Login to Dimensions failed.");
+                        build.setResult(Result.FAILURE);
+                        return false;
+                    }
                 } catch(Exception e) {
                     listener.fatalError("Unable to unlock Dimensions project - " + e.getMessage());
                     build.setResult(Result.FAILURE);

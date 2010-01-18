@@ -373,6 +373,11 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         }
                     }
                 }
+                else {
+                    listener.fatalError("[DIMENSIONS] Login to Dimensions failed.");
+                    build.setResult(Result.FAILURE);
+                    return false;
+                }
             }
         } catch(Exception e) {
             listener.fatalError("Unable to tag build in Dimensions - " + e.getMessage());

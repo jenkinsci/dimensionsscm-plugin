@@ -346,6 +346,13 @@ public class ArtifactUploader extends Notifier implements Serializable {
                             listener.getLogger().flush();
                         }
                     }
+                    else {
+                        if (tmpFile != null)
+                            tmpFile.delete();
+                        listener.fatalError("[DIMENSIONS] Login to Dimensions failed.");
+                        build.setResult(Result.FAILURE);
+                        return false;
+                    }
                     if (tmpFile != null)
                         tmpFile.delete();
                 } else {

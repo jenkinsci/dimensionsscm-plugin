@@ -94,47 +94,194 @@ package hudson.plugins.dimensionsscm;
 
 // Dimensions imports
 import hudson.plugins.dimensionsscm.DimensionsAPI;
+import hudson.plugins.dimensionsscm.DimensionsSCM;
 import hudson.plugins.dimensionsscm.Logger;
+import com.serena.dmclient.api.DimensionsResult;
 
 // Hudson imports
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.util.FormFieldValidator;
+import hudson.Util;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.model.Build;
 import hudson.model.BuildListener;
+import hudson.model.Descriptor.FormException;
 import hudson.model.Descriptor;
+import hudson.model.Result;
+import hudson.model.TaskListener;
+import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import net.sf.json.JSONObject;
+import hudson.tasks.Notifier;
+import hudson.tasks.Publisher;
+import hudson.util.FormFieldValidator;
+import hudson.util.FormValidation;
+import hudson.util.VariableResolver;
+
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
-import org.kohsuke.stapler.QueryParameter;
 
-import javax.servlet.ServletException;
+// General imports
 import java.io.IOException;
+import java.io.Serializable;
+import javax.servlet.ServletException;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
 
 public class DimensionsBuilder extends Builder {
 
-    private String name = null;
+    private static DimensionsSCM scm = null;
+
+    private boolean canBaselineBuild = false;
+
+    private String area = null;
+    private String buildConfig = null;
+    private String buildOptions = null;
+    private String buildTargets = null;
+
+    private boolean batch = false;
+    private boolean buildClean = false;
+    private boolean capture = false;
+
+    /*
+     * Gets the batch .
+     * @return boolean
+     */
+    public boolean isProjectBatch() {
+        return this.batch;
+    }
+
+    /*
+     * Gets the buildClean .
+     * @return boolean
+     */
+    public boolean isProjectClean() {
+        return this.buildClean;
+    }
+
+    /*
+     * Gets the capture .
+     * @return boolean
+     */
+    public boolean isProjectCapture() {
+        return this.capture;
+    }
+
+    /*
+     * Gets the area .
+     * @return String
+     */
+    public String getProjectArea() {
+        return this.area;
+    }
+
+    /*
+     * Gets the build config .
+     * @return String
+     */
+    public String getProjectConfig() {
+        return this.buildConfig;
+    }
+
+    /*
+     * Gets the build options .
+     * @return String
+     */
+    public String getProjectOptions() {
+        return this.buildOptions;
+    }
 
 
-    @DataBoundConstructor
-    public DimensionsBuilder(String name) {
-        this.name = name;
+    /*
+     * Gets the build targets .
+     * @return String
+     */
+    public String getProjectTargets() {
+        return this.buildTargets;
     }
 
     /**
-     * We'll use this from the <tt>config.jelly</tt>.
+     * Default constructor.
      */
-    public String getName() {
-        return name;
+    public DimensionsBuilder(String area, String buildConfig,
+                             String buildOptions, String buildTargets,
+                             boolean batch, boolean buildClean, boolean capture) {
+        this.area = area;
+        this.buildConfig = buildConfig;
+        this.buildOptions = buildOptions;
+        this.buildTargets = buildTargets;
+
+        this.batch = batch;
+        this.buildClean = buildClean;
+        this.capture = capture;
     }
 
-    public boolean perform(Build build, Launcher launcher, BuildListener listener) {
-        // this is where you 'build' the project
-        // since this is a dummy, we just say 'hello world' and call that a build
-        Logger.Debug("Invoking build callout " + this.getClass().getName());
 
+    public boolean perform(Build build, Launcher launcher, BuildListener listener) {
+        Logger.Debug("Invoking perform callout " + this.getClass().getName());
+        long key = -1;
+        try {
+            if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
+                listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
+                build.setResult(Result.FAILURE);
+                throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
+            }
+            if (build.getResult() == Result.SUCCESS) {
+                if (scm == null)
+                    scm = (DimensionsSCM)build.getProject().getScm();
+                Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+                key = scm.getAPI().login(scm.getJobUserName(),
+                                       scm.getJobPasswd(),
+                                       scm.getJobDatabase(),
+                                       scm.getJobServer());
+                if (key>0)
+                {
+                    VariableResolver<String> myResolver = build.getBuildVariableResolver();
+                    String requests = myResolver.resolve("DM_TARGET_REQUEST");
+
+                    if (requests != null) {
+                        requests = requests.replaceAll(" ","");
+                        requests = requests.toUpperCase();
+                    }
+
+                    // This will active the build baseline functionality
+                    {
+                        listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
+                        listener.getLogger().flush();
+                        DimensionsResult res = scm.getAPI().buildProject(key,area,scm.getProject(),batch,buildClean,buildConfig,buildOptions,
+                                                                          capture,requests,buildTargets,build);
+                        if (res==null) {
+                            listener.getLogger().println("[DIMENSIONS] The project failed to be built in Dimensions");
+                            listener.getLogger().flush();
+                            build.setResult(Result.FAILURE);
+                        }
+                        else {
+                            listener.getLogger().println("[DIMENSIONS] Build step was successfully run in Dimensions");
+                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
+                            listener.getLogger().flush();
+                        }
+                    }
+                }
+                else {
+                    listener.fatalError("[DIMENSIONS] Login to Dimensions failed.");
+                    build.setResult(Result.FAILURE);
+                    return false;
+                }
+            }
+        } catch(Exception e) {
+            listener.fatalError("Unable to tag build in Dimensions - " + e.getMessage());
+            build.setResult(Result.FAILURE);
+            return false;
+        }
+        finally
+        {
+            if (scm != null)
+                scm.getAPI().logout(key);
+        }
         return true;
     }
 
@@ -186,11 +333,42 @@ public class DimensionsBuilder extends Builder {
             }.process();
         }
 
+        @Override
+        public Builder newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            // Get variables and then construct a new object
+            Boolean batch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectBatch")));
+            Boolean buildClean = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectClean")));
+            Boolean capture = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectCapture")));
+
+            String area = req.getParameter("dimensionsbuilder.projectArea");
+            String buildConfig = req.getParameter("dimensionsbuilder.projectConfig");
+            String buildOptions = req.getParameter("dimensionsbuilder.projectOptions");
+            String buildTargets = req.getParameter("dimensionsbuilder.projectTargets");
+
+            if (area != null)
+                area = Util.fixNull(req.getParameter("dimensionsbuilder.projectArea").trim());
+            if (buildConfig != null)
+                buildConfig = Util.fixNull(req.getParameter("dimensionsbuilder.projectConfig").trim());
+            if (buildOptions != null)
+                buildOptions = Util.fixNull(req.getParameter("dimensionsbuilder.projectOptions").trim());
+            if (buildTargets != null)
+                buildTargets = Util.fixNull(req.getParameter("dimensionsbuilder.projectTargets").trim());
+
+
+            DimensionsBuilder notif = new DimensionsBuilder(
+                                                        area,buildConfig,
+                                                        buildOptions,buildTargets,
+                                                        batch,buildClean,capture);
+
+            return notif;
+        }
+
+
         /**
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "Dimensions";
+            return "Execute Dimensions Build";
         }
 
         public boolean configure(StaplerRequest req, JSONObject o) throws FormException {

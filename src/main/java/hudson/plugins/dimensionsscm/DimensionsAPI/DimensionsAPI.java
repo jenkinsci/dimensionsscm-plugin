@@ -1013,6 +1013,89 @@ public class DimensionsAPI
         }
     }
 
+    /**
+     * Build a project
+     *
+     * @param long
+     * @param String area
+     * @param String projectId
+     * @param boolean batch
+     * @param boolean buildClean
+     * @param String buildConfig
+     * @param String options
+     * @param boolean capture
+     * @param String requests
+     * @param String targets
+     * @param AbstractBuild build
+     * @return DimensionsResult
+     * @throws DimensionsRuntimeException
+     */
+    public DimensionsResult buildProject(long key, String area, String projectId, boolean batch,
+                                          boolean buildClean, String buildConfig,
+                                          String options, boolean capture,
+                                          String requests, String targets,
+                                          AbstractBuild build)
+                            throws DimensionsRuntimeException
+    {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
+        try {
+            String cmd = "BLD ";
+            if (projectId != null && build != null) {
+                cmd += "\""+projectId+"\"";
+                if (area != null && area.length() > 0) {
+                    cmd += " /AREA=\""+area+"\"";
+                }
+                if (batch) {
+                    cmd += " /NOWAIT";
+                } else {
+                    cmd += " /WAIT";
+                }
+                if (capture) {
+                    cmd += " /CAPTURE";
+                } else {
+                    cmd += " /NOCAPTURE";
+                }
+                if (buildClean) {
+                    cmd += " /BUILD_CLEAN";
+                }
+                if (buildConfig != null && buildConfig.length() > 0) {
+                    cmd += " /BUILD_CONFIG=\""+buildConfig+"\"";
+                }
+                if (options != null && options.length() > 0) {
+                    if (options.indexOf(",")==0) {
+                        cmd += "/BUILD_OPTIONS=(\"" + options + "\") ";
+                    } else {
+                        cmd += "/BUILD_OPTIONS=("+ options +") ";
+                    }
+                }
+                if (requests != null && requests.length() > 0) {
+                    if (requests.indexOf(",")==0) {
+                        cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+                    } else {
+                        cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                    }
+                }
+                if (targets != null && targets.length() > 0) {
+                    if (targets.indexOf(",")==0) {
+                        cmd += "/TARGETS=(\"" + targets + "\") ";
+                    } else {
+                        cmd += "/TARGETS=("+ targets +") ";
+                    }
+                }
+                DimensionsResult res = run(connection,cmd);
+                if (res != null ) {
+                    Logger.Debug("Building project - "+res.getMessage());
+                    return res;
+                }
+            }
+            return null;
+        } catch(Exception e) {
+            throw new DimensionsRuntimeException(e.getMessage());
+        }
+    }
 
     /**
      * Upload files
