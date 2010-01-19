@@ -13,7 +13,18 @@
         <f:entry title="Build Targets" help="/plugin/dimensionsscm/buildTargets.html">
          <f:textbox name="dimensionsbuilder.projectTargets" value="${instance.projectTargets}" />
         </f:entry>
+        <f:entry title="Build Stage" help="/plugin/dimensionsscm/buildStage.html">
+         <f:textbox name="dimensionsbuilder.projectStage" value="${instance.projectStage}" />
+        </f:entry>
 
+		<f:entry title="Area Type" field="projectType" 
+				help="/plugin/dimensionsscm/buildType.html">
+            <select class="setting-input" name="dimensionsbuilder.projectType">
+                <f:option value="WORK" selected="${'WORK'==instance.projectType}">Work</f:option>
+                <f:option value="DEPLOYMENT" selected="${'DEPLOYMENT'==instance.projectType}">Deployment</f:option>
+            </select>
+        </f:entry> 
+		
         <f:entry title="${%Run the build in background}" help="/plugin/dimensionsscm/batch.html">
         <f:checkbox name="dimensionsbuilder.projectBatch" default="true" checked="${instance.projectBatch}"/>
         </f:entry>
@@ -23,6 +34,17 @@
         <f:entry title="${%Capture build outputs}" help="/plugin/dimensionsscm/capture.html">
         <f:checkbox name="dimensionsbuilder.projectCapture" default="false" checked="${instance.projectCapture}"/>
         </f:entry>
+
+        <f:entry title="${%Audit the build area}" help="/plugin/dimensionsscm/audit.html">
+        <f:checkbox name="dimensionsbuilder.projectAudit" default="false" checked="${instance.projectAudit}"/>
+        </f:entry>
+        <f:entry title="${%Populate the build area}" help="/plugin/dimensionsscm/populate.html">
+        <f:checkbox name="dimensionsbuilder.projectPopulate" default="false" checked="${instance.projectPopulate}"/>
+        </f:entry>
+        <f:entry title="${%Touch files}" help="/plugin/dimensionsscm/touch.html">
+        <f:checkbox name="dimensionsbuilder.projectTouch" default="false" checked="${instance.projectTouch}"/>
+        </f:entry>
+
       </table>
     </f:block>
 </j:jelly>

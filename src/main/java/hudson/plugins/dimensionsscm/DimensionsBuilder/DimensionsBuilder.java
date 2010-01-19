@@ -136,17 +136,45 @@ public class DimensionsBuilder extends Builder {
 
     private static DimensionsSCM scm = null;
 
-    private boolean canBaselineBuild = false;
-
-    private String area = null;
-    private String buildConfig = null;
-    private String buildOptions = null;
-    private String buildTargets = null;
-
+    private String projectArea = null;
+    private String projectConfig = null;
+    private String projectOptions = null;
+    private String projectTargets = null;
+	private String projectType = null;
+	private String projectStage = null;
+	
     private boolean batch = false;
     private boolean buildClean = false;
     private boolean capture = false;
 
+    private boolean audit = false;
+    private boolean populate = false;
+    private boolean touch = false;
+
+    /*
+     * Gets the audit .
+     * @return boolean
+     */
+    public boolean isProjectAudit() {
+        return this.audit;
+    }
+
+	/*
+     * Gets the populate .
+     * @return boolean
+     */
+    public boolean isProjectPopulate() {
+        return this.populate;
+    }
+
+	/*
+     * Gets the touch .
+     * @return boolean
+     */
+    public boolean isProjectTouch() {
+        return this.touch;
+    }
+	
     /*
      * Gets the batch .
      * @return boolean
@@ -172,11 +200,27 @@ public class DimensionsBuilder extends Builder {
     }
 
     /*
+     * Gets the project type .
+     * @return String
+     */
+    public String getProjectType() {
+        return this.projectType;
+    }
+
+	/*
+     * Gets the project stage .
+     * @return String
+     */
+    public String getProjectStage() {
+        return this.projectStage;
+    }
+	
+    /*
      * Gets the area .
      * @return String
      */
     public String getProjectArea() {
-        return this.area;
+        return this.projectArea;
     }
 
     /*
@@ -184,7 +228,7 @@ public class DimensionsBuilder extends Builder {
      * @return String
      */
     public String getProjectConfig() {
-        return this.buildConfig;
+        return this.projectConfig;
     }
 
     /*
@@ -192,7 +236,7 @@ public class DimensionsBuilder extends Builder {
      * @return String
      */
     public String getProjectOptions() {
-        return this.buildOptions;
+        return this.projectOptions;
     }
 
 
@@ -201,7 +245,7 @@ public class DimensionsBuilder extends Builder {
      * @return String
      */
     public String getProjectTargets() {
-        return this.buildTargets;
+        return this.projectTargets;
     }
 
     /**
@@ -209,15 +253,21 @@ public class DimensionsBuilder extends Builder {
      */
     public DimensionsBuilder(String area, String buildConfig,
                              String buildOptions, String buildTargets,
-                             boolean batch, boolean buildClean, boolean capture) {
-        this.area = area;
-        this.buildConfig = buildConfig;
-        this.buildOptions = buildOptions;
-        this.buildTargets = buildTargets;
-
+							 String buildType, String buildStage,
+                             boolean batch, boolean buildClean, boolean capture,
+							 boolean audit, boolean populate, boolean touch) {
+        this.projectArea = area;
+        this.projectConfig = buildConfig;
+        this.projectOptions = buildOptions;
+        this.projectTargets = buildTargets;
+		this.projectType = buildType;
+		this.projectStage = buildStage;
         this.batch = batch;
         this.buildClean = buildClean;
         this.capture = capture;
+		this.audit = audit;
+		this.populate = populate;
+		this.touch = touch;
     }
 
 
@@ -252,8 +302,8 @@ public class DimensionsBuilder extends Builder {
                     {
                         listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().buildProject(key,area,scm.getProject(),batch,buildClean,buildConfig,buildOptions,
-                                                                          capture,requests,buildTargets,build);
+                        DimensionsResult res = scm.getAPI().buildProject(key,projectArea,scm.getProject(),batch,buildClean,projectConfig,projectOptions,
+                                                                          capture,requests,projectTargets,build);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The project failed to be built in Dimensions");
                             listener.getLogger().flush();
@@ -340,10 +390,16 @@ public class DimensionsBuilder extends Builder {
             Boolean buildClean = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectClean")));
             Boolean capture = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectCapture")));
 
+			Boolean audit = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectAudit")));
+            Boolean populate = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectPopulate")));
+            Boolean touch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectTouch")));
+			
             String area = req.getParameter("dimensionsbuilder.projectArea");
             String buildConfig = req.getParameter("dimensionsbuilder.projectConfig");
             String buildOptions = req.getParameter("dimensionsbuilder.projectOptions");
             String buildTargets = req.getParameter("dimensionsbuilder.projectTargets");
+            String buildType = req.getParameter("dimensionsbuilder.projectType");
+            String buildStage = req.getParameter("dimensionsbuilder.projectStage");
 
             if (area != null)
                 area = Util.fixNull(req.getParameter("dimensionsbuilder.projectArea").trim());
@@ -353,12 +409,18 @@ public class DimensionsBuilder extends Builder {
                 buildOptions = Util.fixNull(req.getParameter("dimensionsbuilder.projectOptions").trim());
             if (buildTargets != null)
                 buildTargets = Util.fixNull(req.getParameter("dimensionsbuilder.projectTargets").trim());
+            if (buildType != null)
+                buildType = Util.fixNull(req.getParameter("dimensionsbuilder.projectType").trim());
+            if (buildStage != null)
+                buildStage = Util.fixNull(req.getParameter("dimensionsbuilder.projectStage").trim());
 
 
             DimensionsBuilder notif = new DimensionsBuilder(
                                                         area,buildConfig,
-                                                        buildOptions,buildTargets,
-                                                        batch,buildClean,capture);
+                                                        buildOptions,buildTargets,buildType,
+														buildStage,
+                                                        batch,buildClean,capture,
+													    audit,populate,touch);
 
             return notif;
         }
