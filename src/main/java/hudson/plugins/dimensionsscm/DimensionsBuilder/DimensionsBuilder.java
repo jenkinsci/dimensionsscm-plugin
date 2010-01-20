@@ -140,9 +140,9 @@ public class DimensionsBuilder extends Builder {
     private String projectConfig = null;
     private String projectOptions = null;
     private String projectTargets = null;
-	private String projectType = null;
-	private String projectStage = null;
-	
+    private String projectType = null;
+    private String projectStage = null;
+
     private boolean batch = false;
     private boolean buildClean = false;
     private boolean capture = false;
@@ -159,7 +159,7 @@ public class DimensionsBuilder extends Builder {
         return this.audit;
     }
 
-	/*
+    /*
      * Gets the populate .
      * @return boolean
      */
@@ -167,14 +167,14 @@ public class DimensionsBuilder extends Builder {
         return this.populate;
     }
 
-	/*
+    /*
      * Gets the touch .
      * @return boolean
      */
     public boolean isProjectTouch() {
         return this.touch;
     }
-	
+
     /*
      * Gets the batch .
      * @return boolean
@@ -207,14 +207,14 @@ public class DimensionsBuilder extends Builder {
         return this.projectType;
     }
 
-	/*
+    /*
      * Gets the project stage .
      * @return String
      */
     public String getProjectStage() {
         return this.projectStage;
     }
-	
+
     /*
      * Gets the area .
      * @return String
@@ -253,21 +253,21 @@ public class DimensionsBuilder extends Builder {
      */
     public DimensionsBuilder(String area, String buildConfig,
                              String buildOptions, String buildTargets,
-							 String buildType, String buildStage,
+                             String buildType, String buildStage,
                              boolean batch, boolean buildClean, boolean capture,
-							 boolean audit, boolean populate, boolean touch) {
+                             boolean audit, boolean populate, boolean touch) {
         this.projectArea = area;
         this.projectConfig = buildConfig;
         this.projectOptions = buildOptions;
         this.projectTargets = buildTargets;
-		this.projectType = buildType;
-		this.projectStage = buildStage;
+        this.projectType = buildType;
+        this.projectStage = buildStage;
         this.batch = batch;
         this.buildClean = buildClean;
         this.capture = capture;
-		this.audit = audit;
-		this.populate = populate;
-		this.touch = touch;
+        this.audit = audit;
+        this.populate = populate;
+        this.touch = touch;
     }
 
 
@@ -302,8 +302,14 @@ public class DimensionsBuilder extends Builder {
                     {
                         listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().buildProject(key,projectArea,scm.getProject(),batch,buildClean,projectConfig,projectOptions,
-                                                                          capture,requests,projectTargets,build);
+                        DimensionsResult res = scm.getAPI().buildProject(key,projectArea,scm.getProject(),
+                                                                         batch,buildClean,projectConfig,
+                                                                         projectOptions,
+                                                                         capture,requests,
+                                                                         projectTargets,
+                                                                         projectStage, projectType,
+                                                                         audit, populate,
+                                                                         touch, build);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The project failed to be built in Dimensions");
                             listener.getLogger().flush();
@@ -390,10 +396,10 @@ public class DimensionsBuilder extends Builder {
             Boolean buildClean = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectClean")));
             Boolean capture = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectCapture")));
 
-			Boolean audit = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectAudit")));
+            Boolean audit = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectAudit")));
             Boolean populate = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectPopulate")));
             Boolean touch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectTouch")));
-			
+
             String area = req.getParameter("dimensionsbuilder.projectArea");
             String buildConfig = req.getParameter("dimensionsbuilder.projectConfig");
             String buildOptions = req.getParameter("dimensionsbuilder.projectOptions");
@@ -418,9 +424,9 @@ public class DimensionsBuilder extends Builder {
             DimensionsBuilder notif = new DimensionsBuilder(
                                                         area,buildConfig,
                                                         buildOptions,buildTargets,buildType,
-														buildStage,
+                                                        buildStage,
                                                         batch,buildClean,capture,
-													    audit,populate,touch);
+                                                        audit,populate,touch);
 
             return notif;
         }

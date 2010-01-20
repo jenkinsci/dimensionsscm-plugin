@@ -1026,6 +1026,11 @@ public class DimensionsAPI
      * @param boolean capture
      * @param String requests
      * @param String targets
+     * @param String stage
+     * @param String type
+     * @param boolean audit
+     * @param boolean populate
+     * @param boolean touch
      * @param AbstractBuild build
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
@@ -1034,6 +1039,9 @@ public class DimensionsAPI
                                           boolean buildClean, String buildConfig,
                                           String options, boolean capture,
                                           String requests, String targets,
+                                          String stage, String type,
+                                          boolean audit, boolean populate,
+                                          boolean touch,
                                           AbstractBuild build)
                             throws DimensionsRuntimeException
     {
@@ -1047,6 +1055,27 @@ public class DimensionsAPI
                 cmd += "\""+projectId+"\"";
                 if (area != null && area.length() > 0) {
                     cmd += " /AREA=\""+area+"\"";
+                }
+                if (type != null && type.length() > 0) {
+                    cmd += " /TYPE=\""+type+"\"";
+                }
+                if (stage != null && stage.length() > 0) {
+                    cmd += " /STAGE=\""+stage+"\"";
+                }
+                if (touch) {
+                    cmd += " /TOUCH";
+                } else {
+                    cmd += " /NOTOUCH";
+                }
+                if (populate) {
+                    cmd += " /POPULATE";
+                } else {
+                    cmd += " /NOPOPULATE";
+                }
+                if (audit) {
+                    cmd += " /AUDIT";
+                } else {
+                    cmd += " /NOAUDIT";
                 }
                 if (batch) {
                     cmd += " /NOWAIT";
