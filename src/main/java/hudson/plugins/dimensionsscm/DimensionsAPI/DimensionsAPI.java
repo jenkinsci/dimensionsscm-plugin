@@ -538,15 +538,9 @@ public class DimensionsAPI
      *      @param final String projectName
      *      @param final FilePath projectDir
      *      @param final FilePath workspaceName
-     *      @param final Calendar fromDate
-     *      @param final Calendar toDate
-     *      @param final File changelogFile
-     *      @param final TimeZone tz
      *      @param StringBuffer cmdOutput
-     *      @param final String url
      *      @param final String baseline
      *      @param final String requests
-     *      @param final boolean doFullUpdate
      *      @param final boolean doRevert
      *  Return:
      *      @return boolean
@@ -556,15 +550,9 @@ public class DimensionsAPI
                             final String projectName,
                             final FilePath projectDir,
                             final FilePath workspaceName,
-                            final Calendar fromDate,
-                            final Calendar toDate,
-                            final File changelogFile,
-                            final TimeZone tz,
                             StringBuffer cmdOutput,
-                            final String url,
                             final String baseline,
                             final String requests,
-                            final boolean doFullUpdate,
                             final boolean doRevert)
                     throws IOException, InterruptedException
     {
@@ -622,44 +610,12 @@ public class DimensionsAPI
             if (version == 10)
                 coCmd = "DOWNLOAD ";
 
-            List items = calcRepositoryDiffs(key,projectName,baseline,requests,projectDir,fromDate,toDate,tz);
-            if (items != null || doFullUpdate)
             {
-                File logFile = new File("a");
-                FileWriter logFileWriter = null;
-                PrintWriter fmtWriter = null;
-                File tmpFile = null;
-
-                if (items != null && !doFullUpdate) {
-                    try {
-                        tmpFile = logFile.createTempFile("dmCm"+toDate.getTimeInMillis(),null,null);
-                        logFileWriter = new FileWriter(tmpFile);
-                        fmtWriter = new PrintWriter(logFileWriter,true);
-
-                        for (int i = 0; i < items.size(); ++i) {
-                            ItemRevision item = (ItemRevision) items.get(i);
-                            fmtWriter.println((String)item.getAttribute(SystemAttributes.OBJECT_SPEC));
-                        }
-                        fmtWriter.flush();
-                    } catch (Exception e) {
-                        //e.printStackTrace();
-                        throw new IOException("Unable to write command log - " + e.getMessage());
-                    } finally {
-                        fmtWriter.close();
-                    }
-                }
-
                 String cmd = coCmd;
                 String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
 
-                Logger.Debug("Do full update : " + doFullUpdate);
-                Logger.Debug("CM Url : " + ((url != null) ? url : "(null)"));
-
-                if (!doFullUpdate && tmpFile != null)
-                    cmd += "/USER_ITEMLIST=\"" + tmpFile.getPath() + "\"";
-                else {
-                    if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null)
-                        cmd += "/DIR=\"" + projDir + "\"";
+                if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null) {
+                    cmd += "/DIR=\"" + projDir + "\"";
                 }
 
                 if (requests != null) {
@@ -689,23 +645,6 @@ public class DimensionsAPI
                     cmdOutput = cmdOutput.append(res.getMessage());
                     String outputStr = new String(cmdOutput.toString());
                     Logger.Debug(outputStr);
-
-                    if (items != null) {
-                        getLogger().println("[DIMENSIONS] Calculating change set for directory '"+((projDir!=null) ? projDir : "/")+"'...");
-                        getLogger().flush();
-                        if (tmpFile != null)
-                            tmpFile.delete();
-                        // Process the changesets...
-                        List changes = createChangeList(items,tz,url);
-                        Logger.Debug("Writing changeset to " + changelogFile.getPath());
-                        DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
-                        write.writeLog(changes,changelogFile);
-                    }
-                    else {
-                        // No changes - just fake a log
-                        DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
-                        write.writeLog(null,changelogFile);
-                    }
                     bRet = true;
 
                     // Check if any conflicts were identified
@@ -714,8 +653,81 @@ public class DimensionsAPI
                         bRet = false;
                 }
             }
-            else
-                bRet = true;
+        }
+        catch(Exception e)
+        {
+            //e.printStackTrace();
+            throw new IOException(e.getMessage());
+        }
+        return bRet;
+    }
+
+
+    /*
+     *-----------------------------------------------------------------
+     *  FUNCTION SPECIFICATION
+     *  Name:
+     *      createChangeSetLogs
+     *  Description:
+     *      Generate change log
+     * Parameters:
+     *      @param final long key
+     *      @param final String projectName
+     *      @param final FilePath projectDir
+     *      @param final Calendar fromDate
+     *      @param final Calendar toDate
+     *      @param final File changelogFile
+     *      @param final TimeZone tz
+     *      @param final String url
+     *      @param final String baseline
+     *      @param final String requests
+     *  Return:
+     *      @return boolean
+     *-----------------------------------------------------------------
+     */
+    public boolean createChangeSetLogs(final long key,
+                            final String projectName,
+                            final FilePath projectDir,
+                            final Calendar fromDate,
+                            final Calendar toDate,
+                            final File changelogFile,
+                            final TimeZone tz,
+                            final String url,
+                            final String baseline,
+                            final String requests)
+                    throws IOException, InterruptedException
+    {
+        DimensionsConnection connection = getCon(key);
+
+        if (connection == null)
+            throw new IOException("Not connected to an SCM repository");
+
+        try
+        {
+            List items = calcRepositoryDiffs(key,projectName,baseline,requests,projectDir,fromDate,toDate,tz);
+            File logFile = new File("a");
+            FileWriter logFileWriter = null;
+            PrintWriter fmtWriter = null;
+            File tmpFile = null;
+
+            Logger.Debug("CM Url : " + ((url != null) ? url : "(null)"));
+            getLogger().println("[DIMENSIONS] Calculating change set for directory '"+((projectDir!=null) ? projectDir.toString() : "/")+"'...");
+            getLogger().flush();
+
+            if (items != null) {
+                if (tmpFile != null)
+                    tmpFile.delete();
+                // Process the changesets...
+                List changes = createChangeList(items,tz,url);
+                Logger.Debug("Writing changeset to " + changelogFile.getPath());
+                DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
+                write.writeLog(changes,changelogFile);
+            }
+            else {
+                // No changes - just fake a log
+                DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
+                write.writeLog(null,changelogFile);
+            }
         }
         catch(Exception e)
         {
@@ -723,9 +735,8 @@ public class DimensionsAPI
             throw new IOException(e.getMessage());
         }
 
-        return bRet;
+        return true;
     }
-
 
     /*
      *-----------------------------------------------------------------

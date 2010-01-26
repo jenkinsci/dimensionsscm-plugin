@@ -101,6 +101,7 @@ import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
 import hudson.plugins.dimensionsscm.DimensionsBuildWrapper;
 import hudson.plugins.dimensionsscm.DimensionsBuildNotifier;
 import hudson.plugins.dimensionsscm.DimensionsChecker;
+import hudson.plugins.dimensionsscm.CheckoutTask;
 
 
 // Hudson imports
@@ -122,6 +123,15 @@ import hudson.scm.SCMDescriptor;
 import hudson.util.FormFieldValidator;
 import hudson.util.Scrambler;
 import hudson.util.VariableResolver;
+import hudson.FilePath;
+import hudson.FilePath.FileCallable;
+import hudson.model.Node;
+import hudson.model.Computer;
+import hudson.model.Hudson.MasterComputer;
+import hudson.remoting.Callable;
+import hudson.remoting.DelegatingCallable;
+import hudson.remoting.Channel;
+import hudson.remoting.VirtualChannel;
 
 // General imports
 import java.io.File;
@@ -517,20 +527,16 @@ public class DimensionsSCM extends SCM implements Serializable
                             final File changelogFile)
                             throws IOException, InterruptedException
     {
-        if (!isCanJobUpdate())
-        {
+        boolean bRet = false;
+
+        if (!isCanJobUpdate()) {
             Logger.Debug("Skipping checkout - " + this.getClass().getName());
             return true;
         }
 
         Logger.Debug("Invoking checkout - " + this.getClass().getName());
 
-        boolean bFreshBuild = (build.getPreviousBuild() == null);
-        boolean bRet = true;
-        long key = -1;
-
-        try
-        {
+        try {
             // Load other Dimensions plugins if set
             DimensionsBuildWrapper.DescriptorImpl bwplugin = (DimensionsBuildWrapper.DescriptorImpl)
                                 Hudson.getInstance().getDescriptor(DimensionsBuildWrapper.class);
@@ -545,62 +551,76 @@ public class DimensionsSCM extends SCM implements Serializable
                 return false;
             }
 
+            CheckoutTask task = new CheckoutTask(build,this,workspace,listener);
+            bRet = workspace.act(task);
+            if (bRet) {
+                bRet = generateChangeSet(build,listener,changelogFile);
+            }
+        }
+        catch(Exception e)
+        {
+            String errMsg = e.getMessage();
+            if (errMsg == null) {
+                errMsg = "An unknown error occurred. Please try the operation again.";
+            }
+            listener.fatalError("Unable to run checkout callout - " + errMsg);
+            // e.printStackTrace();
+            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            bRet = false;
+        }
+        return bRet;
+    }
+
+
+    /*
+     *-----------------------------------------------------------------
+     *  FUNCTION SPECIFICATION
+     *  Name:
+     *      generateChangeSet
+     *  Description:
+     *      Generate the changeset
+     * Parameters:
+     *      @param AbstractProject build
+     *      @param BuildListener listener
+     *      @param File changelogFile
+     *  Return:
+     *      @return boolean
+     *-----------------------------------------------------------------
+     */
+    private boolean generateChangeSet(final AbstractBuild build, final BuildListener listener,
+                            final File changelogFile)
+                            throws IOException, InterruptedException {
+        long key = -1;
+        boolean bRet = false;
+        DimensionsAPI dmSCM = new DimensionsAPI();
+
+        try
+        {
             // When are we building files for?
             // Looking for the last successful build and then going forward from there - could use the last build as well
             //
             // Calendar lastBuildCal = (build.getPreviousBuild() != null) ? build.getPreviousBuild().getTimestamp() : null;
-
             Calendar lastBuildCal = (build.getPreviousNotFailedBuild() != null) ? build.getPreviousNotFailedBuild().getTimestamp() : null;
             Calendar nowDateCal = Calendar.getInstance();
+
             TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0) ? TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
             if (getJobTimeZone() != null && getJobTimeZone().length() > 0)
                 Logger.Debug("Job timezone setting is " + getJobTimeZone());
-            Logger.Debug("Checkout updates between " + ((lastBuildCal != null) ? DateUtils.getStrDate(lastBuildCal,tz) : "0") +
+
+            Logger.Debug("Log updates between " + ((lastBuildCal != null) ? DateUtils.getStrDate(lastBuildCal,tz) : "0") +
                             " -> " + DateUtils.getStrDate(nowDateCal,tz) + " (" + tz.getID() + ")");
 
-            if (dmSCM == null)
-            {
-                Logger.Debug("Creating new API interface object");
-                dmSCM = new DimensionsAPI();
-            }
-
             dmSCM.setLogger(listener.getLogger());
+
             // Connect to Dimensions...
-            key = dmSCM.login(jobUserName,
-                            getJobPasswd(),
-                            jobDatabase,
-                            jobServer);
+            key = dmSCM.login(getJobUserName(),getJobPasswd(),
+                            getJobDatabase(),getJobServer());
+
             if (key>0)
             {
                 Logger.Debug("Login worked.");
-                StringBuffer cmdOutput = new StringBuffer();
-                FilePath wa = null;
-                if (workarea != null)
-                {
-                    File waN = new File(workarea);
-                    wa = new FilePath(waN);
-                }
-                else
-                    wa = workspace;
-
-                // Emulate SVN plugin
-                // - if workspace exists and it is not managed by this project, blow it away
-                //
-                if (bFreshBuild) {
-                    if (listener.getLogger() != null) {
-                        listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
-                        listener.getLogger().flush();
-                    }
-                }
-
-                if (wa.exists() && (canJobDelete || bFreshBuild)) {
-                    Logger.Debug("Deleting '" + wa.toURI() + "'...");
-                    listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
-                    listener.getLogger().flush();
-                    wa.deleteRecursive();
-                }
-
                 VariableResolver<String> myResolver = build.getBuildVariableResolver();
+
                 String baseline = myResolver.resolve("DM_BASELINE");
                 String requests = myResolver.resolve("DM_REQUEST");
 
@@ -614,24 +634,14 @@ public class DimensionsSCM extends SCM implements Serializable
                 }
 
                 Logger.Debug("Extra parameters - " + baseline + " " + requests);
-
                 String[] folders = getFolders();
-                String cmdLog = null;
 
                 if (baseline != null && baseline.length() == 0)
                     baseline = null;
                 if (requests != null && requests.length() == 0)
                     requests = null;
 
-                if (listener.getLogger() != null) {
-                    if (requests != null)
-                        listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
-                    else if (baseline != null)
-                        listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
-                    else
-                        listener.getLogger().println("[DIMENSIONS] Checking out project \"" + getProject() + "\"...");
-                    listener.getLogger().flush();
-                }
+                bRet = true;
 
                 // Iterate through the project folders and process them in Dimensions
                 for (int ii=0;ii<folders.length; ii++) {
@@ -642,26 +652,14 @@ public class DimensionsSCM extends SCM implements Serializable
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
-                    Logger.Debug("Checking out '" + folderN + "'...");
+                    Logger.Debug("Looking for changes in '" + folderN + "'...");
 
                     // Checkout the folder
-                    bRet = dmSCM.checkout(key,getProject(),dname,wa,
+                    bRet = dmSCM.createChangeSetLogs(key,getProject(),dname,
                                           lastBuildCal,nowDateCal,
                                           changelogFile, tz,
-                                          cmdOutput,jobWebUrl,
-                                          baseline,requests,
-                                          true,canJobRevert);
-                    Logger.Debug("SCM checkout returned " + bRet);
-
-                    if (!bRet && canJobForce)
-                        bRet = true;
-
-                    if (cmdLog==null)
-                        cmdLog = "\n";
-
-                    cmdLog += cmdOutput;
-                    cmdOutput.setLength(0);
-                    cmdLog += "\n";
+                                          jobWebUrl,
+                                          baseline,requests);
                 }
 
                 // Close the changes log file
@@ -678,23 +676,6 @@ public class DimensionsSCM extends SCM implements Serializable
                     } finally {
                         logFile.close();
                     }
-                }
-
-                if (cmdLog.length() > 0 && listener.getLogger() != null) {
-                    Logger.Debug("Found command output to log to the build logger");
-                    listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
-                    cmdLog = cmdLog.replaceAll("\n\n","\n");
-                    listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
-                    listener.getLogger().flush();
-                }
-
-                if (!bRet) {
-                    listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                    listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
-                    listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
-                    listener.getLogger().println("[DIMENSIONS] that may have been detected.");
-                    listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                    listener.getLogger().flush();
                 }
             }
         }
