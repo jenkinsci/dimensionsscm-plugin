@@ -101,7 +101,7 @@ import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
 import hudson.plugins.dimensionsscm.DimensionsBuildWrapper;
 import hudson.plugins.dimensionsscm.DimensionsBuildNotifier;
 import hudson.plugins.dimensionsscm.DimensionsChecker;
-import hudson.plugins.dimensionsscm.CheckoutTask;
+import hudson.plugins.dimensionsscm.CheckOutTask;
 
 
 // Hudson imports
@@ -531,7 +531,6 @@ public class DimensionsSCM extends SCM implements Serializable
 
         if (!isCanJobUpdate()) {
             Logger.Debug("Skipping checkout - " + this.getClass().getName());
-            return true;
         }
 
         Logger.Debug("Invoking checkout - " + this.getClass().getName());
@@ -551,8 +550,13 @@ public class DimensionsSCM extends SCM implements Serializable
                 return false;
             }
 
-            CheckoutTask task = new CheckoutTask(build,this,workspace,listener);
-            bRet = workspace.act(task);
+            if (isCanJobUpdate()) {
+                CheckOutTask task = new CheckOutTask(build,this,workspace,listener);
+                bRet = workspace.act(task);
+            } else {
+                bRet = true;
+            }
+
             if (bRet) {
                 bRet = generateChangeSet(build,listener,changelogFile);
             }
