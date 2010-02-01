@@ -165,8 +165,8 @@ import org.apache.commons.lang.StringEscapeUtils;
 /*
  * Main Dimensions API class
  */
-public class DimensionsAPI
-{
+public class DimensionsAPI implements Serializable {
+
     private static final String MISSING_SOURCE_PATH = "The nested element needs a valid 'srcpath' attribute"; //$NON-NLS-1$
     private static final String MISSING_PROJECT = "The nested element needs a valid project to work on"; //$NON-NLS-1$
     private static final String MISSING_BASELINE = "The nested element needs a valid baseline to work on"; //$NON-NLS-1$

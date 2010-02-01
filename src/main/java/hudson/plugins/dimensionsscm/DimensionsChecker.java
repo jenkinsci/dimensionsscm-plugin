@@ -118,7 +118,7 @@ import java.util.Vector;
  * A set of methods for checking the consistency of data passed into the plugin
  * @author Tim Payne
  */
-public class DimensionsChecker {
+public class DimensionsChecker implements Serializable {
 
     /**
      * Checks if all the plugins that need to be loaded are loaded

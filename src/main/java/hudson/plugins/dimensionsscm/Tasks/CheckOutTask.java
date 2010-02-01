@@ -215,7 +215,6 @@ public class CheckOutTask implements FileCallable<Boolean> {
         myResolver = build.getBuildVariableResolver();
     }
 
-
     /*
      * Invoke method
      *
@@ -226,7 +225,7 @@ public class CheckOutTask implements FileCallable<Boolean> {
      */
     public Boolean invoke(File area, VirtualChannel channel) throws IOException {
         // This here code is executed on the slave.
-        Logger.Debug("Invoking checkout task - " + this.getClass().getName());
+        listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
 
         boolean bRet = true;
         long key = -1;

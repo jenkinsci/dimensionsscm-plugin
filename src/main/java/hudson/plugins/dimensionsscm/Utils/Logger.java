@@ -105,6 +105,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 
 
 // General imports
@@ -112,7 +113,7 @@ import java.io.IOException;
 /**
  * @author Tim Payne
  */
-public class Logger {
+public class Logger implements Serializable {
 
     /**
      * Print a message to stdout
@@ -135,7 +136,7 @@ public class Logger {
             String value = entry.getValue();
             String varname = name.toUpperCase();
             if (varname.equals(dmLogger))
-				logEnabled=true;
+                logEnabled=true;
         }
 
         if (logEnabled)
@@ -150,24 +151,24 @@ public class Logger {
      */
     public static void DebugFile(String outln)
     {
-		File logFile = new File("a");
-		FileWriter logFileWriter = null;
-		PrintWriter fmtWriter = null;
-		File tmpFile = null;
-		String tmpDir = System.getProperty("java.io.tmpdir");
-		
-		try {
-			tmpFile = logFile.createTempFile(tmpDir+"dmCm.log",null,null);
-			logFileWriter = new FileWriter(tmpFile);
-			fmtWriter = new PrintWriter(logFileWriter,true);
-			fmtWriter.println("DEBUG (" + DateUtils.getNowStrDate() + ") :" + outln);
-			fmtWriter.flush();
-		} catch (Exception e) {
-			// Do nothing
-		} finally {
-			fmtWriter.close();
-		}
+        File logFile = new File("a");
+        FileWriter logFileWriter = null;
+        PrintWriter fmtWriter = null;
+        File tmpFile = null;
+        String tmpDir = System.getProperty("java.io.tmpdir");
+
+        try {
+            tmpFile = logFile.createTempFile(tmpDir+"dmCm.log",null,null);
+            logFileWriter = new FileWriter(tmpFile);
+            fmtWriter = new PrintWriter(logFileWriter,true);
+            fmtWriter.println("DEBUG (" + DateUtils.getNowStrDate() + ") :" + outln);
+            fmtWriter.flush();
+        } catch (Exception e) {
+            // Do nothing
+        } finally {
+            fmtWriter.close();
+        }
         return;
     }
-	
+
 }
