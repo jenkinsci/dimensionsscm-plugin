@@ -275,15 +275,18 @@ public class DimensionsBuilder extends Builder {
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         long key = -1;
         try {
+
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
                 listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
                 build.setResult(Result.FAILURE);
                 throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
             }
-            if (build.getResult() == Result.SUCCESS) {
+
+            if (build.isBuilding()) {
                 if (scm == null)
                     scm = (DimensionsSCM)build.getProject().getScm();
                 Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+                Logger.Debug("Running a project build step...");
                 key = scm.getAPI().login(scm.getJobUserName(),
                                        scm.getJobPasswd(),
                                        scm.getJobDatabase(),
@@ -298,8 +301,12 @@ public class DimensionsBuilder extends Builder {
                         requests = requests.toUpperCase();
                     }
 
-                    // This will active the build baseline functionality
                     {
+                        String projectXType = projectType;
+                        if (projectXType.equals("NONE"))
+                            projectXType = null;
+
+                        // This will active the build baseline functionality
                         listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
                         listener.getLogger().flush();
                         DimensionsResult res = scm.getAPI().buildProject(key,projectArea,scm.getProject(),
@@ -307,7 +314,7 @@ public class DimensionsBuilder extends Builder {
                                                                          projectOptions,
                                                                          capture,requests,
                                                                          projectTargets,
-                                                                         projectStage, projectType,
+                                                                         projectStage, projectXType,
                                                                          audit, populate,
                                                                          touch, build);
                         if (res==null) {
