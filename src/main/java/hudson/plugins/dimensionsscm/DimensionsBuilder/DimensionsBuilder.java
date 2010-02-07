@@ -336,7 +336,13 @@ public class DimensionsBuilder extends Builder {
                 }
             }
         } catch(Exception e) {
-            listener.fatalError("Unable to tag build in Dimensions - " + e.getMessage());
+            String errMsg;
+            if (e.getMessage() != null || e.getMessage().length() > 0) {
+                errMsg = e.getMessage();
+            } else {
+                errMsg = "Dimensions returned no error";
+            }
+            listener.fatalError("Unable to tag build in Dimensions - " + errMsg);
             build.setResult(Result.FAILURE);
             return false;
         }
