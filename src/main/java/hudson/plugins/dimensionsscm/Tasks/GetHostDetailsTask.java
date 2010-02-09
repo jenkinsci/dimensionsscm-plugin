@@ -119,7 +119,7 @@ import java.io.Serializable;
 
 
 /*
- * Find out the remove host name
+ * Find out the remote host name
  */
 
 /**
