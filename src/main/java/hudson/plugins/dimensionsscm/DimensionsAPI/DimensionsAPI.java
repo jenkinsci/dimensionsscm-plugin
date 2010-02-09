@@ -199,7 +199,7 @@ public class DimensionsAPI implements Serializable {
     private PrintStream listener;
 
     // Inline connection cache
-    class ConnectionCache {
+    private class ConnectionCache {
         private DimensionsConnection connection = null;
 
         ConnectionCache(DimensionsConnection connection) {
@@ -303,6 +303,9 @@ public class DimensionsAPI implements Serializable {
      */
     public final DimensionsConnection getCon(long key) {
         Logger.Debug("Looking for key "+key);
+		if (conns == null) {
+			return null;
+		}
         if (conns.containsKey(key)) {
             ConnectionCache cc = (ConnectionCache)this.conns.get(key);
             DimensionsConnection con = cc.getCon();
@@ -366,6 +369,10 @@ public class DimensionsAPI implements Serializable {
         DimensionsConnection connection = null;
         long key = Calendar.getInstance().getTimeInMillis();
 
+		if (conns == null) {
+		    conns = new HashMap();
+		}
+				
         dmServer = server;
         dmDb = database;
         dmUser = userID;
@@ -413,8 +420,10 @@ public class DimensionsAPI implements Serializable {
      * Disconnects from the Dimensions repository
      */
     public final void logout(long key) {
-
-        Logger.Debug("Currently have "+conns.size()+" connections in use...");
+		if (conns == null) {
+			return;
+		}
+		
         DimensionsConnection connection = getCon(key);
         if (connection != null) {
             try {
