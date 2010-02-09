@@ -102,6 +102,7 @@ import hudson.plugins.dimensionsscm.DimensionsBuildWrapper;
 import hudson.plugins.dimensionsscm.DimensionsBuildNotifier;
 import hudson.plugins.dimensionsscm.DimensionsChecker;
 import hudson.plugins.dimensionsscm.CheckOutTask;
+import hudson.plugins.dimensionsscm.GetHostDetailsTask;
 
 
 // Hudson imports
@@ -149,6 +150,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.Vector;
+import java.net.InetSocketAddress;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.servlet.ServletException;
 
@@ -551,8 +555,26 @@ public class DimensionsSCM extends SCM implements Serializable
             }
 
             if (isCanJobUpdate()) {
-                CheckOutTask task = new CheckOutTask(build,this,workspace,listener);
-                bRet = workspace.act(task);
+				// Get the details of the master
+				InetAddress netAddr = InetAddress.getLocalHost();
+				byte[] ipAddr = netAddr.getAddress();
+				String hostname = netAddr.getHostName();
+
+				boolean master = false;
+				GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
+				master = workspace.act(buildHost);
+				
+				if (master) {
+					// Running on master...
+					listener.getLogger().println("[DIMENSIONS] Running checkout on master...");
+					listener.getLogger().flush();
+					CheckOutTask task = new CheckOutTask(build,this,workspace,listener);
+					bRet = workspace.act(task);
+				} else {
+					// Running on slave...
+					listener.getLogger().println("[DIMENSIONS] Running checkout on slave...");
+					listener.getLogger().flush();
+				}
             } else {
                 bRet = true;
             }
