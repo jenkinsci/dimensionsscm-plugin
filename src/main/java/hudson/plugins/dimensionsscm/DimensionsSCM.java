@@ -101,7 +101,7 @@ import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
 import hudson.plugins.dimensionsscm.DimensionsBuildWrapper;
 import hudson.plugins.dimensionsscm.DimensionsBuildNotifier;
 import hudson.plugins.dimensionsscm.DimensionsChecker;
-import hudson.plugins.dimensionsscm.CheckOutTask;
+import hudson.plugins.dimensionsscm.CheckOutAPITask;
 import hudson.plugins.dimensionsscm.CheckOutCmdTask;
 import hudson.plugins.dimensionsscm.GetHostDetailsTask;
 
@@ -569,10 +569,16 @@ public class DimensionsSCM extends SCM implements Serializable
                     // Running on master...
                     listener.getLogger().println("[DIMENSIONS] Running checkout on master...");
                     listener.getLogger().flush();
-                    CheckOutTask task = new CheckOutTask(build,this,workspace,listener);
+
+                    // Using Java API because this allows the plugin to work on platforms
+                    // where Dimensions has not been ported, e.g. MAC OS, which is what
+                    // I use
+                    CheckOutAPITask task = new CheckOutAPITask(build,this,workspace,listener);
                     bRet = workspace.act(task);
                 } else {
-                    // Running on slave...
+                    // Running on slave... Have to use the command line as Java API will not
+                    // work on remote hosts. Cannot serialise it...
+
                     listener.getLogger().println("[DIMENSIONS] Running checkout on slave...");
                     listener.getLogger().flush();
 

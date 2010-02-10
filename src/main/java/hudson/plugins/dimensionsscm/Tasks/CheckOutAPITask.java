@@ -163,7 +163,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Class implementation of the checkout process.
  */
-public class CheckOutTask implements FileCallable<Boolean> {
+public class CheckOutAPITask implements FileCallable<Boolean> {
 
     boolean bFreshBuild = false;
     boolean isDelete = false;
@@ -188,7 +188,7 @@ public class CheckOutTask implements FileCallable<Boolean> {
     /*
      * Default constructor
      */
-    public CheckOutTask(AbstractBuild<?,?> build, DimensionsSCM parent,
+    public CheckOutAPITask(AbstractBuild<?,?> build, DimensionsSCM parent,
                         FilePath workspace, TaskListener listener) {
 
         Logger.Debug("Creating task - " + this.getClass().getName());
