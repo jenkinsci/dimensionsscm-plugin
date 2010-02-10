@@ -555,26 +555,28 @@ public class DimensionsSCM extends SCM implements Serializable
             }
 
             if (isCanJobUpdate()) {
-				// Get the details of the master
-				InetAddress netAddr = InetAddress.getLocalHost();
-				byte[] ipAddr = netAddr.getAddress();
-				String hostname = netAddr.getHostName();
+                // Get the details of the master
+                InetAddress netAddr = InetAddress.getLocalHost();
+                byte[] ipAddr = netAddr.getAddress();
+                String hostname = netAddr.getHostName();
 
-				boolean master = false;
-				GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
-				master = workspace.act(buildHost);
-				
-				if (master) {
-					// Running on master...
-					listener.getLogger().println("[DIMENSIONS] Running checkout on master...");
-					listener.getLogger().flush();
-					CheckOutTask task = new CheckOutTask(build,this,workspace,listener);
-					bRet = workspace.act(task);
-				} else {
-					// Running on slave...
-					listener.getLogger().println("[DIMENSIONS] Running checkout on slave...");
-					listener.getLogger().flush();
-				}
+                boolean master = false;
+                GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
+                master = workspace.act(buildHost);
+
+                if (master) {
+                    // Running on master...
+                    listener.getLogger().println("[DIMENSIONS] Running checkout on master...");
+                    listener.getLogger().flush();
+                    CheckOutTask task = new CheckOutTask(build,this,workspace,listener);
+                    bRet = workspace.act(task);
+                } else {
+                    // Running on slave...
+                    listener.getLogger().println("[DIMENSIONS] Running checkout on slave...");
+                    listener.getLogger().flush();
+                    listener.fatalError("\n[DIMENSIONS] This is not currently supported in this release.");
+                    return false;
+                }
             } else {
                 bRet = true;
             }
