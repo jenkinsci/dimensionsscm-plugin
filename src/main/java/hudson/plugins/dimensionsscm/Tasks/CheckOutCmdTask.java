@@ -194,6 +194,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
 
         // This here code is executed on the slave.
         try {
+            listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
             return false;
         } catch (Exception e) {
             throw new IOException(e.getMessage());

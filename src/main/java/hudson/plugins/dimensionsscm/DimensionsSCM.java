@@ -588,7 +588,7 @@ public class DimensionsSCM extends SCM implements Serializable
                                                                isCanJobRevert(), isCanJobForce(),
                                                                (build.getPreviousBuild() == null),
                                                                workspace,listener);
-
+                    bRet = workspace.act(task);
                     listener.fatalError("\n[DIMENSIONS] This is not currently supported in this release.");
                     return false;
                 }
