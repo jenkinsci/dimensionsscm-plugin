@@ -578,23 +578,28 @@ public class DimensionsSCM extends SCM implements Serializable
                 } else {
                     // Running on slave... Have to use the command line as Java API will not
                     // work on remote hosts. Cannot serialise it...
-                    VariableResolver<String> myResolver = build.getBuildVariableResolver();
 
-                    String baseline = myResolver.resolve("DM_BASELINE");
-                    String requests = myResolver.resolve("DM_REQUEST");
+                    {
+                        // VariableResolver does not appear to be serialisable either, so...
+                        VariableResolver<String> myResolver = build.getBuildVariableResolver();
 
-                    listener.getLogger().println("[DIMENSIONS] Running checkout on slave...");
-                    listener.getLogger().flush();
+                        String baseline = myResolver.resolve("DM_BASELINE");
+                        String requests = myResolver.resolve("DM_REQUEST");
 
-                    CheckOutCmdTask task = new CheckOutCmdTask(getJobUserName(), getJobPasswd(),
-                                                               getJobDatabase(), getJobServer(),
-                                                               getProject(), baseline, requests,
-                                                               isCanJobDelete(),
-                                                               isCanJobRevert(), isCanJobForce(),
-                                                               (build.getPreviousBuild() == null),
-                                                               getFolders(),
-                                                               workspace,listener);
-                    bRet = workspace.act(task);
+                        listener.getLogger().println("[DIMENSIONS] Running checkout on slave...");
+                        listener.getLogger().flush();
+
+                        CheckOutCmdTask task = new CheckOutCmdTask(getJobUserName(), getJobPasswd(),
+                                                                   getJobDatabase(), getJobServer(),
+                                                                   getProject(), baseline, requests,
+                                                                   isCanJobDelete(),
+                                                                   isCanJobRevert(), isCanJobForce(),
+                                                                   (build.getPreviousBuild() == null),
+                                                                   getFolders(),
+                                                                   workspace,listener);
+                        bRet = workspace.act(task);
+                    }
+
                     listener.fatalError("\n[DIMENSIONS] Error: This feature is not currently supported in this version.");
                     return false;
                 }
