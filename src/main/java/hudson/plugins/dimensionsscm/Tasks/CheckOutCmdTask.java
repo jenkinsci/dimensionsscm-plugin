@@ -111,15 +111,17 @@ import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
 
 // General imports
-import java.net.InetSocketAddress;
-import java.net.InetAddress;
-import java.lang.Exception;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
-
+import java.io.PrintWriter;
 import java.io.Serializable;
-
-
+import java.lang.Exception;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Calendar;
 /*
  * Find out the remote host name
  */
@@ -131,24 +133,27 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
 
     private static final long serialVersionUID = 1L;
 
-    boolean bFreshBuild = false;
-    boolean isDelete = false;
-    boolean isRevert = false;
-    boolean isForce = false;
+    private boolean bFreshBuild = false;
+    private boolean isDelete = false;
+    private boolean isRevert = false;
+    private boolean isForce = false;
 
-    FilePath workspace = null;
-    TaskListener listener = null;
+    private FilePath workspace = null;
+    private TaskListener listener = null;
 
-    String userName = "";
-    String passwd = "";
-    String database = "";
-    String server = "";
+    private String userName = "";
+    private String passwd = "";
+    private String database = "";
+    private String server = "";
 
-    String workarea = "";
-    String projectId = "";
-    String[] folders;
+    private String workarea = "";
+    private String projectId = "";
+    private String baseline = null;
+    private String requests = null;
 
-    String exec = "dm";
+    private String[] folders;
+
+    private String exec = "dmcli";
 
     /**
      * Utility routine to look for an executable in the path
@@ -180,14 +185,47 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
      }
 
 
+    /**
+     * Utility routine to create parameter file for dmcli
+     *
+     * @return File
+     * @throws IOException
+     */
+     private File createParamFile()
+            throws IOException {
+        Calendar nowDateCal = Calendar.getInstance();
+        File logFile = new File("a");
+        FileWriter logFileWriter = null;
+        PrintWriter fmtWriter = null;
+        File tmpFile = null;
+
+        try {
+            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+            logFileWriter = new FileWriter(tmpFile);
+            fmtWriter = new PrintWriter(logFileWriter,true);
+            fmtWriter.println("-host "+ server);
+            fmtWriter.println("-user "+ userName);
+            fmtWriter.println("-pass "+ passwd);
+            fmtWriter.println("-dbname "+ database);
+            fmtWriter.flush();
+        } catch (Exception e) {
+            throw new IOException("Unable to write command log - " + e.getMessage());
+        } finally {
+            fmtWriter.close();
+        }
+
+        return tmpFile;
+    }
+
     /*
      * Default constructor
      */
     public CheckOutCmdTask(String userName, String passwd,
                              String database, String server,
-                             String projectId, boolean isDelete,
+                             String projectId, String baselineId,
+                             String requestId, boolean isDelete,
                              boolean isRevert, boolean isForce,
-                             boolean freshBuild,
+                             boolean freshBuild, String[] folders,
                              FilePath workspace,
                              TaskListener listener) {
 
@@ -205,7 +243,9 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
         this.projectId = projectId;
         this.isRevert = isRevert;
         this.isForce = isForce;
-        // this.folders = folders;
+        this.folders = folders;
+        this.requests = requests;
+        this.baseline = baseline;
 
         // Build details
         this.bFreshBuild = freshBuild;
@@ -234,10 +274,121 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                 listener.getLogger().println("[DIMENSIONS] Error: Cannot locate '" + exec + "' on the slave node.");
             } else {
                 listener.getLogger().println("[DIMENSIONS] Located '" + exe.getAbsolutePath() + "' on the slave node.");
+
+                File param = createParamFile();
+                if (param == null) {
+                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create parameter file for Dimensions login.");
+                    return false;
+                }
+
+                boolean retStatus = processCheckout(param,area);
+                param.delete();
             }
             return false;
         } catch (Exception e) {
             throw new IOException(e.getMessage());
+        }
+    }
+
+    /*
+     * Process the checkout
+     *
+     * @param File
+     * @param File
+     * @return boolean
+     */
+    private Boolean processCheckout(final File param, final File area)
+                throws IOException {
+
+        FilePath wa = new FilePath(area);
+        boolean bRet = true;
+
+        // Emulate SVN plugin
+        // - if workspace exists and it is not managed by this project, blow it away
+        //
+        try {
+            if (bFreshBuild) {
+                if (listener.getLogger() != null) {
+                    listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
+                    listener.getLogger().flush();
+                }
+            }
+
+            if (wa.exists() && (isDelete || bFreshBuild)) {
+                Logger.Debug("Deleting '" + wa.toURI() + "'...");
+                listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
+                listener.getLogger().flush();
+                wa.deleteRecursive();
+            }
+
+            if (baseline != null) {
+                baseline = baseline.trim();
+                baseline = baseline.toUpperCase();
+            }
+            if (requests != null) {
+                requests = requests.replaceAll(" ","");
+                requests = requests.toUpperCase();
+            }
+
+            String cmdLog = null;
+            StringBuffer cmdOutput = new StringBuffer();
+
+            if (baseline != null && baseline.length() == 0)
+                baseline = null;
+            if (requests != null && requests.length() == 0)
+                requests = null;
+
+            if (listener.getLogger() != null) {
+                if (requests != null)
+                    listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
+                else if (baseline != null)
+                    listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
+                else
+                    listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
+                listener.getLogger().flush();
+            }
+
+            // Iterate through the project folders and process them in Dimensions
+            for (int ii=0;ii<folders.length; ii++) {
+                if (!bRet)
+                    break;
+
+                String folderN = folders[ii];
+                File fileName = new File(folderN);
+                FilePath dname = new FilePath(fileName);
+
+                // Checkout the folder
+
+                if (!bRet && isForce)
+                    bRet = true;
+
+                if (cmdLog==null)
+                    cmdLog = "\n";
+
+                cmdLog += cmdOutput;
+                cmdOutput.setLength(0);
+                cmdLog += "\n";
+            }
+
+            if (cmdLog.length() > 0 && listener.getLogger() != null) {
+                listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
+                cmdLog = cmdLog.replaceAll("\n\n","\n");
+                listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
+                listener.getLogger().flush();
+            }
+
+            if (!bRet) {
+                listener.getLogger().println("[DIMENSIONS] ==========================================================");
+                listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
+                listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
+                listener.getLogger().println("[DIMENSIONS] that may have been detected.");
+                listener.getLogger().println("[DIMENSIONS] ==========================================================");
+                listener.getLogger().flush();
+            }
+
+            return false;
+        } catch (Exception e) {
+            return false;
         }
     }
 }
