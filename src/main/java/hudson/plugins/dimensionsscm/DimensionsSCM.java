@@ -102,6 +102,7 @@ import hudson.plugins.dimensionsscm.DimensionsBuildWrapper;
 import hudson.plugins.dimensionsscm.DimensionsBuildNotifier;
 import hudson.plugins.dimensionsscm.DimensionsChecker;
 import hudson.plugins.dimensionsscm.CheckOutTask;
+import hudson.plugins.dimensionsscm.CheckOutCmdTask;
 import hudson.plugins.dimensionsscm.GetHostDetailsTask;
 
 
@@ -574,6 +575,14 @@ public class DimensionsSCM extends SCM implements Serializable
                     // Running on slave...
                     listener.getLogger().println("[DIMENSIONS] Running checkout on slave...");
                     listener.getLogger().flush();
+
+                    CheckOutCmdTask task = new CheckOutCmdTask(getJobUserName(), getJobPasswd(),
+                                                               getJobDatabase(), getJobServer(),
+                                                               getProject(), isCanJobDelete(),
+                                                               isCanJobRevert(), isCanJobForce(),
+                                                               (build.getPreviousBuild() == null),
+                                                               workspace,listener);
+
                     listener.fatalError("\n[DIMENSIONS] This is not currently supported in this release.");
                     return false;
                 }

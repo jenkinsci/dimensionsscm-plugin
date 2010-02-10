@@ -108,6 +108,7 @@ import hudson.remoting.Callable;
 import hudson.remoting.DelegatingCallable;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
+import hudson.model.TaskListener;
 
 // General imports
 import java.net.InetSocketAddress;
@@ -126,15 +127,59 @@ import java.io.Serializable;
 /**
  * Class implementation of the checkout process.
  */
-public class CheckOutSlaveTask implements FileCallable<Boolean> {
+public class CheckOutCmdTask implements FileCallable<Boolean> {
 
     private static final long serialVersionUID = 1L;
+
+    boolean bFreshBuild = false;
+    boolean isDelete = false;
+    boolean isRevert = false;
+    boolean isForce = false;
+
+    FilePath workspace = null;
+    TaskListener listener = null;
+
+    String userName = "";
+    String passwd = "";
+    String database = "";
+    String server = "";
+
+    String workarea = "";
+    String projectId = "";
+    String[] folders;
+
 
     /*
      * Default constructor
      */
-    public CheckOutSlaveTask() {
+    public CheckOutCmdTask(String userName, String passwd,
+                             String database, String server,
+                             String projectId, boolean isDelete,
+                             boolean isRevert, boolean isForce,
+                             boolean freshBuild,
+                             FilePath workspace,
+                             TaskListener listener) {
+
+        this.workspace = workspace;
+        this.listener = listener;
+
+        // Server details
+        this.userName = userName;
+        this.passwd = passwd;
+        this.database = database;
+        this.server = server;
+
+        // Config details
+        this.isDelete = isDelete;
+        this.projectId = projectId;
+        this.isRevert = isRevert;
+        this.isForce = isForce;
+        // this.folders = folders;
+
+        // Build details
+        this.bFreshBuild = freshBuild;
     }
+
 
     /*
      * Invoke method
