@@ -148,6 +148,37 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
     String projectId = "";
     String[] folders;
 
+    String exec = "dm";
+
+    /**
+     * Utility routine to look for an executable in the path
+     *
+     * @param exeName
+     * @return File
+     */
+     private static File getExecutable(String exeName) {
+        // Get the path environment
+        String path = System.getenv("PATH");
+        if (path == null)
+            path = System.getenv("path");
+        if (path == null)
+            return null;
+
+        // Split it into directories
+        String[] pathDirs = path.split(File.pathSeparator);
+
+        // Hunt through the directories to find the file I want
+        File exe = null;
+        for (String pathDir : pathDirs) {
+            File file = new File(pathDir, exeName);
+            if (file.isFile()) {
+                exe = file;
+                break;
+            }
+        }
+        return exe;
+     }
+
 
     /*
      * Default constructor
@@ -195,6 +226,15 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
         // This here code is executed on the slave.
         try {
             listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
+            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                exec += ".exe";
+            }
+            File exe = getExecutable(exec);
+            if (exe == null) {
+                listener.getLogger().println("[DIMENSIONS] Error: Cannot locate '" + exec + "' on the slave node.");
+            } else {
+                listener.getLogger().println("[DIMENSIONS] Located '" + exe.getAbsolutePath() + "' on the slave node.");
+            }
             return false;
         } catch (Exception e) {
             throw new IOException(e.getMessage());
