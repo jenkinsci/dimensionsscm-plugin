@@ -749,9 +749,9 @@ public class DimensionsSCM extends SCM implements Serializable
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";
             }
-            listener.fatalError("Unable to run checkout callout - " + errMsg);
+            listener.fatalError("Unable to run change set callout - " + errMsg);
             // e.printStackTrace();
-            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            //throw new IOException("Unable to run change set callout - " + e.getMessage());
             bRet = false;
         }
         finally
