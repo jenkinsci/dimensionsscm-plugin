@@ -456,6 +456,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                 File cmdFile = createCmdFile(projDir,area);
                 if (cmdFile == null) {
                     listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
+                    param.delete();
                     return false;
                 }
 
@@ -483,11 +484,10 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                     try {
                         int cmdResult = proc.launch(cmd, new String[0], null,
                                                     os.getLogger(), wa).join();
-                        param.delete();
                         cmdFile.delete();
                         if (cmdResult != 0) {
                             listener.fatalError("Execution of checkout failed with exit code " + cmdResult);
-                            return false;
+                            bRet = false;
                         }
                     } finally {
                         os.getLogger().flush();
@@ -515,6 +515,8 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                 if (!bRet && isForce)
                     bRet = true;
             }
+
+            param.delete();
 
             if (cmdLog.length() > 0 && listener.getLogger() != null) {
                 listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
