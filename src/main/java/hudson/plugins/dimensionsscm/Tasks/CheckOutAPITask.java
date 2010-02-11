@@ -264,7 +264,7 @@ public class CheckOutAPITask implements FileCallable<Boolean> {
                     Logger.Debug("Deleting '" + wa.toURI() + "'...");
                     listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
                     listener.getLogger().flush();
-                    wa.deleteRecursive();
+                    wa.deleteContents();
                 }
 
                 String baseline = myResolver.resolve("DM_BASELINE");

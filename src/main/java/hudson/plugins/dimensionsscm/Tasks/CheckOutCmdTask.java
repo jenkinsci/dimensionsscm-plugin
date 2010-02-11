@@ -110,22 +110,28 @@ import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
 import hudson.Launcher;
+import hudson.model.StreamBuildListener;
 
 // General imports
+import java.io.BufferedOutputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.lang.Exception;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Calendar;
-/*
- * Find out the remote host name
- */
 
 /**
  * Class implementation of the checkout process.
@@ -146,7 +152,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
     private String passwd = "";
     private String database = "";
     private String server = "";
-	private int version = 2009;
+    private int version = 2009;
 
     private String workarea = "";
     private String projectId = "";
@@ -156,6 +162,21 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
     private String[] folders;
 
     private String exec = "dmcli";
+
+
+    /**
+     * Utility routine to read file into memory
+     *
+     * @param fileName
+     * @return File
+     */
+    private final byte[] loadFile(final File fileName) throws IOException {
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(fileName));
+        byte [] bytes = new byte[(int) fileName.length()];
+        bis.read(bytes);
+        bis.close();
+        return bytes;
+    }
 
     /**
      * Utility routine to look for an executable in the path
@@ -219,66 +240,69 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
         return tmpFile;
     }
 
-	/**
+    /**
      * Utility routine to create command file for dmcli
      *
-	 * @param String
-	 * @param File
+     * @param String
+     * @param File
      * @return File
      * @throws IOException
      */
-	private File createCmdFile(final String projDir, final File area)
-			throws IOException {
+    private File createCmdFile(final String projDir, final File area)
+            throws IOException {
         Calendar nowDateCal = Calendar.getInstance();
         File logFile = new File("a");
         FileWriter logFileWriter = null;
         PrintWriter fmtWriter = null;
         File tmpFile = null;
-		
+
         try {
             tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
             logFileWriter = new FileWriter(tmpFile);
             fmtWriter = new PrintWriter(logFileWriter,true);
 
-			String coCmd = "UPDATE /BRIEF ";
-			if (version == 10)
-				coCmd = "DOWNLOAD ";
-			
-			String cmd = coCmd;
-			
-			if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null) {
-				cmd += "/DIR=\"" + projDir + "\"";
-			}
-			
-			if (requests != null) {
-				if (requests.indexOf(",")==0) {
-					cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
-				} else {
-					cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
-				}
-				cmd += "/WORKSET=\"" + projectId + "\" ";
-			}
-			else if (baseline != null) {
-				cmd += "/BASELINE=\"" + baseline + "\"";
-			} else {
-				cmd += "/WORKSET=\"" + projectId + "\" ";
-			}
-			
-			cmd += "/USER_DIR=\"" + area.getAbsolutePath() + "\" ";
-			
-			if (isRevert)
-				cmd += " /OVERWRITE";
-			fmtWriter.println(cmd);
+            String coCmd = "UPDATE /BRIEF ";
+            if (version == 10)
+                coCmd = "DOWNLOAD ";
+
+            String cmd = coCmd;
+
+            if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null) {
+                cmd += "/DIR=\"" + projDir + "\"";
+            }
+
+            if (requests != null) {
+                if (requests.indexOf(",")==0) {
+                    cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+                } else {
+                    cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                }
+                cmd += "/WORKSET=\"" + projectId + "\" ";
+            }
+            else if (baseline != null) {
+                cmd += "/BASELINE=\"" + baseline + "\"";
+            } else {
+                cmd += "/WORKSET=\"" + projectId + "\" ";
+            }
+
+            cmd += "/USER_DIR=\"" + area.getAbsolutePath() + "\" ";
+
+            if (isRevert)
+                cmd += " /OVERWRITE";
+            listener.getLogger().println("[DIMENSIONS] Running the command '"+cmd+"'...");
+            listener.getLogger().flush();
+
+            fmtWriter.println(cmd);
             fmtWriter.flush();
         } catch (Exception e) {
             throw new IOException("Unable to write command log - " + e.getMessage());
         } finally {
             fmtWriter.close();
         }
-		
+
         return tmpFile;
     }
-	
+
     /*
      * Default constructor
      */
@@ -299,7 +323,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
         this.passwd = passwd;
         this.database = database;
         this.server = server;
-		this.version = version;
+        this.version = version;
 
         // Config details
         this.isDelete = isDelete;
@@ -326,6 +350,8 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
     public Boolean invoke(File area, VirtualChannel channel)
               throws IOException {
 
+        boolean retStatus = false;
+
         // This here code is executed on the slave.
         try {
             listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
@@ -344,12 +370,19 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                     return false;
                 }
 
-                boolean retStatus = processCheckout(exe,param,area);
+                retStatus = processCheckout(exe,param,area);
                 param.delete();
             }
-            return false;
+            return retStatus;
         } catch (Exception e) {
-            throw new IOException(e.getMessage());
+            String errMsg = e.getMessage();
+            if (errMsg == null) {
+                errMsg = "An unknown error occurred. Please try the operation again.";
+            }
+            listener.fatalError("Unable to run checkout callout - " + errMsg);
+            // e.printStackTrace();
+            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            return false;
         }
     }
 
@@ -366,7 +399,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
 
         FilePath wa = new FilePath(area);
         boolean bRet = true;
-		Launcher proc = new Launcher.LocalLauncher(listener);
+        Launcher proc = new Launcher.LocalLauncher(listener);
 
         // Emulate SVN plugin
         // - if workspace exists and it is not managed by this project, blow it away
@@ -383,7 +416,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                 Logger.Debug("Deleting '" + wa.toURI() + "'...");
                 listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
                 listener.getLogger().flush();
-                wa.deleteRecursive();
+                wa.deleteContents();
             }
 
             if (baseline != null) {
@@ -396,7 +429,6 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
             }
 
             String cmdLog = null;
-            StringBuffer cmdOutput = new StringBuffer();
 
             if (baseline != null && baseline.length() == 0)
                 baseline = null;
@@ -421,50 +453,69 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                 String folderN = folders[ii];
                 File fileName = new File(folderN);
                 FilePath projectDir = new FilePath(fileName);
-				String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
+                String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
 
-				File cmdFile = createCmdFile(projDir,area);
+                File cmdFile = createCmdFile(projDir,area);
                 if (cmdFile == null) {
                     listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
                     return false;
                 }
-				
-				listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
-				listener.getLogger().flush();
 
-				String[] cmd = new String[5];
-				cmd[0] = exe.getAbsolutePath();
-				cmd[1] = "-param";
-				cmd[2] = param.getAbsolutePath();
-				cmd[3] = "-cmd";
-				cmd[4] = cmdFile.getAbsolutePath();
-				
-				// Need to capture output into a stream so I can parse it
-				File logFile = new File("a");
-				File tmpFile = null;
-				Calendar nowDateCal = Calendar.getInstance();
-				FileOutputStream outp = new FileOutputStream(tmpFile);
-				tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
-					
-				int cmdResult = proc.launch(cmd, new String[0], null, 
-											outp, wa).join();
+                listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
+                listener.getLogger().flush();
 
-				outp.close();
-				tmpFile.delete();
-				// Check if any conflicts were identified
-				//int confl = outputStr.indexOf("C\t");
-				//if (confl > 0)
-				//	bRet = false;
-			
+                String[] cmd = new String[5];
+                cmd[0] = exe.getAbsolutePath();
+                cmd[1] = "-param";
+                cmd[2] = param.getAbsolutePath();
+                cmd[3] = "cmd";
+                cmd[4] = cmdFile.getAbsolutePath();
+
+                File tmpFile = null;
+
+                // Need to capture output into a file so I can parse it
+                try {
+                    File logFile = new File("a");
+                    Calendar nowDateCal = Calendar.getInstance();
+                    tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+
+                    FileOutputStream fos = new FileOutputStream(tmpFile);
+                    StreamBuildListener os = new StreamBuildListener(fos);
+
+                    try {
+                        int cmdResult = proc.launch(cmd, new String[0], null,
+                                                    os.getLogger(), wa).join();
+                        param.delete();
+                        cmdFile.delete();
+                        if (cmdResult != 0) {
+                            listener.fatalError("Execution of checkout failed with exit code " + cmdResult);
+                            return false;
+                        }
+                    } finally {
+                        os.getLogger().flush();
+                        fos.close();
+                    }
+                } finally {
+                }
+
+                if (tmpFile != null) {
+                    String outputStr = new String(loadFile(tmpFile));
+                    tmpFile.delete();
+
+                    // Check if any conflicts were identified
+                    int confl = outputStr.indexOf("C\t");
+                    if (confl > 0)
+                        bRet = false;
+
+                    if (cmdLog==null)
+                        cmdLog = "\n";
+
+                    cmdLog += outputStr;
+                    cmdLog += "\n";
+                }
+
                 if (!bRet && isForce)
                     bRet = true;
-
-                if (cmdLog==null)
-                    cmdLog = "\n";
-
-                cmdLog += cmdOutput;
-                cmdOutput.setLength(0);
-                cmdLog += "\n";
             }
 
             if (cmdLog.length() > 0 && listener.getLogger() != null) {
@@ -483,8 +534,15 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                 listener.getLogger().flush();
             }
 
-            return false;
+            return bRet;
         } catch (Exception e) {
+            String errMsg = e.getMessage();
+            if (errMsg == null) {
+                errMsg = "An unknown error occurred. Please try the operation again.";
+            }
+            listener.fatalError("Unable to run checkout callout - " + errMsg);
+            // e.printStackTrace();
+            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
             return false;
         }
     }

@@ -578,20 +578,20 @@ public class DimensionsSCM extends SCM implements Serializable
                 } else {
                     // Running on slave... Have to use the command line as Java API will not
                     // work on remote hosts. Cannot serialise it...
-					int version = 2009;
-					long key = dmSCM.login(getJobUserName(),getJobPasswd(),
-									       getJobDatabase(),getJobServer());
-					
-					if (key>0) {
-						// Get the server version
-						Logger.Debug("Login worked.");
-						version = dmSCM.getDmVersion();
-						if (version == 0) {
-							version = 2009;
-						}
-						dmSCM.logout(key);
-					}
-					
+                    int version = 2009;
+                    long key = dmSCM.login(getJobUserName(),getJobPasswd(),
+                                           getJobDatabase(),getJobServer());
+
+                    if (key>0) {
+                        // Get the server version
+                        Logger.Debug("Login worked.");
+                        version = dmSCM.getDmVersion();
+                        if (version == 0) {
+                            version = 2009;
+                        }
+                        dmSCM.logout(key);
+                    }
+
                     {
                         // VariableResolver does not appear to be serialisable either, so...
                         VariableResolver<String> myResolver = build.getBuildVariableResolver();
@@ -612,9 +612,6 @@ public class DimensionsSCM extends SCM implements Serializable
                                                                    workspace,listener);
                         bRet = workspace.act(task);
                     }
-
-                    listener.fatalError("\n[DIMENSIONS] Error: This feature is not currently supported in this version.");
-                    return false;
                 }
             } else {
                 bRet = true;
