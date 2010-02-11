@@ -492,13 +492,17 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                     } finally {
                         os.getLogger().flush();
                         fos.close();
+                        os = null;
+                        fos = null;
                     }
                 } finally {
                 }
 
                 if (tmpFile != null) {
+                    // Get the log file into a string for processing...
                     String outputStr = new String(loadFile(tmpFile));
                     tmpFile.delete();
+                    tmpFile = null;
 
                     // Check if any conflicts were identified
                     int confl = outputStr.indexOf("C\t");
