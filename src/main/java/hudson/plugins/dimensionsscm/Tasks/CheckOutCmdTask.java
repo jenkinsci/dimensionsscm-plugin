@@ -109,6 +109,7 @@ import hudson.remoting.DelegatingCallable;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
+import hudson.Launcher;
 
 // General imports
 import java.io.File;
@@ -145,6 +146,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
     private String passwd = "";
     private String database = "";
     private String server = "";
+	private int version = 2009;
 
     private String workarea = "";
     private String projectId = "";
@@ -217,6 +219,66 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
         return tmpFile;
     }
 
+	/**
+     * Utility routine to create command file for dmcli
+     *
+	 * @param String
+	 * @param File
+     * @return File
+     * @throws IOException
+     */
+	private File createCmdFile(final String projDir, final File area)
+			throws IOException {
+        Calendar nowDateCal = Calendar.getInstance();
+        File logFile = new File("a");
+        FileWriter logFileWriter = null;
+        PrintWriter fmtWriter = null;
+        File tmpFile = null;
+		
+        try {
+            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+            logFileWriter = new FileWriter(tmpFile);
+            fmtWriter = new PrintWriter(logFileWriter,true);
+
+			String coCmd = "UPDATE /BRIEF ";
+			if (version == 10)
+				coCmd = "DOWNLOAD ";
+			
+			String cmd = coCmd;
+			
+			if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null) {
+				cmd += "/DIR=\"" + projDir + "\"";
+			}
+			
+			if (requests != null) {
+				if (requests.indexOf(",")==0) {
+					cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+				} else {
+					cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+				}
+				cmd += "/WORKSET=\"" + projectId + "\" ";
+			}
+			else if (baseline != null) {
+				cmd += "/BASELINE=\"" + baseline + "\"";
+			} else {
+				cmd += "/WORKSET=\"" + projectId + "\" ";
+			}
+			
+			cmd += "/USER_DIR=\"" + area.getAbsolutePath() + "\" ";
+			
+			if (isRevert)
+				cmd += " /OVERWRITE";
+			fmtWriter.println(cmd);
+            fmtWriter.flush();
+        } catch (Exception e) {
+            throw new IOException("Unable to write command log - " + e.getMessage());
+        } finally {
+            fmtWriter.close();
+        }
+		
+        return tmpFile;
+    }
+	
     /*
      * Default constructor
      */
@@ -226,7 +288,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                              String requestId, boolean isDelete,
                              boolean isRevert, boolean isForce,
                              boolean freshBuild, String[] folders,
-                             FilePath workspace,
+                             int version, FilePath workspace,
                              TaskListener listener) {
 
         this.workspace = workspace;
@@ -237,6 +299,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
         this.passwd = passwd;
         this.database = database;
         this.server = server;
+		this.version = version;
 
         // Config details
         this.isDelete = isDelete;
@@ -281,7 +344,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                     return false;
                 }
 
-                boolean retStatus = processCheckout(param,area);
+                boolean retStatus = processCheckout(exe,param,area);
                 param.delete();
             }
             return false;
@@ -295,13 +358,15 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
      *
      * @param File
      * @param File
+     * @param File
      * @return boolean
      */
-    private Boolean processCheckout(final File param, final File area)
+    private Boolean processCheckout(final File exe, final File param, final File area)
                 throws IOException {
 
         FilePath wa = new FilePath(area);
         boolean bRet = true;
+		Launcher proc = new Launcher.LocalLauncher(listener);
 
         // Emulate SVN plugin
         // - if workspace exists and it is not managed by this project, blow it away
@@ -355,10 +420,42 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
 
                 String folderN = folders[ii];
                 File fileName = new File(folderN);
-                FilePath dname = new FilePath(fileName);
+                FilePath projectDir = new FilePath(fileName);
+				String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
 
-                // Checkout the folder
+				File cmdFile = createCmdFile(projDir,area);
+                if (cmdFile == null) {
+                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
+                    return false;
+                }
+				
+				listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
+				listener.getLogger().flush();
 
+				String[] cmd = new String[5];
+				cmd[0] = exe.getAbsolutePath();
+				cmd[1] = "-param";
+				cmd[2] = param.getAbsolutePath();
+				cmd[3] = "-cmd";
+				cmd[4] = cmdFile.getAbsolutePath();
+				
+				// Need to capture output into a stream so I can parse it
+				File logFile = new File("a");
+				File tmpFile = null;
+				Calendar nowDateCal = Calendar.getInstance();
+				FileOutputStream outp = new FileOutputStream(tmpFile);
+				tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+					
+				int cmdResult = proc.launch(cmd, new String[0], null, 
+											outp, wa).join();
+
+				outp.close();
+				tmpFile.delete();
+				// Check if any conflicts were identified
+				//int confl = outputStr.indexOf("C\t");
+				//if (confl > 0)
+				//	bRet = false;
+			
                 if (!bRet && isForce)
                     bRet = true;
 

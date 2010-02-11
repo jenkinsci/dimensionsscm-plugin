@@ -404,8 +404,46 @@ public class DimensionsAPI implements Serializable {
             if (connection!=null) {
                 Logger.Debug("Storing details for key "+key+"...");
                 conns.put(key, new ConnectionCache(connection));
-            }
-
+				if (version < 0) {
+					version = 2009;
+					// Get the server version
+					List inf = connection.getObjectFactory().getServerVersion(2);
+					if (inf == null)
+						Logger.Debug("Detection of server information failed");
+					
+					if (inf != null) {
+						Logger.Debug("Server information detected -" + inf.size());
+						for (int i = 0; i < inf.size(); ++i) {
+							String prop = (String) inf.get(i);
+							Logger.Debug(i + " - " + prop);
+						}
+						
+						// Try and locate the server version.
+						// If not found, then get the schema version and use that
+						String serverx = (String)inf.get(2);
+						if (serverx == null)
+							serverx = (String)inf.get(0);
+						
+						if (serverx != null)
+						{
+							Logger.Debug("Detected server version: " + serverx);
+							String[] tokens = serverx.split(" ");
+							serverx = tokens[0];
+							if (serverx.startsWith("10."))
+								version = 10;
+							else if (serverx.startsWith("2009"))
+								version = 2009;
+							else if (serverx.startsWith("201"))
+								version = 2010;
+							else
+								version = 2009;
+							Logger.Debug("Version to process set to " + version);
+						}
+						else
+							Logger.Debug("No server information found");
+					}
+				}
+			}
         } catch(Exception e) {
             throw new DimensionsRuntimeException("Login to Dimensions failed - " + e.getMessage());
         }
@@ -574,46 +612,6 @@ public class DimensionsAPI implements Serializable {
 
         try
         {
-            if (version < 0) {
-                version = 2009;
-                // Get the server version
-                List inf = connection.getObjectFactory().getServerVersion(2);
-                if (inf == null)
-                    Logger.Debug("Detection of server information failed");
-
-                if (inf != null)
-                {
-                    Logger.Debug("Server information detected -" + inf.size());
-                    for (int i = 0; i < inf.size(); ++i) {
-                        String prop = (String) inf.get(i);
-                        Logger.Debug(i + " - " + prop);
-                    }
-
-                    // Try and locate the server version.
-                    // If not found, then get the schema version and use that
-                    String server = (String)inf.get(2);
-                    if (server == null)
-                        server = (String)inf.get(0);
-
-                    if (server != null)
-                    {
-                        Logger.Debug("Detected server version: " + server);
-                        String[] tokens = server.split(" ");
-                        server = tokens[0];
-                        if (server.startsWith("10."))
-                            version = 10;
-                        else if (server.startsWith("2009"))
-                            version = 2009;
-                        else if (server.startsWith("201"))
-                            version = 2010;
-                        else
-                            version = 2009;
-                        Logger.Debug("Version to process set to " + version);
-                    }
-                    else
-                        Logger.Debug("No server information found");
-                }
-            }
 
             String coCmd = "UPDATE /BRIEF ";
             if (version == 10)
