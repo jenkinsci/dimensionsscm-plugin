@@ -329,8 +329,8 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
         this.isRevert = isRevert;
         this.isForce = isForce;
         this.folders = folders;
-        this.requests = requests;
-        this.baseline = baseline;
+        this.requests = requestId;
+        this.baseline = baselineId;
 
         // Build details
         this.bFreshBuild = freshBuild;
