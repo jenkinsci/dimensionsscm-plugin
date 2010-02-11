@@ -289,8 +289,6 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
 
             if (isRevert)
                 cmd += " /OVERWRITE";
-            listener.getLogger().println("[DIMENSIONS] Running the command '"+cmd+"'...");
-            listener.getLogger().flush();
 
             fmtWriter.println(cmd);
             fmtWriter.flush();
