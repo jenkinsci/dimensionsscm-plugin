@@ -111,6 +111,7 @@ import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
 import hudson.Launcher;
 import hudson.model.StreamBuildListener;
+import hudson.Launcher.ProcStarter;
 
 // General imports
 import java.io.BufferedOutputStream;
@@ -482,8 +483,12 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                     StreamBuildListener os = new StreamBuildListener(fos);
 
                     try {
-                        int cmdResult = proc.launch(cmd, new String[0], null,
-                                                    os.getLogger(), wa).join();
+                        Launcher.ProcStarter ps = proc.launch();
+                        ps.cmds(cmd);
+                        ps.stdout(os.getLogger());
+                        ps.stdin(null);
+                        ps.pwd(wa);
+                        int cmdResult = ps.join();
                         cmdFile.delete();
                         if (cmdResult != 0) {
                             listener.fatalError("Execution of checkout failed with exit code " + cmdResult);

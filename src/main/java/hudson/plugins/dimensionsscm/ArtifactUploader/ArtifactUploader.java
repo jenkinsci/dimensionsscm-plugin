@@ -115,6 +115,7 @@ import hudson.util.FormValidation;
 import hudson.Util;
 import hudson.FilePath;
 import hudson.util.VariableResolver;
+import hudson.tasks.BuildStepMonitor;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -240,6 +241,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
     private static DimensionsSCM scm = null;
     private String[] patterns = new String[0];
 
+    public BuildStepMonitor getRequiredMonitorService() {
+        return BuildStepMonitor.NONE;
+    }
+
     /**
      * Default constructor.
      */
@@ -283,7 +288,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
                 listener.getLogger().flush();
                 ArtifactFilter af = new ArtifactFilter(patterns);
-                FilePath wd = build.getProject().getWorkspace();
+                FilePath wd = build.getWorkspace();
                 Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
                 File dir = new File (wd.getRemote());
                 FileScanner fs = new FileScanner(dir,af,-1);

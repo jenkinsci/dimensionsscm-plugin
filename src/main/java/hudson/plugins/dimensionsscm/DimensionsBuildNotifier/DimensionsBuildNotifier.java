@@ -114,6 +114,7 @@ import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.Util;
 import hudson.util.VariableResolver;
+import hudson.tasks.BuildStepMonitor;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -246,6 +247,11 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     public String getBuildTargets() {
         return this.buildTargets;
     }
+
+    public BuildStepMonitor getRequiredMonitorService() {
+        return BuildStepMonitor.NONE;
+    }
+
 
 
     /**

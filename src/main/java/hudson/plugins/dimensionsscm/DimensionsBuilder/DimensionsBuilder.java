@@ -114,7 +114,6 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
-import hudson.util.FormFieldValidator;
 import hudson.util.FormValidation;
 import hudson.util.VariableResolver;
 
@@ -271,7 +270,7 @@ public class DimensionsBuilder extends Builder {
     }
 
 
-    public boolean perform(Build build, Launcher launcher, BuildListener listener) {
+    public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) {
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         long key = -1;
         try {
@@ -384,24 +383,6 @@ public class DimensionsBuilder extends Builder {
             Logger.Debug("Loading " + this.getClass().getName());
         }
 
-        /**
-         * Performs on-the-fly validation of the form field 'name'.
-         *
-         * @param value
-         *      This receives the current value of the field.
-         */
-        public void doCheckName(StaplerRequest req, StaplerResponse rsp, @QueryParameter final String value) throws IOException, ServletException {
-            new FormFieldValidator(req,rsp,null) {
-                /**
-                 * The real check goes here. In the end, depending on which
-                 * method you call, the browser shows text differently.
-                 */
-                protected void check() throws IOException, ServletException {
-                    ok();
-                }
-            }.process();
-        }
-
         @Override
         public Builder newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             // Get variables and then construct a new object
@@ -456,7 +437,7 @@ public class DimensionsBuilder extends Builder {
             // to persist global configuration information,
             // set that to properties and call save().
             save();
-            return super.configure(req);
+            return super.configure(req,o);
         }
     }
 }

@@ -110,7 +110,6 @@ import hudson.model.Result;
 import hudson.tasks.BuildWrapper.Environment;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
-import hudson.util.FormFieldValidator;
 import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;

@@ -116,7 +116,6 @@ import hudson.scm.ChangeLogParser;
 import hudson.scm.RepositoryBrowsers;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
-import hudson.util.FormFieldValidator;
 import hudson.util.Scrambler;
 import hudson.util.VariableResolver;
 import hudson.FilePath;
