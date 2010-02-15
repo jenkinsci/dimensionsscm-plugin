@@ -28,14 +28,21 @@
              with="dimensionsscm.userName,dimensionsscm.passwd,dimensionsscm.server,dimensionsscm.database"/>
     </f:entry>
 
-    <f:entry title="${%Use update}">
-    <f:checkbox name="dimensionsscm.canUpdate" default="true" checked="${descriptor.canUpdate}"/>
-    <p>
-    If this option is checked, then the workspace will be automatically populated with the changed
-    code from Dimensions using the UPDATE or DOWNLOAD command. This option should only be used if
-    you intend Hudson to populate the workspace for you.
-    </p>
-    </f:entry>
+    <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use Update"
+                           checked="${descriptor.canJobUpdate}" default="true" />
+        <p>
+        If this option is checked, then the workspace will be automatically populated with the changed
+        code from Dimensions using the UPDATE or DOWNLOAD command. This option should only be used if
+        you intend Hudson to populate the workspace for you.
+        </p>
+        <f:entry title="Permissions" field="permissions">
+            <select class="setting-input" name="dimensionsscm.permissions">
+                <f:option value="DEFAULT" selected="${'DEFAULT'==descriptor.permissions}">(Default)</f:option>
+                <f:option value="READONLY" selected="${'READONLY'==descriptor.permissions}">Read-only</f:option>
+                <f:option value="WRITABLE" selected="${'WRITABLE'==descriptor.permissions}">Writable</f:option>
+            </select>
+        </f:entry>
+    </f:optionalBlock>
 
     <f:entry>
         <p>

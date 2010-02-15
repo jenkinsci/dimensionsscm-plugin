@@ -159,6 +159,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
     private String projectId = "";
     private String baseline = null;
     private String requests = null;
+    private String permissions = null;
 
     private String[] folders;
 
@@ -291,6 +292,12 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
             if (isRevert)
                 cmd += " /OVERWRITE";
 
+            if (permissions != null && permissions.length() > 0) {
+                if (!permissions.equals("DEFAULT")) {
+                    cmd += "/PERMS="+permissions;
+                }
+            }
+
             fmtWriter.println(cmd);
             fmtWriter.flush();
         } catch (Exception e) {
@@ -311,7 +318,8 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
                              String requestId, boolean isDelete,
                              boolean isRevert, boolean isForce,
                              boolean freshBuild, String[] folders,
-                             int version, FilePath workspace,
+                             int version, String permissions,
+                             FilePath workspace,
                              TaskListener listener) {
 
         this.workspace = workspace;
@@ -332,6 +340,7 @@ public class CheckOutCmdTask implements FileCallable<Boolean> {
         this.folders = folders;
         this.requests = requestId;
         this.baseline = baselineId;
+        this.permissions = permissions;
 
         // Build details
         this.bFreshBuild = freshBuild;

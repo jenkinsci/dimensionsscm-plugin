@@ -589,6 +589,7 @@ public class DimensionsAPI implements Serializable {
      *      @param final String baseline
      *      @param final String requests
      *      @param final boolean doRevert
+     *      @param final String permissions
      *  Return:
      *      @return boolean
      *-----------------------------------------------------------------
@@ -600,7 +601,8 @@ public class DimensionsAPI implements Serializable {
                             StringBuffer cmdOutput,
                             final String baseline,
                             final String requests,
-                            final boolean doRevert)
+                            final boolean doRevert,
+                            final String permissions)
                     throws IOException, InterruptedException
     {
         boolean bRet = false;
@@ -637,6 +639,12 @@ public class DimensionsAPI implements Serializable {
                     cmd += "/BASELINE=\"" + baseline + "\"";
                 } else {
                     cmd += "/WORKSET=\"" + projectName + "\" ";
+                }
+
+                if (permissions != null && permissions.length() > 0) {
+                    if (!permissions.equals("DEFAULT")) {
+                        cmd += "/PERMS="+permissions;
+                    }
                 }
 
                 cmd += "/USER_DIR=\"" + workspaceName.getRemote() + "\" ";

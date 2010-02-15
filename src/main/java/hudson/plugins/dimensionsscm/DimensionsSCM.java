@@ -187,6 +187,7 @@ public class DimensionsSCM extends SCM implements Serializable
     private String project;
     private String directory;
     private String workarea;
+    private String permissions;
 
     private String jobUserName;
     private String jobPasswd;
@@ -230,6 +231,13 @@ public class DimensionsSCM extends SCM implements Serializable
         return this.directory;
     }
 
+    /*
+     * Gets the permissions .
+     * @return the permissions
+     */
+    public String getPermissions() {
+        return this.permissions;
+    }
 
     /*
      * Gets the project paths.
@@ -422,7 +430,7 @@ public class DimensionsSCM extends SCM implements Serializable
              jobUserName,jobPasswd,
              jobServer,jobDatabase,
              canJobUpdate,jobTimeZone,
-             jobWebUrl,directory);
+             jobWebUrl,directory,"DEFAULT");
     }
 
     /*
@@ -442,6 +450,7 @@ public class DimensionsSCM extends SCM implements Serializable
      *      @param String jobPasswd
      *      @param String jobDatabase
      *      @param String directory
+     *      @param String permissions
      *  Return:
      *      @return void
      *-----------------------------------------------------------------
@@ -460,7 +469,8 @@ public class DimensionsSCM extends SCM implements Serializable
                          boolean canJobUpdate,
                          String jobTimeZone,
                          String jobWebUrl,
-                         String directory)
+                         String directory,
+                         String permissions)
     {
         // Check the folders specified have data specified
         if (folders != null) {
@@ -487,6 +497,7 @@ public class DimensionsSCM extends SCM implements Serializable
         this.project = (Util.fixEmptyAndTrim(project) == null ? "${JOB_NAME}" : project);
         this.workarea = (Util.fixEmptyAndTrim(workarea) == null ? null : workarea);
         this.directory = (Util.fixEmptyAndTrim(directory) == null ? null : directory);
+        this.permissions = (Util.fixEmptyAndTrim(permissions) == null ? null : permissions);
 
         this.jobServer = (Util.fixEmptyAndTrim(jobServer) == null ? getDescriptor().getServer() : jobServer);
         this.jobUserName = (Util.fixEmptyAndTrim(jobUserName) == null ? getDescriptor().getUserName() : jobUserName);
@@ -608,6 +619,7 @@ public class DimensionsSCM extends SCM implements Serializable
                                                                    isCanJobRevert(), isCanJobForce(),
                                                                    (build.getPreviousBuild() == null),
                                                                    getFolders(),version,
+                                                                   permissions,
                                                                    workspace,listener);
                         bRet = workspace.act(task);
                     }
@@ -917,6 +929,7 @@ public class DimensionsSCM extends SCM implements Serializable
         private String webUrl;
 
         private boolean canUpdate;
+        private String permissions;
 
         /*
          * Loads the SCM descriptor
@@ -945,8 +958,13 @@ public class DimensionsSCM extends SCM implements Serializable
             server = req.getParameter("dimensionsscm.server");
             database = req.getParameter("dimensionsscm.database");
 
+            permissions = req.getParameter("dimensionsscm.permissions");
+
             timeZone = req.getParameter("dimensionsscm.timeZone");
             webUrl = req.getParameter("dimensionsscm.webUrl");
+
+            if (permissions != null)
+                permissions = Util.fixNull(req.getParameter("dimensionsscm.permissions").trim());
 
             if (userName != null)
                 userName = Util.fixNull(req.getParameter("dimensionsscm.userName").trim());
@@ -980,6 +998,7 @@ public class DimensionsSCM extends SCM implements Serializable
             String project = req.getParameter("dimensionsscm.project");
             String directory = req.getParameter("dimensionsscm.directory");
             String workarea = req.getParameter("dimensionsscm.workarea");
+            String permissions = req.getParameter("dimensionsscm.permissions");
 
             Boolean canJobDelete = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete")));
             Boolean canJobForce = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce")));
@@ -998,7 +1017,7 @@ public class DimensionsSCM extends SCM implements Serializable
                                                   jobUserName,jobPasswd,
                                                   jobServer,jobDatabase,
                                                   canJobUpdate,jobTimeZone,
-                                                  jobWebUrl,directory);
+                                                  jobWebUrl,directory,permissions);
 
             scm.browser = RepositoryBrowsers.createInstance(DimensionsSCMRepositoryBrowser.class,req,formData,"browser");
             if (scm.dmSCM == null)
@@ -1012,6 +1031,14 @@ public class DimensionsSCM extends SCM implements Serializable
          */
         public String getTimeZone() {
             return this.timeZone;
+        }
+
+        /*
+         * Gets the permissions for the connection.
+         * @return the permissions
+         */
+        public String getPermissions() {
+            return this.permissions;
         }
 
         /*
