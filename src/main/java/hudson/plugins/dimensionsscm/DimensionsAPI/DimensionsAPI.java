@@ -1894,12 +1894,16 @@ public class DimensionsAPI implements Serializable {
      */
     private boolean isStream(DimensionsConnection connection,
                              final String projectId) {
-        DimensionsObjectFactory fc = connection.getObjectFactory();
-        Project proj = fc.getProject(projectId);
-        proj.queryAttribute(SystemAttributes.WSET_IS_STREAM);
-        Boolean isStream = (Boolean)proj.getAttribute(SystemAttributes.WSET_IS_STREAM);
-        if (isStream != null) {
-            return isStream.booleanValue();
+        if (connection != null) {
+            DimensionsObjectFactory fc = connection.getObjectFactory();
+            Project proj = fc.getProject(projectId.toUpperCase());
+            if (proj != null) {
+                proj.queryAttribute(SystemAttributes.WSET_IS_STREAM);
+                Boolean isStream = (Boolean)proj.getAttribute(SystemAttributes.WSET_IS_STREAM);
+                if (isStream != null) {
+                    return isStream.booleanValue();
+                }
+            }
         }
         return false;
     }
