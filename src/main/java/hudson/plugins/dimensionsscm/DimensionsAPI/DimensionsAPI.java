@@ -1156,7 +1156,9 @@ public class DimensionsAPI implements Serializable {
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult UploadFiles(long key, FilePath rootDir, String projectId, File cmdFile, AbstractBuild build, String requests)
+    public DimensionsResult UploadFiles(long key, FilePath rootDir, String projectId, File cmdFile,
+                                        AbstractBuild build, String requests,
+                                        boolean forceCheckIn, boolean forceTip, String owningPart)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1164,8 +1166,9 @@ public class DimensionsAPI implements Serializable {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
 
         try {
+            boolean isStream = isStream(connection,projectId);
             String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
-            if (version == 10)
+            if (version == 10 || !isStream)
                 ciCmd = "UPLOAD ";
 
             if (projectId != null && build != null) {
@@ -1178,6 +1181,17 @@ public class DimensionsAPI implements Serializable {
                         ciCmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                     } else {
                         ciCmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                    }
+                }
+                if (owningPart != null && owningPart.length() > 0) {
+                    ciCmd += "/PART=\"" + owningPart + "\"";
+                }
+                if (!isStream) {
+                    if (forceCheckIn) {
+                        ciCmd += "/FORCE_CHECKIN ";
+                    }
+                    if (forceTip) {
+                        ciCmd += "/FORCE_TIP ";
                     }
                 }
                 DimensionsResult res = run(connection,ciCmd);
@@ -1867,5 +1881,26 @@ public class DimensionsAPI implements Serializable {
     static Date parseDatabaseDate(String date, TimeZone timeZone) {
 
         return (timeZone == null) ? DateUtils.parse(date) : DateUtils.parse(date, timeZone);
+    }
+
+    /**
+     * Query what type of object a project is
+     *
+     * @param connection
+     *            Dimensions connection
+     * @param projectName
+     *            Name of the project
+     * @return boolean
+     */
+    private boolean isStream(DimensionsConnection connection,
+                             final String projectId) {
+        DimensionsObjectFactory fc = connection.getObjectFactory();
+        Project proj = fc.getProject(projectId);
+        proj.queryAttribute(SystemAttributes.WSET_IS_STREAM);
+        Boolean isStream = (Boolean)proj.getAttribute(SystemAttributes.WSET_IS_STREAM);
+        if (isStream != null) {
+            return isStream.booleanValue();
+        }
+        return false;
     }
 }

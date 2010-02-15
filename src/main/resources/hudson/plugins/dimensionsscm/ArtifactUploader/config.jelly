@@ -14,5 +14,21 @@
             </f:entry>
          </table>
        </f:repeatable>
+       <f:advanced>
+         <f:entry title="${%Force files to be checked onto the tip}" help="/plugin/dimensionsscm/forceCheckIn.html">
+         <f:checkbox name="artifactuploader.forceCheckIn" default="false" checked="${instance.forceCheckIn}"/>
+         </f:entry>
+         <f:entry title="${%Force files to be recorded as merged}" help="/plugin/dimensionsscm/forceTip.html">
+         <f:checkbox name="artifactuploader.forceTip" default="false" checked="${instance.forceTip}"/>
+         </f:entry>
+         <f:entry>
+            <p>
+            Note - The above options are only applicable to projects. For streams, they will be ignored.
+            </p>
+         </f:entry>
+         <f:entry title="Owning part for files">
+          <f:textbox name="artifactuploader.owningPart" value="${instance.owningPart}" />
+         </f:entry>
+       </f:advanced>
     </f:entry>
 </j:jelly>
