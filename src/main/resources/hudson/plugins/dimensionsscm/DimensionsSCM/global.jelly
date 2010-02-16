@@ -44,7 +44,7 @@
             you intend Hudson to populate the workspace for you.
             </p>
 		</f:entry>
-        <f:entry title="Permissions" field="permissions">
+        <f:entry title="Default Permissions for updated files" field="permissions">
             <select class="setting-input" name="dimensionsscm.permissions">
                 <f:option value="DEFAULT" selected="${'DEFAULT'==descriptor.permissions}">(Default)</f:option>
                 <f:option value="READONLY" selected="${'READONLY'==descriptor.permissions}">Read-only</f:option>
