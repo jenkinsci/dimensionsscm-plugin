@@ -67,12 +67,14 @@
               with="dimensionsscm.jobUserName,dimensionsscm.jobPasswd,dimensionsscm.jobServer,dimensionsscm.jobDatabase"/>
 
         <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use Update"
-                               checked="${scm.canJobUpdate}" default="true" />
-            <p>
-            If this option is checked, then the workspace will be automatically populated with the changed
-            code from Dimensions using the UPDATE or DOWNLOAD command. This option should only be used if
-            you intend Hudson to populate the workspace for you.
-            </p>
+                               checked="${scm.canJobUpdate}" default="true">
+			<f:entry>
+			  <p>
+              If this option is checked, then the workspace will be automatically populated with the changed
+              code from Dimensions using the UPDATE or DOWNLOAD command. This option should only be used if
+              you intend Hudson to populate the workspace for you.
+              </p>
+			</f:entry>
             <f:entry title="Permissions" field="permissions">
                 <select class="setting-input" name="dimensionsscm.permissions">
                     <f:option value="DEFAULT" selected="${'DEFAULT'==scm.permissions}">(Default)</f:option>

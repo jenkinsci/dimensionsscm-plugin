@@ -28,13 +28,22 @@
              with="dimensionsscm.userName,dimensionsscm.passwd,dimensionsscm.server,dimensionsscm.database"/>
     </f:entry>
 
-    <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use Update"
-                           checked="${descriptor.canJobUpdate}" default="true" />
+    <f:entry>
         <p>
-        If this option is checked, then the workspace will be automatically populated with the changed
-        code from Dimensions using the UPDATE or DOWNLOAD command. This option should only be used if
-        you intend Hudson to populate the workspace for you.
+        Note: The installation details entered above will be used as the default Dimensions SCM repository for
+        every Hudson job unless specifically overriden in a job configuration.
         </p>
+    </f:entry>
+
+    <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use Update"
+                           checked="${descriptor.canJobUpdate}" default="true">
+	    <f:entry>
+			<p>
+            If this option is checked, then the workspace will be automatically populated with the changed
+            code from Dimensions using the UPDATE or DOWNLOAD command. This option should only be used if
+            you intend Hudson to populate the workspace for you.
+            </p>
+		</f:entry>
         <f:entry title="Permissions" field="permissions">
             <select class="setting-input" name="dimensionsscm.permissions">
                 <f:option value="DEFAULT" selected="${'DEFAULT'==descriptor.permissions}">(Default)</f:option>
@@ -43,13 +52,6 @@
             </select>
         </f:entry>
     </f:optionalBlock>
-
-    <f:entry>
-        <p>
-        Note: The installation details entered above will be used as the default Dimensions SCM repository for
-        every Hudson job unless specifically overriden in a job configuration.
-        </p>
-    </f:entry>
 
     <f:advanced>
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
