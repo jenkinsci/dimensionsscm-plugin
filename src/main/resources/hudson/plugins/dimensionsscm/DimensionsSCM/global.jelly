@@ -48,7 +48,7 @@
             <select class="setting-input" name="dimensionsscm.permissions">
                 <f:option value="DEFAULT" selected="${'DEFAULT'==descriptor.permissions}">(Default)</f:option>
                 <f:option value="READONLY" selected="${'READONLY'==descriptor.permissions}">Read-only</f:option>
-                <f:option value="WRITABLE" selected="${'WRITABLE'==descriptor.permissions}">Writable</f:option>
+                <f:option value="WRITABLE" selected="${'WRITABLE'==descriptor.permissions}">Writeable</f:option>
             </select>
         </f:entry>
     </f:optionalBlock>

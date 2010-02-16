@@ -79,7 +79,7 @@
                 <select class="setting-input" name="dimensionsscm.permissions">
                     <f:option value="DEFAULT" selected="${'DEFAULT'==scm.permissions}">(Default)</f:option>
                     <f:option value="READONLY" selected="${'READONLY'==scm.permissions}">Read-only</f:option>
-                    <f:option value="WRITABLE" selected="${'WRITABLE'==scm.permissions}">Writable</f:option>
+                    <f:option value="WRITABLE" selected="${'WRITABLE'==scm.permissions}">Writeable</f:option>
                 </select>
             </f:entry>
         </f:optionalBlock>
