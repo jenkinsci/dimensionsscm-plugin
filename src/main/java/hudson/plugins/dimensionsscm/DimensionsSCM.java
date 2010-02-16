@@ -497,13 +497,14 @@ public class DimensionsSCM extends SCM implements Serializable
         this.project = (Util.fixEmptyAndTrim(project) == null ? "${JOB_NAME}" : project);
         this.workarea = (Util.fixEmptyAndTrim(workarea) == null ? null : workarea);
         this.directory = (Util.fixEmptyAndTrim(directory) == null ? null : directory);
-        this.permissions = (Util.fixEmptyAndTrim(permissions) == null ? null : permissions);
+        this.permissions = (Util.fixEmptyAndTrim(permissions) == null ? "DEFAULT" : permissions);
 
         this.jobServer = (Util.fixEmptyAndTrim(jobServer) == null ? getDescriptor().getServer() : jobServer);
         this.jobUserName = (Util.fixEmptyAndTrim(jobUserName) == null ? getDescriptor().getUserName() : jobUserName);
         this.jobDatabase = (Util.fixEmptyAndTrim(jobDatabase) == null ? getDescriptor().getDatabase() : jobDatabase);
         String passwd = (Util.fixEmptyAndTrim(jobPasswd) == null ? getDescriptor().getPasswd() : jobPasswd);
         this.jobPasswd = Scrambler.scramble(passwd);
+
 
         this.canJobUpdate = canJobUpdate;
         this.canJobDelete = canJobDelete;
@@ -929,7 +930,6 @@ public class DimensionsSCM extends SCM implements Serializable
         private String webUrl;
 
         private boolean canUpdate;
-        private String permissions;
 
         /*
          * Loads the SCM descriptor
@@ -958,13 +958,8 @@ public class DimensionsSCM extends SCM implements Serializable
             server = req.getParameter("dimensionsscm.server");
             database = req.getParameter("dimensionsscm.database");
 
-            permissions = req.getParameter("dimensionsscm.permissions");
-
             timeZone = req.getParameter("dimensionsscm.timeZone");
             webUrl = req.getParameter("dimensionsscm.webUrl");
-
-            if (permissions != null)
-                permissions = Util.fixNull(req.getParameter("dimensionsscm.permissions").trim());
 
             if (userName != null)
                 userName = Util.fixNull(req.getParameter("dimensionsscm.userName").trim());
@@ -1031,14 +1026,6 @@ public class DimensionsSCM extends SCM implements Serializable
          */
         public String getTimeZone() {
             return this.timeZone;
-        }
-
-        /*
-         * Gets the permissions for the connection.
-         * @return the permissions
-         */
-        public String getPermissions() {
-            return this.permissions;
         }
 
         /*
