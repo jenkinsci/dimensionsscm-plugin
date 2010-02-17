@@ -1174,7 +1174,12 @@ public class DimensionsAPI implements Serializable {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
 
         try {
-            boolean isStream = isStream(connection,projectId);
+			boolean isStream = false;
+			
+            if (version != 10) {
+				isStream = isStream(connection,projectId);
+			}
+			
             String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
             if (version == 10 || !isStream)
                 ciCmd = "UPLOAD ";
