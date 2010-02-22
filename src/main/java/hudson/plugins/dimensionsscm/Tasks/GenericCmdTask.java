@@ -133,8 +133,6 @@ import java.util.Calendar;
  */
 public class GenericCmdTask implements FileCallable<Boolean> {
 
-    private static final long serialVersionUID = 1L;
-
     protected FilePath workspace = null;
     protected TaskListener listener = null;
 
@@ -146,6 +144,7 @@ public class GenericCmdTask implements FileCallable<Boolean> {
 
     private String exec = "dmcli";
 
+    protected static final long serialVersionUID = 1L;
 
     /**
      * Utility routine to read file into memory

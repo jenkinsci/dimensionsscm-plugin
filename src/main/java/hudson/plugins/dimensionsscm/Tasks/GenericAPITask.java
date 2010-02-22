@@ -151,9 +151,6 @@ import org.apache.commons.lang.StringUtils;
  * Main Checkout
  */
 
-/**************************************************************/
-/* TODO - Need to make this a GenericAPITask etc like CmdTask */
-/**************************************************************/
 
 /**
  * Class implementation of the checkout process.
@@ -172,7 +169,7 @@ public class GenericAPITask implements FileCallable<Boolean> {
     protected long key = -1;
     protected DimensionsAPI dmSCM = null;
 
-    private static final long serialVersionUID = 1L;
+    protected static final long serialVersionUID = 1L;
 
     /*
      * Default constructor
