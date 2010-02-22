@@ -178,6 +178,8 @@ public class CheckOutAPITask implements FileCallable<Boolean> {
     String workarea = "";
     String projectId = "";
     String[] folders;
+    long key = -1;
+    DimensionsAPI dmSCM = null;
 
     private static final long serialVersionUID = 1L;
 
@@ -221,124 +223,151 @@ public class CheckOutAPITask implements FileCallable<Boolean> {
      * @throws IOException
      */
     public Boolean invoke(File area, VirtualChannel channel) throws IOException {
-        // This here code is executed on the slave.
-        listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
-
         boolean bRet = true;
-        long key = -1;
-        DimensionsAPI dmSCM = new DimensionsAPI();
 
-        try
-        {
+        try {
+            // This here code is executed on the slave.
+            listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
+
+            dmSCM = new DimensionsAPI();
+
             dmSCM.setLogger(listener.getLogger());
+
             // Connect to Dimensions...
             key = dmSCM.login(userName,passwd,
                             database,server);
             if (key>0)
             {
                 Logger.Debug("Login worked.");
-                StringBuffer cmdOutput = new StringBuffer();
-                FilePath wa = null;
-                if (workarea != null)
-                {
-                    File waN = new File(workarea);
-                    wa = new FilePath(waN);
-                }
-                else
-                    wa = new FilePath(area);
+                bRet = execute(area,channel);
+            }
+        } catch(Exception e) {
+            bRet = false;
+            throw new IOException(e.getMessage());
+        }
+        finally
+        {
+            dmSCM.logout(key);
+        }
+        return bRet;
+    }
 
-                // Emulate SVN plugin
-                // - if workspace exists and it is not managed by this project, blow it away
-                //
-                if (bFreshBuild) {
-                    if (listener.getLogger() != null) {
-                        listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
-                        listener.getLogger().flush();
-                    }
-                }
 
-                if (wa.exists() && (isDelete || bFreshBuild)) {
-                    Logger.Debug("Deleting '" + wa.toURI() + "'...");
-                    listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
-                    listener.getLogger().flush();
-                    wa.deleteContents();
-                }
+    /*
+     * Execute method
+     *
+     * @param File
+     * @param VirtualChannel
+     * @return boolean
+     * @throws IOException
+     */
+    public Boolean execute(File area, VirtualChannel channel) throws IOException {
 
-                String baseline = myResolver.resolve("DM_BASELINE");
-                String requests = myResolver.resolve("DM_REQUEST");
+        boolean bRet = true;
 
-                if (baseline != null) {
-                    baseline = baseline.trim();
-                    baseline = baseline.toUpperCase();
-                }
-                if (requests != null) {
-                    requests = requests.replaceAll(" ","");
-                    requests = requests.toUpperCase();
-                }
+        try
+        {
+            StringBuffer cmdOutput = new StringBuffer();
+            FilePath wa = null;
+            if (workarea != null)
+            {
+                File waN = new File(workarea);
+                wa = new FilePath(waN);
+            }
+            else
+                wa = new FilePath(area);
 
-                Logger.Debug("Extra parameters - " + baseline + " " + requests);
-
-                String cmdLog = null;
-
-                if (baseline != null && baseline.length() == 0)
-                    baseline = null;
-                if (requests != null && requests.length() == 0)
-                    requests = null;
-
+            // Emulate SVN plugin
+            // - if workspace exists and it is not managed by this project, blow it away
+            //
+            if (bFreshBuild) {
                 if (listener.getLogger() != null) {
-                    if (requests != null)
-                        listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
-                    else if (baseline != null)
-                        listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
-                    else
-                        listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
+                    listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
                     listener.getLogger().flush();
                 }
+            }
 
-                // Iterate through the project folders and process them in Dimensions
-                for (int ii=0;ii<folders.length; ii++) {
-                    if (!bRet)
-                        break;
+            if (wa.exists() && (isDelete || bFreshBuild)) {
+                Logger.Debug("Deleting '" + wa.toURI() + "'...");
+                listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
+                listener.getLogger().flush();
+                wa.deleteContents();
+            }
 
-                    String folderN = folders[ii];
-                    File fileName = new File(folderN);
-                    FilePath dname = new FilePath(fileName);
+            String baseline = myResolver.resolve("DM_BASELINE");
+            String requests = myResolver.resolve("DM_REQUEST");
 
-                    Logger.Debug("Checking out '" + folderN + "'...");
+            if (baseline != null) {
+                baseline = baseline.trim();
+                baseline = baseline.toUpperCase();
+            }
+            if (requests != null) {
+                requests = requests.replaceAll(" ","");
+                requests = requests.toUpperCase();
+            }
 
-                    // Checkout the folder
-                    bRet = dmSCM.checkout(key,projectId,dname,wa,
-                                          cmdOutput,baseline,requests,
-                                          isRevert,permissions);
-                    Logger.Debug("SCM checkout returned " + bRet);
+            Logger.Debug("Extra parameters - " + baseline + " " + requests);
 
-                    if (!bRet && isForce)
-                        bRet = true;
+            String cmdLog = null;
 
-                    if (cmdLog==null)
-                        cmdLog = "\n";
+            if (baseline != null && baseline.length() == 0)
+                baseline = null;
+            if (requests != null && requests.length() == 0)
+                requests = null;
 
-                    cmdLog += cmdOutput;
-                    cmdOutput.setLength(0);
-                    cmdLog += "\n";
-                }
+            if (listener.getLogger() != null) {
+                if (requests != null)
+                    listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
+                else if (baseline != null)
+                    listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
+                else
+                    listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
+                listener.getLogger().flush();
+            }
 
-                if (cmdLog.length() > 0 && listener.getLogger() != null) {
-                    Logger.Debug("Found command output to log to the build logger");
-                    listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
-                    cmdLog = cmdLog.replaceAll("\n\n","\n");
-                    listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
-                    listener.getLogger().flush();
-                }
+            // Iterate through the project folders and process them in Dimensions
+            for (int ii=0;ii<folders.length; ii++) {
+                if (!bRet)
+                    break;
 
-                if (!bRet) {
-                    listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                    listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
-                    listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
-                    listener.getLogger().println("[DIMENSIONS] that may have been detected.");
-                    listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                    listener.getLogger().flush();
-                }
+                String folderN = folders[ii];
+                File fileName = new File(folderN);
+                FilePath dname = new FilePath(fileName);
+
+                Logger.Debug("Checking out '" + folderN + "'...");
+
+                // Checkout the folder
+                bRet = dmSCM.checkout(key,projectId,dname,wa,
+                                      cmdOutput,baseline,requests,
+                                      isRevert,permissions);
+                Logger.Debug("SCM checkout returned " + bRet);
+
+                if (!bRet && isForce)
+                    bRet = true;
+
+                if (cmdLog==null)
+                    cmdLog = "\n";
+
+                cmdLog += cmdOutput;
+                cmdOutput.setLength(0);
+                cmdLog += "\n";
+            }
+
+            if (cmdLog.length() > 0 && listener.getLogger() != null) {
+                Logger.Debug("Found command output to log to the build logger");
+                listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
+                cmdLog = cmdLog.replaceAll("\n\n","\n");
+                listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
+                listener.getLogger().flush();
+            }
+
+            if (!bRet) {
+                listener.getLogger().println("[DIMENSIONS] ==========================================================");
+                listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
+                listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
+                listener.getLogger().println("[DIMENSIONS] that may have been detected.");
+                listener.getLogger().println("[DIMENSIONS] ==========================================================");
+                listener.getLogger().flush();
             }
         }
         catch(Exception e)
@@ -351,10 +380,6 @@ public class CheckOutAPITask implements FileCallable<Boolean> {
             // e.printStackTrace();
             //throw new IOException("Unable to run checkout callout - " + e.getMessage());
             bRet = false;
-        }
-        finally
-        {
-            dmSCM.logout(key);
         }
         return bRet;
     }
