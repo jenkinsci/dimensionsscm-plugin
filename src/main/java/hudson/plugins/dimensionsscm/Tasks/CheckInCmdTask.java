@@ -135,22 +135,18 @@ import java.net.InetSocketAddress;
 import java.util.Calendar;
 
 /**
- * Class implementation of the checkout process.
+ * Class implementation of the checkin process.
  */
-public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
+public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
 
-    private boolean bFreshBuild = false;
-    private boolean isDelete = false;
-    private boolean isRevert = false;
+    private boolean isMerge = false;
     private boolean isForce = false;
 
     private String workarea = "";
     private String projectId = "";
-    private String baseline = null;
     private String requests = null;
-    private String permissions = null;
 
-    private String[] folders;
+    private String[] patterns;
 
     /**
      * Utility routine to create command file for dmcli
@@ -173,9 +169,9 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
             logFileWriter = new FileWriter(tmpFile);
             fmtWriter = new PrintWriter(logFileWriter,true);
 
-            String coCmd = "UPDATE /BRIEF ";
+            String coCmd = "DELIVER /BRIEF ";
             if (version == 10)
-                coCmd = "DOWNLOAD ";
+                coCmd = "UPLOAD ";
 
             String cmd = coCmd;
 
@@ -190,23 +186,11 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                     cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
                 }
                 cmd += "/WORKSET=\"" + projectId + "\" ";
-            }
-            else if (baseline != null) {
-                cmd += "/BASELINE=\"" + baseline + "\"";
             } else {
                 cmd += "/WORKSET=\"" + projectId + "\" ";
             }
 
             cmd += "/USER_DIR=\"" + area.getAbsolutePath() + "\" ";
-
-            if (isRevert)
-                cmd += " /OVERWRITE";
-
-            if (permissions != null && permissions.length() > 0) {
-                if (!permissions.equals("DEFAULT")) {
-                    cmd += "/PERMS="+permissions;
-                }
-            }
 
             fmtWriter.println(cmd);
             fmtWriter.flush();
@@ -222,13 +206,11 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
     /*
      * Default constructor
      */
-    public CheckOutCmdTask(String userName, String passwd,
+    public CheckInCmdTask(String userName, String passwd,
                              String database, String server,
-                             String projectId, String baselineId,
-                             String requestId, boolean isDelete,
-                             boolean isRevert, boolean isForce,
-                             boolean freshBuild, String[] folders,
-                             int version, String permissions,
+                             String projectId, String requestId,
+                             boolean isMerge, boolean isForce,
+                             String[] patterns, int version,
                              FilePath workspace,
                              TaskListener listener) {
 
@@ -243,22 +225,16 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         this.version = version;
 
         // Config details
-        this.isDelete = isDelete;
         this.projectId = projectId;
-        this.isRevert = isRevert;
+        this.isMerge = isMerge;
         this.isForce = isForce;
-        this.folders = folders;
+        this.patterns = patterns;
         this.requests = requestId;
-        this.baseline = baselineId;
-        this.permissions = permissions;
-
-        // Build details
-        this.bFreshBuild = freshBuild;
     }
 
 
     /*
-     * Process the checkout
+     * Process the checkin
      *
      * @param File
      * @param File
@@ -272,158 +248,16 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         boolean bRet = true;
         Launcher proc = new Launcher.LocalLauncher(listener);
 
-        // Emulate SVN plugin
-        // - if workspace exists and it is not managed by this project, blow it away
-        //
         try {
-            if (bFreshBuild) {
-                if (listener.getLogger() != null) {
-                    listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
-                    listener.getLogger().flush();
-                }
-            }
-
-            if (wa.exists() && (isDelete || bFreshBuild)) {
-                Logger.Debug("Deleting '" + wa.toURI() + "'...");
-                listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
-                listener.getLogger().flush();
-                wa.deleteContents();
-            }
-
-            if (baseline != null) {
-                baseline = baseline.trim();
-                baseline = baseline.toUpperCase();
-            }
-            if (requests != null) {
-                requests = requests.replaceAll(" ","");
-                requests = requests.toUpperCase();
-            }
-
-            String cmdLog = null;
-
-            if (baseline != null && baseline.length() == 0)
-                baseline = null;
-            if (requests != null && requests.length() == 0)
-                requests = null;
-
-            if (listener.getLogger() != null) {
-                if (requests != null)
-                    listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
-                else if (baseline != null)
-                    listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
-                else
-                    listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
-                listener.getLogger().flush();
-            }
-
-            // Iterate through the project folders and process them in Dimensions
-            for (int ii=0;ii<folders.length; ii++) {
-                if (!bRet)
-                    break;
-
-                String folderN = folders[ii];
-                File fileName = new File(folderN);
-                FilePath projectDir = new FilePath(fileName);
-                String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
-
-                File cmdFile = createCmdFile(projDir,area);
-                if (cmdFile == null) {
-                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
-                    param.delete();
-                    return false;
-                }
-
-                listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
-                listener.getLogger().flush();
-
-                String[] cmd = new String[5];
-                cmd[0] = exe.getAbsolutePath();
-                cmd[1] = "-param";
-                cmd[2] = param.getAbsolutePath();
-                cmd[3] = "cmd";
-                cmd[4] = cmdFile.getAbsolutePath();
-
-                File tmpFile = null;
-
-                // Need to capture output into a file so I can parse it
-                try {
-                    File logFile = new File("a");
-                    Calendar nowDateCal = Calendar.getInstance();
-                    tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
-
-                    FileOutputStream fos = new FileOutputStream(tmpFile);
-                    StreamBuildListener os = new StreamBuildListener(fos);
-
-                    try {
-                        Launcher.ProcStarter ps = proc.launch();
-                        ps.cmds(cmd);
-                        ps.stdout(os.getLogger());
-                        ps.stdin(null);
-                        ps.pwd(wa);
-                        int cmdResult = ps.join();
-                        cmdFile.delete();
-                        if (cmdResult != 0) {
-                            listener.fatalError("Execution of checkout failed with exit code " + cmdResult);
-                            bRet = false;
-                        }
-                    } finally {
-                        os.getLogger().flush();
-                        fos.close();
-                        os = null;
-                        fos = null;
-                    }
-                } finally {
-                }
-
-                if (tmpFile != null) {
-                    // Get the log file into a string for processing...
-                    String outputStr = new String(loadFile(tmpFile));
-                    tmpFile.delete();
-                    tmpFile = null;
-
-                    // Check if any conflicts were identified
-                    int confl = outputStr.indexOf("C\t");
-                    if (confl > 0)
-                        bRet = false;
-
-                    if (cmdLog==null)
-                        cmdLog = "\n";
-
-                    cmdLog += outputStr;
-                    cmdLog += "\n";
-                }
-
-                if (!bRet && isForce)
-                    bRet = true;
-            }
-
-            param.delete();
-
-            if (cmdLog.length() > 0 && listener.getLogger() != null) {
-                listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
-                cmdLog = cmdLog.replaceAll("\n\n","\n");
-                listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
-                listener.getLogger().flush();
-            }
-
-            if (!bRet) {
-                listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
-                listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
-                listener.getLogger().println("[DIMENSIONS] that may have been detected.");
-                listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                listener.getLogger().flush();
-            }
-
             return bRet;
         } catch (Exception e) {
             String errMsg = e.getMessage();
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";
             }
-            listener.fatalError("Unable to run checkout callout - " + errMsg);
+            listener.fatalError("Unable to run checkin callout - " + errMsg);
             // e.printStackTrace();
-            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            //throw new IOException("Unable to run checkin callout - " + e.getMessage());
             return false;
         }
     }

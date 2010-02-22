@@ -822,48 +822,17 @@ public class DimensionsAPI implements Serializable {
             List items = null;
 
             if (requests != null) {
-                String[] reqStr = null;
-                if (requests.indexOf(",")>0) {
-                    reqStr = requests.split(",");
-                    Logger.Debug("User specified " + reqStr.length + " requests");
-                }
-                else {
-                    reqStr = new String[1];
-                    reqStr[0] = requests;
-                }
-
-                // setup filter for requests Name
-                List requestList = new ArrayList(1);
-                items = new ArrayList(1);
-
-                for(int ii=0;ii<reqStr.length;ii++) {
-                    String xStr = reqStr[ii];
-                    xStr.trim();
-                    Logger.Debug("Request to process is \"" + xStr + "\"");
-                    Request requestObj = connection.getObjectFactory().findRequest(xStr.toUpperCase());
-
-                    if (requestObj != null) {
-                        Logger.Debug("Request to process is \"" + requestObj.getName() + "\"");
-                        requestList.add(requestObj);
-                        // Get all the children for this request
-                        if (!getDmChildRequests(requestObj, requestList))
-                            throw new IOException("Could not process request \""+requestObj.getName()+"\" children in repository");
-
-                        Logger.Debug("Request has "+requestList.size()+" elements to process");
-                        Project projectObj = connection.getObjectFactory().getProject(projName);
-                        for (int i=0; i<requestList.size(); i++) {
-                            Request req = (Request)requestList.get(i);
-                            Logger.Debug("Request "+i+" is \"" + req.getName() + "\"");
-                            if (!queryItems(connection, req, "/", items, filter, projectObj, true, allRevisions))
-                                throw new IOException("Could not process items for request \""+req.getName()+"\"");
-                        }
-
-                        if (items != null) {
-                            Logger.Debug("Request has "+items.size()+" items to process");
-                            BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
-                            bo.queryAttribute(attrs);
-                        }
-                    }
+                //
+                // Use existing routine to get list of items related to requests
+                //
+                try {
+                    items = getItemsInRequests(connection,
+                                               projName,
+                                               requests,
+                                               dateAfter,
+                                               dateBefore);
+                } catch(Exception e) {
+                    throw new IOException(e.getMessage());
                 }
             } else if (baselineName != null) {
                 // setup filter for baseline Name
@@ -1174,12 +1143,12 @@ public class DimensionsAPI implements Serializable {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
 
         try {
-			boolean isStream = false;
-			
+            boolean isStream = false;
+
             if (version != 10) {
-				isStream = isStream(connection,projectId);
-			}
-			
+                isStream = isStream(connection,projectId);
+            }
+
             String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
             if (version == 10 || !isStream)
                 ciCmd = "UPLOAD ";
@@ -1849,7 +1818,7 @@ public class DimensionsAPI implements Serializable {
             return res;
         } catch (Exception e) {
             Logger.Debug("Command failed to run");
-            throw new DimensionsRuntimeException("Dimension command failed - " + e.getMessage());
+            throw new DimensionsRuntimeException("Dimension command failed -\n\t("+cmd+")\n\t(" + e.getMessage()+")");
         }
     }
 
@@ -1919,5 +1888,98 @@ public class DimensionsAPI implements Serializable {
             }
         }
         return false;
+    }
+
+
+    /**
+     * Populate list with all the items related to a set of requests
+     *
+     * @param connection
+     *            Dimensions connection
+     * @param projectName
+     *            Name of the project
+     * @param requests
+     *            List of requests
+     * @param dateAfter
+     *            Date filter
+     * @param dateBefore
+     *            Date filter
+     * @return List
+     * @throws DimensionsRuntimeException
+     */
+     public List getItemsInRequests(DimensionsConnection connection,
+                             final String projName,
+                             final String requests,
+                             final String dateAfter,
+                             final String dateBefore)
+                    throws DimensionsRuntimeException {
+
+        List items = null;
+        int[] attrs = getItemFileAttributes(true);
+
+        if (requests != null && connection != null) {
+            String[] reqStr = null;
+            if (requests.indexOf(",")>0) {
+                reqStr = requests.split(",");
+                Logger.Debug("User specified " + reqStr.length + " requests");
+            }
+            else {
+                reqStr = new String[1];
+                reqStr[0] = requests;
+            }
+
+            // setup filter for requests Name
+            List requestList = new ArrayList(1);
+            items = new ArrayList(1);
+
+            Filter filter = new Filter();
+
+            filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
+            filter.orders().add(new Filter.Order(SystemAttributes.REVISION_COMMENT, Filter.ORDER_ASCENDING));
+            filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
+            filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
+
+            if (dateAfter != null) {
+                filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+            }
+
+            if (dateBefore != null) {
+                filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+                filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+            }
+
+            for(int ii=0;ii<reqStr.length;ii++) {
+                String xStr = reqStr[ii];
+                xStr.trim();
+                Logger.Debug("Request to process is \"" + xStr + "\"");
+                Request requestObj = connection.getObjectFactory().findRequest(xStr.toUpperCase());
+
+                if (requestObj != null) {
+                    Logger.Debug("Request to process is \"" + requestObj.getName() + "\"");
+                    requestList.add(requestObj);
+                    // Get all the children for this request
+                    if (!getDmChildRequests(requestObj, requestList))
+                        throw new DimensionsRuntimeException("Could not process request \""+requestObj.getName()+"\" children in repository");
+
+                    Logger.Debug("Request has "+requestList.size()+" elements to process");
+                    Project projectObj = connection.getObjectFactory().getProject(projName);
+                    for (int i=0; i<requestList.size(); i++) {
+                        Request req = (Request)requestList.get(i);
+                        Logger.Debug("Request "+i+" is \"" + req.getName() + "\"");
+                        if (!queryItems(connection, req, "/", items, filter, projectObj, true, allRevisions))
+                            throw new DimensionsRuntimeException("Could not process items for request \""+req.getName()+"\"");
+                    }
+
+                    if (items != null) {
+                        Logger.Debug("Request has "+items.size()+" items to process");
+                        BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
+                        bo.queryAttribute(attrs);
+                    }
+                }
+            }
+        }
+
+        return items;
     }
 }
