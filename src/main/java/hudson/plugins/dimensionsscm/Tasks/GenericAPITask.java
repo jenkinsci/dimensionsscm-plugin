@@ -151,27 +151,40 @@ import org.apache.commons.lang.StringUtils;
  * Main Checkout
  */
 
+/**************************************************************/
+/* TODO - Need to make this a GenericAPITask etc like CmdTask */
+/**************************************************************/
+
 /**
  * Class implementation of the checkout process.
  */
-public class CheckOutAPITask extends GenericAPITask implements FileCallable<Boolean> {
+public class GenericAPITask implements FileCallable<Boolean> {
 
-    boolean bFreshBuild = false;
-    boolean isDelete = false;
-    boolean isRevert = false;
-    boolean isForce = false;
+    protected FilePath workspace = null;
+    protected TaskListener listener = null;
 
-    VariableResolver<String> myResolver;
+    protected String userName = "";
+    protected String passwd = "";
+    protected String database = "";
+    protected String server = "";
+    protected String permissions = "";
 
-    String workarea = "";
-    String projectId = "";
-    String[] folders;
+    protected long key = -1;
+    protected DimensionsAPI dmSCM = null;
+
+    private static final long serialVersionUID = 1L;
 
     /*
      * Default constructor
      */
-    public CheckOutAPITask(AbstractBuild<?,?> build, DimensionsSCM parent,
-                        FilePath workspace, TaskListener listener) {
+    public GenericAPITask() {
+    }
+
+    /*
+     * Default constructor
+     */
+    public GenericAPITask(DimensionsSCM parent,
+                          FilePath workspace, TaskListener listener) {
 
         Logger.Debug("Creating task - " + this.getClass().getName());
 
@@ -183,20 +196,48 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
         passwd = parent.getJobPasswd();
         database = parent.getJobDatabase();
         server = parent.getJobServer();
-
-        // Config details
-        workarea = parent.getWorkarea();
-        isDelete = parent.isCanJobDelete();
-        projectId = parent.getProject();
-        isRevert = parent.isCanJobRevert();
-        isForce = parent.isCanJobForce();
-        folders = parent.getFolders();
-        permissions = parent.getPermissions();
-
-        // Build details
-        bFreshBuild = (build.getPreviousBuild() == null);
-        myResolver = build.getBuildVariableResolver();
     }
+
+    /*
+     * Invoke method
+     *
+     * @param File
+     * @param VirtualChannel
+     * @return boolean
+     * @throws IOException
+     */
+    public Boolean invoke(File area, VirtualChannel channel) throws IOException {
+        boolean bRet = true;
+
+        try {
+            // This here code is executed on the slave.
+            listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
+
+            if (dmSCM == null) {
+                dmSCM = new DimensionsAPI();
+            }
+            dmSCM.setLogger(listener.getLogger());
+
+            // Connect to Dimensions...
+            key = dmSCM.login(userName,passwd,
+                            database,server);
+            if (key>0)
+            {
+                Logger.Debug("Login worked.");
+                bRet = execute(area,channel);
+            }
+        } catch(Exception e) {
+            bRet = false;
+            throw new IOException(e.getMessage());
+        }
+        finally
+        {
+            dmSCM.logout(key);
+        }
+        dmSCM = null;
+        return bRet;
+    }
+
 
     /*
      * Execute method
@@ -207,126 +248,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
      * @throws IOException
      */
     public Boolean execute(File area, VirtualChannel channel) throws IOException {
-
-        boolean bRet = true;
-
-        try
-        {
-            StringBuffer cmdOutput = new StringBuffer();
-            FilePath wa = null;
-            if (workarea != null)
-            {
-                File waN = new File(workarea);
-                wa = new FilePath(waN);
-            }
-            else
-                wa = new FilePath(area);
-
-            // Emulate SVN plugin
-            // - if workspace exists and it is not managed by this project, blow it away
-            //
-            if (bFreshBuild) {
-                if (listener.getLogger() != null) {
-                    listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
-                    listener.getLogger().flush();
-                }
-            }
-
-            if (wa.exists() && (isDelete || bFreshBuild)) {
-                Logger.Debug("Deleting '" + wa.toURI() + "'...");
-                listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
-                listener.getLogger().flush();
-                wa.deleteContents();
-            }
-
-            String baseline = myResolver.resolve("DM_BASELINE");
-            String requests = myResolver.resolve("DM_REQUEST");
-
-            if (baseline != null) {
-                baseline = baseline.trim();
-                baseline = baseline.toUpperCase();
-            }
-            if (requests != null) {
-                requests = requests.replaceAll(" ","");
-                requests = requests.toUpperCase();
-            }
-
-            Logger.Debug("Extra parameters - " + baseline + " " + requests);
-
-            String cmdLog = null;
-
-            if (baseline != null && baseline.length() == 0)
-                baseline = null;
-            if (requests != null && requests.length() == 0)
-                requests = null;
-
-            if (listener.getLogger() != null) {
-                if (requests != null)
-                    listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
-                else if (baseline != null)
-                    listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
-                else
-                    listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
-                listener.getLogger().flush();
-            }
-
-            // Iterate through the project folders and process them in Dimensions
-            for (int ii=0;ii<folders.length; ii++) {
-                if (!bRet)
-                    break;
-
-                String folderN = folders[ii];
-                File fileName = new File(folderN);
-                FilePath dname = new FilePath(fileName);
-
-                Logger.Debug("Checking out '" + folderN + "'...");
-
-                // Checkout the folder
-                bRet = dmSCM.checkout(key,projectId,dname,wa,
-                                      cmdOutput,baseline,requests,
-                                      isRevert,permissions);
-                Logger.Debug("SCM checkout returned " + bRet);
-
-                if (!bRet && isForce)
-                    bRet = true;
-
-                if (cmdLog==null)
-                    cmdLog = "\n";
-
-                cmdLog += cmdOutput;
-                cmdOutput.setLength(0);
-                cmdLog += "\n";
-            }
-
-            if (cmdLog.length() > 0 && listener.getLogger() != null) {
-                Logger.Debug("Found command output to log to the build logger");
-                listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
-                cmdLog = cmdLog.replaceAll("\n\n","\n");
-                listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
-                listener.getLogger().flush();
-            }
-
-            if (!bRet) {
-                listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
-                listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
-                listener.getLogger().println("[DIMENSIONS] that may have been detected.");
-                listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                listener.getLogger().flush();
-            }
-        }
-        catch(Exception e)
-        {
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run checkout callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
-            bRet = false;
-        }
-        return bRet;
+        return true;
     }
 }
 
