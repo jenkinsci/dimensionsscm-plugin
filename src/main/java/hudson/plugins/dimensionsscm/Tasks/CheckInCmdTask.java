@@ -130,12 +130,10 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.lang.Exception;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Calendar;
 
 /**
- * Class implementation of the checkin process.
+ * Class implementation of the checkin process. DUMMY IMPLEMENTATION!!! PLACE HOLDER ONLY!!!
  */
 public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
 

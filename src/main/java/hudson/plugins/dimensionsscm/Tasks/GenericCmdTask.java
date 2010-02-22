@@ -109,9 +109,6 @@ import hudson.remoting.DelegatingCallable;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
-import hudson.Launcher;
-import hudson.model.StreamBuildListener;
-import hudson.Launcher.ProcStarter;
 
 // General imports
 import java.io.BufferedOutputStream;
@@ -122,7 +119,6 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -130,8 +126,6 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.lang.Exception;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Calendar;
 
 /**
