@@ -97,6 +97,7 @@ import hudson.plugins.dimensionsscm.DimensionsAPI;
 import hudson.plugins.dimensionsscm.DimensionsSCM;
 import hudson.plugins.dimensionsscm.Logger;
 import com.serena.dmclient.api.DimensionsResult;
+import hudson.plugins.dimensionsscm.FileScanner;
 
 // Hudson imports
 import hudson.Extension;
@@ -151,94 +152,6 @@ import javax.servlet.ServletException;
 
 public class ArtifactUploader extends Notifier implements Serializable {
 
-    /**
-     * File pattern matcher class.
-     */
-    public class ArtifactFilter implements FilenameFilter {
-        private TreeSet<String> artifactFilter = new TreeSet<String>() ;
-
-        public ArtifactFilter(String[] extensions) {
-          Iterator<String> artifactList = Arrays.asList(extensions).iterator();
-          while (artifactList.hasNext()) {
-            artifactFilter.add(artifactList.next().trim());
-          }
-          artifactFilter.remove("");
-        }
-
-        public boolean accept(File dir, String name) {
-          final Iterator<String> artifactList = artifactFilter.iterator();
-          while (artifactList.hasNext()) {
-            String filter = artifactList.next();
-            if (Pattern.matches(filter,name)) {
-                Logger.Debug("Matched '"+filter+"' against '"+name+"'");
-                return true;
-            }
-          }
-          return false;
-        }
-    }
-
-
-    /**
-     * File scanner class.
-     */
-    public class FileScanner {
-        private File[] arr = null;
-        private Collection<File> xfiles = null;
-        private File baseDir = null;
-
-        public FileScanner(File dirName, FilenameFilter filter, int depth) {
-             baseDir = dirName;
-             Logger.Debug("Scanning base directory for files that match patterns '" + baseDir.getAbsolutePath() + "'");
-             xfiles = scanFiles(dirName,filter,depth);
-        }
-
-        public Collection<File> getFiles() {
-            return xfiles;
-        }
-
-        public File[] toArray()
-        {
-            arr = new File[xfiles.size()];
-            return xfiles.toArray(arr);
-        }
-
-        private Collection<File> scanFiles(
-                File dirName,
-                FilenameFilter filter,
-                int depth)
-        {
-            if (dirName.isDirectory()) {
-                Logger.Debug("Scanning '"+dirName.getAbsolutePath()+"' " + depth);
-            }
-
-            Vector<File> files = new Vector<File>();
-            File[] entFiles = dirName.listFiles();
-
-            if (dirName.isDirectory() && dirName.getName().equals(".metadata")) {
-                Logger.Debug("Ignoring '"+dirName.getAbsolutePath()+"' " + depth);
-            } else {
-                if (entFiles != null) {
-                    for (File afile : entFiles) {
-                        String dname = afile.getAbsolutePath();
-                        dname = dname.substring(baseDir.getAbsolutePath().length()+1,afile.getAbsolutePath().length());
-
-                        if (filter == null || filter.accept(dirName, dname)) {
-                            files.add(afile);
-                        }
-                        if ((depth<=-1) || (depth>0 && afile.isDirectory())) {
-                            depth--;
-                            files.addAll(scanFiles(afile, filter, depth));
-                            depth++;
-                        }
-                    }
-                }
-            }
-            return files;
-        }
-    }
-
-
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
@@ -248,8 +161,6 @@ public class ArtifactUploader extends Notifier implements Serializable {
     private boolean forceCheckIn = false;
     private boolean forceTip = false;
     private String owningPart = null;
-
-
 
     /**
      * Default constructor.
@@ -322,11 +233,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
             if (build.getResult() == Result.SUCCESS) {
                 listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
                 listener.getLogger().flush();
-                ArtifactFilter af = new ArtifactFilter(patterns);
                 FilePath wd = build.getWorkspace();
                 Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
                 File dir = new File (wd.getRemote());
-                FileScanner fs = new FileScanner(dir,af,-1);
+                FileScanner fs = new FileScanner(dir,patterns,-1);
                 File[] validFiles = fs.toArray();
 
                 if (fs.getFiles().size() > 0) {
