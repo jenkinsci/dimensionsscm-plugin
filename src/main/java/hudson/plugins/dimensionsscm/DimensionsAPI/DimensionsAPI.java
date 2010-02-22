@@ -1128,13 +1128,14 @@ public class DimensionsAPI implements Serializable {
      * @param FilePath
      * @param String
      * @param File
-     * @param AbstractBuild
      * @param String
+     * @param String
+     * @param int
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
     public DimensionsResult UploadFiles(long key, FilePath rootDir, String projectId, File cmdFile,
-                                        AbstractBuild build, String requests,
+                                        String projectName, int buildNo, String requests,
                                         boolean forceCheckIn, boolean forceTip, String owningPart)
                             throws DimensionsRuntimeException
     {
@@ -1153,10 +1154,10 @@ public class DimensionsAPI implements Serializable {
             if (version == 10 || !isStream)
                 ciCmd = "UPLOAD ";
 
-            if (projectId != null && build != null) {
+            if (projectId != null) {
                 ciCmd += " /USER_FILELIST=\""+cmdFile.getAbsolutePath()+"\"";
                 ciCmd += " /WORKSET=\""+projectId+"\"";
-                ciCmd += " /COMMENT=\"Build artifacts saved by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                ciCmd += " /COMMENT=\"Build artifacts saved by Hudson for job '"+projectName+"' - build "+buildNo+"\"";
                 ciCmd += " /USER_DIRECTORY=\""+rootDir.getRemote()+"\"";
                 if (requests != null && requests.length() > 0) {
                     if (requests.indexOf(",")==0) {

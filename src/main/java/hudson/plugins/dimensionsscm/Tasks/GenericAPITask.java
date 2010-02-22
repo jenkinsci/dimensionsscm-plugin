@@ -99,6 +99,7 @@ import hudson.plugins.dimensionsscm.DimensionsSCM;
 import hudson.plugins.dimensionsscm.DimensionsSCMRepositoryBrowser;
 import hudson.plugins.dimensionsscm.Logger;
 import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
+import com.serena.dmclient.api.DimensionsResult;
 
 
 // Hudson imports

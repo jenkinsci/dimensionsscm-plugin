@@ -96,8 +96,11 @@ package hudson.plugins.dimensionsscm;
 import hudson.plugins.dimensionsscm.DimensionsAPI;
 import hudson.plugins.dimensionsscm.DimensionsSCM;
 import hudson.plugins.dimensionsscm.Logger;
-import com.serena.dmclient.api.DimensionsResult;
 import hudson.plugins.dimensionsscm.FileScanner;
+import hudson.plugins.dimensionsscm.CheckInAPITask;
+import hudson.plugins.dimensionsscm.CheckInCmdTask;
+import hudson.plugins.dimensionsscm.GetHostDetailsTask;
+import com.serena.dmclient.api.DimensionsResult;
 
 // Hudson imports
 import hudson.Extension;
@@ -131,7 +134,6 @@ import org.kohsuke.stapler.StaplerResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -145,8 +147,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
-import java.util.regex.*;
 import java.util.Calendar;
+import java.net.InetSocketAddress;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.servlet.ServletException;
 
@@ -156,7 +160,6 @@ public class ArtifactUploader extends Notifier implements Serializable {
         return BuildStepMonitor.NONE;
     }
 
-    private static DimensionsSCM scm = null;
     private String[] patterns = new String[0];
     private boolean forceCheckIn = false;
     private boolean forceTip = false;
@@ -224,92 +227,95 @@ public class ArtifactUploader extends Notifier implements Serializable {
                            BuildListener listener) throws IOException, InterruptedException {
         long key=-1;
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
+        FilePath workspace = build.getWorkspace();
+        boolean bRet = false;
+
         try {
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
                 listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
                 build.setResult(Result.FAILURE);
                 throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
             }
+
             if (build.getResult() == Result.SUCCESS) {
-                listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
-                listener.getLogger().flush();
-                FilePath wd = build.getWorkspace();
-                Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
-                File dir = new File (wd.getRemote());
-                FileScanner fs = new FileScanner(dir,patterns,-1);
-                File[] validFiles = fs.toArray();
+                DimensionsSCM scm = (DimensionsSCM)build.getProject().getScm();
+                DimensionsAPI dmSCM = new DimensionsAPI();
 
-                if (fs.getFiles().size() > 0) {
-                    if (scm == null)
-                        scm = (DimensionsSCM)build.getProject().getScm();
+                Logger.Debug("Calculating version of Dimensions...");
 
-                    listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+scm.getProject()+"\"...");
-                    listener.getLogger().flush();
+                int version = 2009;
+                key = dmSCM.login(scm.getJobUserName(),
+                                  scm.getJobPasswd(),
+                                  scm.getJobDatabase(),
+                                  scm.getJobServer());
 
-                    Calendar nowDateCal = Calendar.getInstance();
-                    File logFile = new File("a");
-                    FileWriter logFileWriter = null;
-                    PrintWriter fmtWriter = null;
-                    File tmpFile = null;
-
-                    try {
-                        tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
-                        logFileWriter = new FileWriter(tmpFile);
-                        fmtWriter = new PrintWriter(logFileWriter,true);
-
-                        for (File f : validFiles) {
-                            Logger.Debug("Found file '"+ f.getAbsolutePath() + "'");
-                            fmtWriter.println(f.getAbsolutePath());
-                        }
-                        fmtWriter.flush();
-                    } catch (Exception e) {
-                        build.setResult(Result.FAILURE);
-                        throw new IOException("Unable to write command log - " + e.getMessage());
-                    } finally {
-                        fmtWriter.close();
+                if (key>0) {
+                    // Get the server version
+                    Logger.Debug("Login worked.");
+                    version = dmSCM.getDmVersion();
+                    if (version == 0) {
+                        version = 2009;
                     }
-
-                    Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
-                    key = scm.getAPI().login(scm.getJobUserName(),
-                                           scm.getJobPasswd(),
-                                           scm.getJobDatabase(),
-                                           scm.getJobServer());
-                    if (key>0)
-                    {
-                        VariableResolver<String> myResolver = build.getBuildVariableResolver();
-                        String requests = myResolver.resolve("DM_TARGET_REQUEST");
-
-                        if (requests != null) {
-                            requests = requests.replaceAll(" ","");
-                            requests = requests.toUpperCase();
-                        }
-
-                        DimensionsResult res = scm.getAPI().UploadFiles(key,wd,scm.getProject(),tmpFile,build,requests,
-                                                                        forceCheckIn,forceTip,owningPart);
-                        if (res==null) {
-                            listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
-                            listener.getLogger().flush();
-                            build.setResult(Result.FAILURE);
-                        }
-                        else {
-                            listener.getLogger().println("[DIMENSIONS] Build artifacts were successfully loaded into Dimensions");
-                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
-                            listener.getLogger().flush();
-                        }
-                    }
-                    else {
-                        if (tmpFile != null)
-                            tmpFile.delete();
-                        listener.fatalError("[DIMENSIONS] Login to Dimensions failed.");
-                        build.setResult(Result.FAILURE);
-                        return false;
-                    }
-                    if (tmpFile != null)
-                        tmpFile.delete();
-                } else {
-                    listener.getLogger().println("[DIMENSIONS] No build artifacts were detected");
-                    listener.getLogger().flush();
+                    dmSCM.logout(key);
                 }
+
+
+                // Get the details of the master
+                InetAddress netAddr = InetAddress.getLocalHost();
+                byte[] ipAddr = netAddr.getAddress();
+                String hostname = netAddr.getHostName();
+
+                String projectName = build.getProject().getName();
+                int buildNo = build.getNumber();
+
+                Logger.Debug("Checking if master or slave...");
+
+                boolean master = false;
+                GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
+                master = workspace.act(buildHost);
+
+                if (master) {
+                    // Running on master...
+                    listener.getLogger().println("[DIMENSIONS] Running checkout on master...");
+                    listener.getLogger().flush();
+
+                    // Using Java API because this allows the plugin to work on platforms
+                    // where Dimensions has not been ported, e.g. MAC OS, which is what
+                    // I use
+                    CheckInAPITask task = new CheckInAPITask(build,scm,
+                                                             buildNo, projectName,version,
+                                                             this,workspace,listener);
+                    bRet = workspace.act(task);
+                } else {
+                    // Running on slave... Have to use the command line as Java API will not
+                    // work on remote hosts. Cannot serialise it...
+
+                    {
+                        // VariableResolver does not appear to be serialisable either, so...
+                        VariableResolver<String> myResolver = build.getBuildVariableResolver();
+
+                        String baseline = myResolver.resolve("DM_BASELINE");
+                        String requests = myResolver.resolve("DM_REQUEST");
+
+                        listener.getLogger().println("[DIMENSIONS] Running checkin on slave...");
+                        listener.getLogger().flush();
+
+                        CheckInCmdTask task = new CheckInCmdTask(scm.getJobUserName(),
+                                                                 scm.getJobPasswd(),
+                                                                 scm.getJobDatabase(),
+                                                                 scm.getJobServer(),
+                                                                 scm.getProject(),
+                                                                 requests,isForceTip(),isForceCheckIn(),
+                                                                 getPatterns(),version,
+                                                                 workspace,listener);
+                        bRet = workspace.act(task);
+                    }
+                }
+            } else {
+                bRet = true;
+            }
+            if (!bRet) {
+                build.setResult(Result.FAILURE);
             }
         } catch(Exception e) {
             listener.fatalError("Unable to load build artifacts into Dimensions - " + e.getMessage());
@@ -318,10 +324,8 @@ public class ArtifactUploader extends Notifier implements Serializable {
         }
         finally
         {
-            if (scm != null)
-                scm.getAPI().logout(key);
         }
-        return true;
+        return bRet;
     }
 
     /**

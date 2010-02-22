@@ -92,14 +92,18 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.Logger;
-
 // Hudson imports
 import hudson.Util;
 import hudson.FilePath;
-
-import org.apache.commons.lang.StringUtils;
+import hudson.FilePath.FileCallable;
+import hudson.model.Node;
+import hudson.model.Computer;
+import hudson.model.Hudson.MasterComputer;
+import hudson.remoting.Callable;
+import hudson.remoting.DelegatingCallable;
+import hudson.remoting.Channel;
+import hudson.remoting.VirtualChannel;
+import hudson.model.TaskListener;
 
 // General imports
 import java.io.File;
@@ -144,7 +148,6 @@ public class FileScanner implements Serializable {
           while (artifactList.hasNext()) {
             String filter = artifactList.next();
             if (Pattern.matches(filter,name)) {
-                Logger.Debug("Matched '"+filter+"' against '"+name+"'");
                 return true;
             }
           }
@@ -159,7 +162,6 @@ public class FileScanner implements Serializable {
     public FileScanner(File dirName, String[] patterns, int depth) {
          baseDir = dirName;
          filter = new ScannerFilter(patterns);
-         Logger.Debug("Scanning base directory for files that match patterns '" + baseDir.getAbsolutePath() + "'");
          xfiles = scanFiles(dirName,filter,depth);
     }
 
@@ -178,14 +180,12 @@ public class FileScanner implements Serializable {
             FilenameFilter filter,
             int depth) {
         if (dirName.isDirectory()) {
-            Logger.Debug("Scanning '"+dirName.getAbsolutePath()+"' " + depth);
         }
 
         Vector<File> files = new Vector<File>();
         File[] entFiles = dirName.listFiles();
 
         if (dirName.isDirectory() && dirName.getName().equals(".metadata")) {
-            Logger.Debug("Ignoring '"+dirName.getAbsolutePath()+"' " + depth);
         } else {
             if (entFiles != null) {
                 for (File afile : entFiles) {
