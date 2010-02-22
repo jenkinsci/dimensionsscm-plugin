@@ -96,7 +96,6 @@ package hudson.plugins.dimensionsscm;
 import hudson.plugins.dimensionsscm.DimensionsAPI;
 import hudson.plugins.dimensionsscm.DimensionsSCM;
 import hudson.plugins.dimensionsscm.Logger;
-import hudson.plugins.dimensionsscm.FileScanner;
 import hudson.plugins.dimensionsscm.CheckInAPITask;
 import hudson.plugins.dimensionsscm.CheckInCmdTask;
 import hudson.plugins.dimensionsscm.GetHostDetailsTask;
@@ -229,6 +228,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         FilePath workspace = build.getWorkspace();
         boolean bRet = false;
+        boolean isStream = false;
 
         try {
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
@@ -256,6 +256,9 @@ public class ArtifactUploader extends Notifier implements Serializable {
                     if (version == 0) {
                         version = 2009;
                     }
+                    if (version != 10) {
+                        isStream = dmSCM.isStream(key,scm.getProject());
+                    }
                     dmSCM.logout(key);
                 }
 
@@ -276,7 +279,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
                 if (master) {
                     // Running on master...
-                    listener.getLogger().println("[DIMENSIONS] Running checkout on master...");
+                    listener.getLogger().println("[DIMENSIONS] Running checkin on master...");
                     listener.getLogger().flush();
 
                     // Using Java API because this allows the plugin to work on platforms
@@ -294,8 +297,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                         // VariableResolver does not appear to be serialisable either, so...
                         VariableResolver<String> myResolver = build.getBuildVariableResolver();
 
-                        String baseline = myResolver.resolve("DM_BASELINE");
-                        String requests = myResolver.resolve("DM_REQUEST");
+                        String requests = myResolver.resolve("DM_TARGET_REQUEST");
 
                         listener.getLogger().println("[DIMENSIONS] Running checkin on slave...");
                         listener.getLogger().flush();
@@ -305,8 +307,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
                                                                  scm.getJobDatabase(),
                                                                  scm.getJobServer(),
                                                                  scm.getProject(),
-                                                                 requests,isForceTip(),isForceCheckIn(),
-                                                                 getPatterns(),version,
+                                                                 requests,isForceCheckIn(),isForceTip(),
+                                                                 getPatterns(),version,isStream,
+                                                                 buildNo, projectName,
+                                                                 getOwningPart(),
                                                                  workspace,listener);
                         bRet = workspace.act(task);
                     }

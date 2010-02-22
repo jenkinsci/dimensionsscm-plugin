@@ -1866,6 +1866,15 @@ public class DimensionsAPI implements Serializable {
         return (timeZone == null) ? DateUtils.parse(date) : DateUtils.parse(date, timeZone);
     }
 
+    public boolean isStream(long key, String projectId)
+                            throws DimensionsRuntimeException {
+        DimensionsConnection connection = getCon(key);
+        if (connection == null)
+            throw new DimensionsRuntimeException("Not connected to an SCM repository");
+
+        return isStream(connection,projectId);
+    }
+
     /**
      * Query what type of object a project is
      *

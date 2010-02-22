@@ -94,8 +94,9 @@
 package hudson.plugins.dimensionsscm;
 
 // Dimensions imports
-import hudson.plugins.dimensionsscm.Logger;
+import hudson.plugins.dimensionsscm.FileScanner;
 import hudson.plugins.dimensionsscm.GenericCmdTask;
+import hudson.plugins.dimensionsscm.Logger;
 
 // Hudson imports
 import hudson.Util;
@@ -137,24 +138,29 @@ import java.util.Calendar;
  */
 public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
 
-    private boolean isMerge = false;
-    private boolean isForce = false;
+    private boolean forceCheckIn = false;
+    private boolean forceTip = false;
+    private boolean isStream = false;
+
+    int buildNo = 0;
+    private String jobId = "";
 
     private String workarea = "";
     private String projectId = "";
     private String requests = null;
+    private String owningPart = null;
 
     private String[] patterns;
 
     /**
      * Utility routine to create command file for dmcli
      *
-     * @param String
+     * @param File
      * @param File
      * @return File
      * @throws IOException
      */
-    private File createCmdFile(final String projDir, final File area)
+    private File createCmdFile(final File area, final File tempFile)
             throws IOException {
         Calendar nowDateCal = Calendar.getInstance();
         File logFile = new File("a");
@@ -167,30 +173,34 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
             logFileWriter = new FileWriter(tmpFile);
             fmtWriter = new PrintWriter(logFileWriter,true);
 
-            String coCmd = "DELIVER /BRIEF ";
-            if (version == 10)
-                coCmd = "UPLOAD ";
+            String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
+            if (version == 10 || !isStream)
+                ciCmd = "UPLOAD ";
 
-            String cmd = coCmd;
-
-            if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null) {
-                cmd += "/DIR=\"" + projDir + "\"";
-            }
-
-            if (requests != null) {
+            ciCmd += " /USER_FILELIST=\""+tempFile.getAbsolutePath()+"\"";
+            ciCmd += " /WORKSET=\""+projectId+"\"";
+            ciCmd += " /COMMENT=\"Build artifacts saved by Hudson for job '"+jobId+"' - build "+buildNo+"\"";
+            ciCmd += " /USER_DIRECTORY=\""+area.getAbsolutePath()+"\"";
+            if (requests != null && requests.length() > 0) {
                 if (requests.indexOf(",")==0) {
-                    cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
+                    ciCmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                 } else {
-                    cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                    ciCmd += "/CHANGE_DOC_IDS=("+ requests +") ";
                 }
-                cmd += "/WORKSET=\"" + projectId + "\" ";
-            } else {
-                cmd += "/WORKSET=\"" + projectId + "\" ";
+            }
+            if (owningPart != null && owningPart.length() > 0) {
+                ciCmd += "/PART=\"" + owningPart + "\"";
+            }
+            if (!isStream) {
+                if (forceCheckIn) {
+                    ciCmd += "/FORCE_CHECKIN ";
+                }
+                if (forceTip) {
+                    ciCmd += "/FORCE_TIP ";
+                }
             }
 
-            cmd += "/USER_DIR=\"" + area.getAbsolutePath() + "\" ";
-
-            fmtWriter.println(cmd);
+            fmtWriter.println(ciCmd);
             fmtWriter.flush();
         } catch (Exception e) {
             throw new IOException("Unable to write command log - " + e.getMessage());
@@ -207,13 +217,18 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
     public CheckInCmdTask(String userName, String passwd,
                              String database, String server,
                              String projectId, String requestId,
-                             boolean isMerge, boolean isForce,
+                             boolean forceCheckIn, boolean forceTip,
                              String[] patterns, int version,
+                             boolean isStream,
+                             int buildNo, String jobId,
+                             String owningPart,
                              FilePath workspace,
                              TaskListener listener) {
 
         this.workspace = workspace;
         this.listener = listener;
+        this.requests = requestId;
+        this.isStream = isStream;
 
         // Server details
         this.userName = userName;
@@ -224,10 +239,13 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
         // Config details
         this.projectId = projectId;
-        this.isMerge = isMerge;
-        this.isForce = isForce;
+        this.forceCheckIn = forceCheckIn;
+        this.forceTip = forceTip;
         this.patterns = patterns;
         this.requests = requestId;
+        this.buildNo = buildNo;
+        this.jobId = jobId;
+        this.owningPart = owningPart;
     }
 
 
@@ -246,18 +264,144 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         boolean bRet = true;
         Launcher proc = new Launcher.LocalLauncher(listener);
 
-        try {
+        try
+        {
+            listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
+            listener.getLogger().flush();
+            FilePath wd = new FilePath(area);
+            Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
+            File dir = new File (wd.getRemote());
+            FileScanner fs = new FileScanner(dir,patterns,-1);
+            File[] validFiles = fs.toArray();
+            String cmdLog = null;
+
+            if (fs.getFiles().size() > 0) {
+
+                if (requests != null) {
+                    requests = requests.replaceAll(" ","");
+                    requests = requests.toUpperCase();
+                }
+
+                File tempFile = null;
+                PrintWriter fmtWriter = null;
+
+                try {
+                    File logFile = new File("a");
+                    FileWriter logFileWriter = null;
+                    Calendar nowDateCal = Calendar.getInstance();
+                    tempFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+                    logFileWriter = new FileWriter(tempFile);
+                    fmtWriter = new PrintWriter(logFileWriter,true);
+
+                    for (File f : validFiles) {
+                        fmtWriter.println(f.getAbsolutePath());
+                    }
+                    fmtWriter.flush();
+                } catch (Exception e) {
+                    bRet = false;
+                    throw new IOException("Unable to write command log - " + e.getMessage());
+                } finally {
+                    fmtWriter.close();
+                }
+
+
+                File cmdFile = createCmdFile(area,tempFile);
+                if (cmdFile == null) {
+                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
+                    param.delete();
+                    tempFile.delete();
+                    return false;
+                }
+
+                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+projectId+"\"...");
+                listener.getLogger().flush();
+
+                String[] cmd = new String[5];
+                cmd[0] = exe.getAbsolutePath();
+                cmd[1] = "-param";
+                cmd[2] = param.getAbsolutePath();
+                cmd[3] = "cmd";
+                cmd[4] = cmdFile.getAbsolutePath();
+
+                File tmpFile = null;
+
+                // Need to capture output into a file so I can parse it
+                try {
+                    File logFile = new File("a");
+                    Calendar nowDateCal = Calendar.getInstance();
+                    tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+
+                    FileOutputStream fos = new FileOutputStream(tmpFile);
+                    StreamBuildListener os = new StreamBuildListener(fos);
+
+                    try {
+                        Launcher.ProcStarter ps = proc.launch();
+                        ps.cmds(cmd);
+                        ps.stdout(os.getLogger());
+                        ps.stdin(null);
+                        ps.pwd(wa);
+                        int cmdResult = ps.join();
+                        cmdFile.delete();
+                        if (cmdResult != 0) {
+                            listener.fatalError("Execution of checkout failed with exit code " + cmdResult);
+                            bRet = false;
+                        }
+                    } finally {
+                        os.getLogger().flush();
+                        fos.close();
+                        os = null;
+                        fos = null;
+                    }
+                } finally {
+                    tempFile.delete();
+                }
+
+                if (tmpFile != null) {
+                    // Get the log file into a string for processing...
+                    String outputStr = new String(loadFile(tmpFile));
+                    tmpFile.delete();
+                    tmpFile = null;
+
+                    if (cmdLog==null)
+                        cmdLog = "\n";
+
+                    cmdLog += outputStr;
+                    cmdLog += "\n";
+                }
+            }
+
+            param.delete();
+
+            if (cmdLog.length() > 0 && listener.getLogger() != null) {
+                listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
+                cmdLog = cmdLog.replaceAll("\n\n","\n");
+                listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
+                listener.getLogger().flush();
+            }
+
+            if (!bRet) {
+                listener.getLogger().println("[DIMENSIONS] ==========================================================");
+                listener.getLogger().println("[DIMENSIONS] The Dimensions checkin command returned a failure status.");
+                listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
+                listener.getLogger().println("[DIMENSIONS] that may have been detected.");
+                listener.getLogger().println("[DIMENSIONS] ==========================================================");
+                listener.getLogger().flush();
+            }
+
             return bRet;
-        } catch (Exception e) {
+        }
+        catch(Exception e)
+        {
             String errMsg = e.getMessage();
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";
             }
-            listener.fatalError("Unable to run checkin callout - " + errMsg);
+            listener.fatalError("Unable to run checkout callout - " + errMsg);
             // e.printStackTrace();
-            //throw new IOException("Unable to run checkin callout - " + e.getMessage());
-            return false;
+            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            bRet = false;
         }
+        return bRet;
     }
 }
 
