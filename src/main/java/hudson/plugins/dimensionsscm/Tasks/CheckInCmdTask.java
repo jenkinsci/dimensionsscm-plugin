@@ -314,6 +314,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
                 listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+projectId+"\"...");
 
+                // Debug for printing out files
                 //String filesToLoad = new String(fu.loadFile(tempFile));
                 //if (filesToLoad!=null)
                 //    filesToLoad += "\n";
