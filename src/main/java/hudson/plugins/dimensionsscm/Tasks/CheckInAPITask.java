@@ -296,7 +296,11 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
                     listener.getLogger().println("[DIMENSIONS] No build artifacts were detected");
                     listener.getLogger().flush();
                 }
+            } else {
+                listener.getLogger().println("[DIMENSIONS] No build artifacts found for checking in");
             }
+
+            listener.getLogger().flush();
         }
         catch(Exception e)
         {
@@ -304,9 +308,9 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";
             }
-            listener.fatalError("Unable to run checkout callout - " + errMsg);
+            listener.fatalError("Unable to run checkin callout - " + errMsg);
             // e.printStackTrace();
-            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            //throw new IOException("Unable to run checkin callout - " + e.getMessage());
             bRet = false;
         }
         return bRet;

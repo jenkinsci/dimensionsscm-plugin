@@ -269,7 +269,6 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
             listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
             listener.getLogger().flush();
             FilePath wd = new FilePath(area);
-            Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
             File dir = new File (wd.getRemote());
             FileScanner fs = new FileScanner(dir,patterns,-1);
             File[] validFiles = fs.toArray();
@@ -377,11 +376,15 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                     cmdLog += outputStr;
                     cmdLog += "\n";
                 }
+            } else {
+                listener.getLogger().println("[DIMENSIONS] No build artifacts found for checking in");
             }
+
+            listener.getLogger().flush();
 
             param.delete();
 
-            if (cmdLog.length() > 0 && listener.getLogger() != null) {
+            if (cmdLog != null && cmdLog.length() > 0 && listener.getLogger() != null) {
                 listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
                 cmdLog = cmdLog.replaceAll("\n\n","\n");
                 listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
