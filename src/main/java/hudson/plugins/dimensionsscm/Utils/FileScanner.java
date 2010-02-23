@@ -197,9 +197,15 @@ public class FileScanner implements Serializable {
             if (entFiles != null) {
                 for (File afile : entFiles) {
                     String dname = afile.getAbsolutePath();
+
+                    if (afile.getName().equals(".metadata")) {
+                        continue;
+
+                    }
                     dname = dname.substring(baseDir.getAbsolutePath().length()+1,afile.getAbsolutePath().length());
 
                     if (filter == null || filter.accept(dirName, dname)) {
+
                         files.add(afile);
                     }
                     if ((depth<=-1) || (depth>0 && afile.isDirectory())) {

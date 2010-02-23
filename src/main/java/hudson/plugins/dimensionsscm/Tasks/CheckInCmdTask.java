@@ -314,13 +314,13 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
                 listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+projectId+"\"...");
 
-                String filesToLoad = new String(fu.loadFile(tempFile));
-                if (filesToLoad!=null)
-                    filesToLoad += "\n";
-                if (filesToLoad != null) {
-                    filesToLoad = filesToLoad.replaceAll("\n\n","\n");
-                    listener.getLogger().println(filesToLoad.replaceAll("\n","\n[DIMENSIONS] - "));
-                }
+                //String filesToLoad = new String(fu.loadFile(tempFile));
+                //if (filesToLoad!=null)
+                //    filesToLoad += "\n";
+                //if (filesToLoad != null) {
+                //    filesToLoad = filesToLoad.replaceAll("\n\n","\n");
+                //    listener.getLogger().println(filesToLoad.replaceAll("\n","\n[DIMENSIONS] - "));
+                //}
 
                 listener.getLogger().flush();
 
