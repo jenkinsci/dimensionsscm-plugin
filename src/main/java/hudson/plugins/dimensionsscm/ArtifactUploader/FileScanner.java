@@ -136,22 +136,29 @@ public class FileScanner implements Serializable {
         private TreeSet<String> artifactFilter = new TreeSet<String>() ;
 
         public ScannerFilter(String[] extensions) {
-          Iterator<String> artifactList = Arrays.asList(extensions).iterator();
-          while (artifactList.hasNext()) {
-            artifactFilter.add(artifactList.next().trim());
-          }
-          artifactFilter.remove("");
+            Iterator<String> artifactList = Arrays.asList(extensions).iterator();
+            while (artifactList.hasNext()) {
+                artifactFilter.add(artifactList.next().trim());
+            }
+            artifactFilter.remove("");
         }
 
         public boolean accept(File dir, String name) {
-          final Iterator<String> artifactList = artifactFilter.iterator();
-          while (artifactList.hasNext()) {
-            String filter = artifactList.next();
-            if (Pattern.matches(filter,name)) {
-                return true;
+            final Iterator<String> artifactList = artifactFilter.iterator();
+
+            // Skip metadata no matter what
+            if (name.equals(".metadata")) {
+                return false;
             }
-          }
-          return false;
+
+            while (artifactList.hasNext()) {
+                String filter = artifactList.next();
+                if (Pattern.matches(filter,name)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
