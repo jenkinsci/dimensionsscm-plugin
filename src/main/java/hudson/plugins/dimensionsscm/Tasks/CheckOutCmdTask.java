@@ -374,7 +374,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
 
                 if (tmpFile != null) {
                     // Get the log file into a string for processing...
-                    String outputStr = new String(loadFile(tmpFile));
+                    String outputStr = new String(fu.loadFile(tmpFile));
                     tmpFile.delete();
                     tmpFile = null;
 

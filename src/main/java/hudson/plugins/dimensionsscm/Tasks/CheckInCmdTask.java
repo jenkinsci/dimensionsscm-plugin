@@ -304,7 +304,6 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                     fmtWriter.close();
                 }
 
-
                 File cmdFile = createCmdFile(area,tempFile);
                 if (cmdFile == null) {
                     listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
@@ -314,6 +313,15 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                 }
 
                 listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+projectId+"\"...");
+
+                String filesToLoad = new String(fu.loadFile(tempFile));
+                if (filesToLoad!=null)
+                    filesToLoad += "\n";
+                if (filesToLoad != null) {
+                    filesToLoad = filesToLoad.replaceAll("\n\n","\n");
+                    listener.getLogger().println(filesToLoad.replaceAll("\n","\n[DIMENSIONS] - "));
+                }
+
                 listener.getLogger().flush();
 
                 String[] cmd = new String[5];
@@ -358,7 +366,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
                 if (tmpFile != null) {
                     // Get the log file into a string for processing...
-                    String outputStr = new String(loadFile(tmpFile));
+                    String outputStr = new String(fu.loadFile(tmpFile));
                     tmpFile.delete();
                     tmpFile = null;
 

@@ -95,7 +95,7 @@ package hudson.plugins.dimensionsscm;
 
 // Dimensions imports
 import hudson.plugins.dimensionsscm.Logger;
-
+import hudson.plugins.dimensionsscm.FileUtils;
 
 // Hudson imports
 import hudson.Util;
@@ -135,6 +135,7 @@ public class GenericCmdTask implements FileCallable<Boolean> {
 
     protected FilePath workspace = null;
     protected TaskListener listener = null;
+    protected FileUtils fu;
 
     protected String userName = "";
     protected String passwd = "";
@@ -145,20 +146,6 @@ public class GenericCmdTask implements FileCallable<Boolean> {
     private String exec = "dmcli";
 
     protected static final long serialVersionUID = 1L;
-
-    /**
-     * Utility routine to read file into memory
-     *
-     * @param fileName
-     * @return File
-     */
-    protected final byte[] loadFile(final File fileName) throws IOException {
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(fileName));
-        byte [] bytes = new byte[(int) fileName.length()];
-        bis.read(bytes);
-        bis.close();
-        return bytes;
-    }
 
     /**
      * Utility routine to look for an executable in the path

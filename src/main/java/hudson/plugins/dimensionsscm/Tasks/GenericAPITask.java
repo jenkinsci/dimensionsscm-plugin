@@ -100,6 +100,7 @@ import hudson.plugins.dimensionsscm.DimensionsSCMRepositoryBrowser;
 import hudson.plugins.dimensionsscm.Logger;
 import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
 import com.serena.dmclient.api.DimensionsResult;
+import hudson.plugins.dimensionsscm.FileUtils;
 
 
 // Hudson imports
@@ -169,6 +170,7 @@ public class GenericAPITask implements FileCallable<Boolean> {
 
     protected long key = -1;
     protected DimensionsAPI dmSCM = null;
+    protected FileUtils fu;
 
     protected static final long serialVersionUID = 1L;
 
