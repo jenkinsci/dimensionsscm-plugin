@@ -11,9 +11,8 @@
               <f:entry title="Baseline Scope" field="blnScope"
                     help="/plugin/dimensionsscm/blnScope.html">
                 <select class="setting-input" name="dimensionsbuildnotifier.blnScope">
-                    <f:option value="DEFAULT" selected="${'DEFAULT'==instance.blnScope}">(Default)</f:option>
-                    <f:option value="WORKSET" selected="${'WORKSET'==instance.blnScope}">Project</f:option>
                     <f:option value="PART" selected="${'PART'==instance.blnScope}">Part</f:option>
+                    <f:option value="WORKSET" selected="${'WORKSET'==instance.blnScope}">Project</f:option>
                 </select>
               </f:entry>
               <f:entry>
