@@ -296,6 +296,8 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                 cmdLog += cmdOutput;
                 cmdOutput.setLength(0);
                 cmdLog += "\n";
+                if (requests != null)
+                    break;
             }
 
             if (cmdLog.length() > 0 && listener.getLogger() != null) {

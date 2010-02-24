@@ -736,6 +736,8 @@ public class DimensionsSCM extends SCM implements Serializable
                                           changelogFile, tz,
                                           jobWebUrl,
                                           baseline,requests);
+                    if (requests != null)
+                        break;
                 }
 
                 // Close the changes log file

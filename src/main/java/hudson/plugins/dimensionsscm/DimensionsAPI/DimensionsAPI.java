@@ -652,8 +652,11 @@ public class DimensionsAPI implements Serializable {
                 if (doRevert)
                     cmd += " /OVERWRITE";
 
-                getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
-                getLogger().flush();
+                if (requests == null) {
+                    getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
+                    getLogger().flush();
+                }
+
                 DimensionsResult res = run(connection,cmd);
                 if (res != null )
                 {
@@ -726,7 +729,11 @@ public class DimensionsAPI implements Serializable {
             File tmpFile = null;
 
             Logger.Debug("CM Url : " + ((url != null) ? url : "(null)"));
-            getLogger().println("[DIMENSIONS] Calculating change set for directory '"+((projectDir!=null) ? projectDir.getRemote() : "/")+"'...");
+            if (requests != null) {
+                getLogger().println("[DIMENSIONS] Calculating change set for request(s) '"+requests+"'...");
+            } else {
+                getLogger().println("[DIMENSIONS] Calculating change set for directory '"+((projectDir!=null) ? projectDir.getRemote() : "/")+"'...");
+            }
             getLogger().flush();
 
             if (items != null) {

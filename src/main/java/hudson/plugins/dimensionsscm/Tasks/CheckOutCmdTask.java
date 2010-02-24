@@ -330,8 +330,10 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                     return false;
                 }
 
-                listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
-                listener.getLogger().flush();
+                if (requests == null) {
+                    listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
+                    listener.getLogger().flush();
+                }
 
                 String[] cmd = new String[5];
                 cmd[0] = exe.getAbsolutePath();
@@ -392,6 +394,9 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
 
                 if (!bRet && isForce)
                     bRet = true;
+
+                if (requests != null)
+                    break;
             }
 
             param.delete();
