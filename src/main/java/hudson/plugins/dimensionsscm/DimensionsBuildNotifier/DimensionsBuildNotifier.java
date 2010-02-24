@@ -139,6 +139,10 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     private String  actionState = null;
     private String  deployState = null;
 
+	private String blnScope = null;
+	private String blnTemplate = null;
+	private String blnOwningPart = null;
+	
     private boolean canBaselineBuild = false;
 
     private String area = null;
@@ -150,6 +154,30 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     private boolean buildClean = false;
     private boolean capture = false;
 
+    /*
+     * Gets the baseline part .
+     * @return String
+     */
+    public String getBlnOwningPart() {
+        return this.blnOwningPart;
+    }
+
+	/*
+     * Gets the baseline template .
+     * @return String
+     */
+    public String getBlnTemplate() {
+        return this.blnTemplate;
+    }
+
+	/*
+     * Gets the baseline scope .
+     * @return boolean
+     */
+    public String getBlnScope() {
+        return this.blnScope;
+    }
+	
     /*
      * Gets the build .
      * @return boolean
@@ -262,6 +290,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                    boolean canBuild,
                                    String area, String buildConfig,
                                    String buildOptions, String buildTargets,
+								   String blnScope, String blnTemplate, String blnOwningPart,
                                    boolean batch, boolean buildClean, boolean capture) {
         this.canBaselineDeploy = canDeploy;
         this.canBaselineAction = canAction;
@@ -273,7 +302,10 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         this.buildConfig = buildConfig;
         this.buildOptions = buildOptions;
         this.buildTargets = buildTargets;
-
+		this.blnScope = blnScope;
+		this.blnTemplate = blnTemplate;
+		this.blnOwningPart = blnOwningPart;
+		
         this.batch = batch;
         this.buildClean = buildClean;
         this.capture = capture;
@@ -439,7 +471,10 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             String buildConfig = req.getParameter("dimensionsbuildnotifier.buildConfig");
             String buildOptions = req.getParameter("dimensionsbuildnotifier.buildOptions");
             String buildTargets = req.getParameter("dimensionsbuildnotifier.buildTargets");
-
+			String blnScope = req.getParameter("dimensionsbuildnotifier.blnScope");
+			String blnTemplate = req.getParameter("dimensionsbuildnotifier.blnTemplate");
+			String blnOwningPart = req.getParameter("dimensionsbuildnotifier.blnOwningPart");
+			
             if (deploy != null)
                 deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
             if (action != null)
@@ -452,12 +487,19 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 buildOptions = Util.fixNull(req.getParameter("dimensionsbuildnotifier.buildOptions").trim());
             if (buildTargets != null)
                 buildTargets = Util.fixNull(req.getParameter("dimensionsbuildnotifier.buildTargets").trim());
-
+            if (blnScope != null)
+                blnScope = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnScope").trim());
+            if (blnTemplate != null)
+                blnTemplate = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnTemplate").trim());
+            if (blnOwningPart != null)
+                blnOwningPart = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnOwningPart").trim());
+			
 
             DimensionsBuildNotifier notif = new DimensionsBuildNotifier(canDeploy,deploy,
                                                                         canAction, action, canBuild,
                                                                         area,buildConfig,
                                                                         buildOptions,buildTargets,
+																		blnScope,blnTemplate,blnOwningPart,
                                                                         batch,buildClean,capture);
 
             return notif;
@@ -478,7 +520,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
             // Get the values and check them
             String deploy = req.getParameter("dimensionsbuildnotifier.deployState");
-            String action = null;
+            String action = req.getParameter("dimensionsbuildnotifier.actionState");
 
             if (deploy != null)
                 deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
