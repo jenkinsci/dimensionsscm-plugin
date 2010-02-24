@@ -227,7 +227,6 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
         this.workspace = workspace;
         this.listener = listener;
-        this.requests = requestId;
         this.isStream = isStream;
 
         // Server details
