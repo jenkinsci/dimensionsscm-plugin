@@ -346,7 +346,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         requests = requests.toUpperCase();
                     }
                     {
-                        DimensionsResult res = scm.getAPI().createBaseline(key,scm.getProject(),build);
+                        DimensionsResult res = scm.getAPI().createBaseline(key,scm.getProject(),build,blnScope,blnTemplate,blnOwningPart);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
                             listener.getLogger().flush();

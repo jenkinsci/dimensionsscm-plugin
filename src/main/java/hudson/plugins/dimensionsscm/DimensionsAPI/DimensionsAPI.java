@@ -1202,10 +1202,14 @@ public class DimensionsAPI implements Serializable {
      * @param long
      * @param String
      * @param AbstractBuild
+     * @param String
+     * @param String
+     * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build)
+    public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build,
+	                                       String blnScope, String blnTemplate, String blnOwningPart)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1216,7 +1220,18 @@ public class DimensionsAPI implements Serializable {
             String cmd = "CBL ";
             if (projectId != null && build != null) {
                 cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
-                cmd += " /SCOPE=WORKSET /WORKSET=\""+projectId+"\"";
+                cmd += " /WORKSET=\""+projectId+"\"";
+				if (blnScope == null) {
+					cmd += " /SCOPE=WORKSET ";
+				} else {
+					cmd += " /SCOPE="+blnScope;
+				}
+				if (blnTemplate != null) {
+					cmd += " /TEMPLATE_ID=\""+blnTemplate+"\"";
+				}
+				if (blnOwningPart != null) {
+					cmd += " /PART=\""+blnOwningPart+"\"";
+				}
                 cmd += " /DESCRIPTION=\"Project Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
