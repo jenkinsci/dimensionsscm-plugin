@@ -1232,7 +1232,7 @@ public class DimensionsAPI implements Serializable {
                 if (blnOwningPart != null && blnOwningPart.length() > 0) {
                     cmd += " /PART=\""+blnOwningPart+"\"";
                 }
-                cmd += " /DESCRIPTION=\"Project Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                cmd += " /DESCRIPTION=\"Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
                     Logger.Debug("Tagging project - "+res.getMessage());
