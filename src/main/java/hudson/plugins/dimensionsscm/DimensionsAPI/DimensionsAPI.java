@@ -1209,7 +1209,7 @@ public class DimensionsAPI implements Serializable {
      * @throws DimensionsRuntimeException
      */
     public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build,
-	                                       String blnScope, String blnTemplate, String blnOwningPart)
+                                           String blnScope, String blnTemplate, String blnOwningPart)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1221,17 +1221,17 @@ public class DimensionsAPI implements Serializable {
             if (projectId != null && build != null) {
                 cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
                 cmd += " /WORKSET=\""+projectId+"\"";
-				if (blnScope == null) {
-					cmd += " /SCOPE=WORKSET ";
-				} else {
-					cmd += " /SCOPE="+blnScope;
-				}
-				if (blnTemplate != null) {
-					cmd += " /TEMPLATE_ID=\""+blnTemplate+"\"";
-				}
-				if (blnOwningPart != null) {
-					cmd += " /PART=\""+blnOwningPart+"\"";
-				}
+                if (blnScope == null || blnScope.length() == 0) {
+                    cmd += " /SCOPE=WORKSET ";
+                } else {
+                    cmd += " /SCOPE="+blnScope;
+                }
+                if (blnTemplate != null && blnTemplate.length() > 0) {
+                    cmd += " /TEMPLATE_ID=\""+blnTemplate+"\"";
+                }
+                if (blnOwningPart != null && blnOwningPart.length() > 0) {
+                    cmd += " /PART=\""+blnOwningPart+"\"";
+                }
                 cmd += " /DESCRIPTION=\"Project Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
