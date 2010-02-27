@@ -83,19 +83,18 @@
  * ===========================================================================
  */
 
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
+/**
+ ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
+ **
+ ** @author Tim Payne
+ **
+ **/
 
 // Package name
 package hudson.plugins.dimensionsscm;
 
 // Dimensions imports
-import hudson.plugins.dimensionsscm.Logger;
-import hudson.plugins.dimensionsscm.SCMLauncher;
+import hudson.plugins.dimensionsscm.FileUtils;
 
 // Hudson imports
 import hudson.Util;
@@ -109,14 +108,18 @@ import hudson.remoting.DelegatingCallable;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
+import hudson.Launcher;
+import hudson.Launcher.LocalLauncher;
+import hudson.model.StreamBuildListener;
+import hudson.Launcher.ProcStarter;
 
 // General imports
-import java.io.BufferedOutputStream;
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -126,173 +129,121 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.lang.Exception;
+import java.lang.InterruptedException;
 import java.util.Calendar;
 
 /**
- * Class implementation of the command process.
+ * Class implementation of the checkout process.
  */
-public class GenericCmdTask implements FileCallable<Boolean> {
+public class SCMLauncher implements Serializable {
 
-    protected FilePath workspace = null;
-    protected TaskListener listener = null;
+    static class dmLauncher extends LocalLauncher {
+        /*
+         * Default constructor
+         */
+        private TaskListener listener = null;
 
-    protected String userName = "";
-    protected String passwd = "";
-    protected String database = "";
-    protected String server = "";
-    protected int version = 2009;
-
-    private String exec = "dmcli";
-
-    protected static final long serialVersionUID = 1L;
-
-    /**
-     * Utility routine to look for an executable in the path
-     *
-     * @param exeName
-     * @return File
-     */
-     protected static File getExecutable(String exeName) {
-        // Get the path environment
-        String path = System.getenv("PATH");
-        if (path == null)
-            path = System.getenv("path");
-        if (path == null)
-            return null;
-
-        // Split it into directories
-        String[] pathDirs = path.split(File.pathSeparator);
-
-        // Hunt through the directories to find the file I want
-        File exe = null;
-        for (String pathDir : pathDirs) {
-            File file = new File(pathDir, exeName);
-            if (file.isFile()) {
-                exe = file;
-                break;
-            }
-        }
-        return exe;
-     }
-
-
-    /**
-     * Utility routine to create parameter file for dmcli
-     *
-     * @return File
-     * @throws IOException
-     */
-     protected File createParamFile()
-            throws IOException {
-        Calendar nowDateCal = Calendar.getInstance();
-        File logFile = new File("a");
-        FileWriter logFileWriter = null;
-        PrintWriter fmtWriter = null;
-        File tmpFile = null;
-
-        try {
-            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
-            logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter,true);
-            fmtWriter.println("-host "+ server);
-            fmtWriter.println("-user "+ userName);
-            fmtWriter.println("-pass "+ passwd);
-            fmtWriter.println("-dbname "+ database);
-            fmtWriter.flush();
-        } catch (Exception e) {
-            throw new IOException("Unable to write command log - " + e.getMessage());
-        } finally {
-            fmtWriter.close();
+        /*
+         * Get listener
+         * @returns listener
+         */
+        public TaskListener getListener() {
+            return this.listener;
         }
 
-        return tmpFile;
+        dmLauncher(TaskListener listener) {
+            super(listener);
+            this.listener = listener;
+        }
     }
+
+    private FileUtils fu;
+    private String[] args = null;
+    private dmLauncher proc = null;
+    private FilePath workArea = null;
+    private String results = null;
+
 
     /*
      * Default constructor
      */
-    public GenericCmdTask() {
+    public SCMLauncher(final String[] args, final TaskListener listener, final FilePath area) {
+        this.args = args;
+        this.proc = new dmLauncher(listener);
+        this.workArea = area;
     }
 
     /*
-     * Constructor
+     * Get the command results
+     * @return String
      */
-    public GenericCmdTask(String userName, String passwd,
-                          String database, String server,
-                          int version,
-                          FilePath workspace,
-                          TaskListener listener) {
-
-        this.workspace = workspace;
-        this.listener = listener;
-
-        // Server details
-        this.userName = userName;
-        this.passwd = passwd;
-        this.database = database;
-        this.server = server;
-        this.version = version;
+    public String getResults() {
+        return this.results;
     }
 
-
     /*
-     * Invoke method
-     *
-     * @param File
-     * @param VirtualChannel
+     * Execute the process
      * @return boolean
      * @throws IOException
+     * @throws InterruptedException
      */
-    public Boolean invoke(File area, VirtualChannel channel)
-              throws IOException {
+    public Boolean execute()
+                throws IOException, InterruptedException {
 
-        boolean retStatus = false;
+        File tmpFile = null;
+        boolean bRet = false;
+        TaskListener listener = proc.getListener();
 
-        // This here code is executed on the slave.
+        // Need to capture output into a file so I can parse it
         try {
-            listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
-            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-                exec += ".exe";
-            }
-            File exe = getExecutable(exec);
-            if (exe == null) {
-                listener.getLogger().println("[DIMENSIONS] Error: Cannot locate '" + exec + "' on the slave node.");
-            } else {
-                listener.getLogger().println("[DIMENSIONS] Located '" + exe.getAbsolutePath() + "' on the slave node.");
+            File logFile = new File("a");
+            Calendar nowDateCal = Calendar.getInstance();
+            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
 
-                File param = createParamFile();
-                if (param == null) {
-                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create parameter file for Dimensions login.");
-                    return false;
+            FileOutputStream fos = new FileOutputStream(tmpFile);
+            StreamBuildListener os = new StreamBuildListener(fos);
+            boolean[] masks = new boolean[args.length];
+
+            int i = 0;
+            for (String astr : args) {
+                if (astr.equalsIgnoreCase("-param")) {
+                    masks[i] = true;
+                    masks[i+1] = true;
                 }
+                i++;
+            }
 
-                retStatus = execute(exe,param,area);
-                param.delete();
+            try {
+                Launcher.ProcStarter ps = proc.launch();
+                ps.cmds(args);
+                ps.stdout(os.getLogger());
+                ps.stdin(null);
+                ps.pwd(workArea);
+                ps.masks(masks);
+                int cmdResult = ps.join();
+                if (cmdResult != 0) {
+                    listener.fatalError("Execution of checkout failed with exit code " + cmdResult);
+                    bRet = false;
+                } else {
+                    bRet = true;
+                }
+            } finally {
+                os.getLogger().flush();
+                fos.close();
+                os = null;
+                fos = null;
             }
-            return retStatus;
-        } catch (Exception e) {
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run command callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run command callout - " + e.getMessage());
-            return false;
+        } finally {
         }
-    }
 
-    /*
-     * Process the task
-     *
-     * @param File
-     * @param File
-     * @param File
-     * @return boolean
-     */
-    public Boolean execute(final File exe, final File param, final File area)
-                throws IOException {
-        return true;
+        if (tmpFile != null) {
+            // Get the log file into a string for processing...
+            results = new String(fu.loadFile(tmpFile));
+            tmpFile.delete();
+            tmpFile = null;
+        }
+
+        return bRet;
     }
 }
 

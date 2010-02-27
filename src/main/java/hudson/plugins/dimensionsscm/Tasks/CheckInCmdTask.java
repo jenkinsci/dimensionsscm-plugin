@@ -110,14 +110,8 @@ import hudson.remoting.DelegatingCallable;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
-import hudson.Launcher;
-import hudson.model.StreamBuildListener;
-import hudson.Launcher.ProcStarter;
 
 // General imports
-import java.io.BufferedOutputStream;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
@@ -134,7 +128,7 @@ import java.lang.Exception;
 import java.util.Calendar;
 
 /**
- * Class implementation of the checkin process. DUMMY IMPLEMENTATION!!! PLACE HOLDER ONLY!!!
+ * Class implementation of the checkin process.
  */
 public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
 
@@ -261,7 +255,6 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
         FilePath wa = new FilePath(area);
         boolean bRet = true;
-        Launcher proc = new Launcher.LocalLauncher(listener);
 
         try
         {
@@ -311,16 +304,6 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                 }
 
                 listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+projectId+"\"...");
-
-                // Debug for printing out files
-                //String filesToLoad = new String(fu.loadFile(tempFile));
-                //if (filesToLoad!=null)
-                //    filesToLoad += "\n";
-                //if (filesToLoad != null) {
-                //    filesToLoad = filesToLoad.replaceAll("\n\n","\n");
-                //    listener.getLogger().println(filesToLoad.replaceAll("\n","\n[DIMENSIONS] - "));
-                //}
-
                 listener.getLogger().flush();
 
                 String[] cmd = new String[5];
@@ -330,51 +313,16 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                 cmd[3] = "cmd";
                 cmd[4] = cmdFile.getAbsolutePath();
 
-                File tmpFile = null;
+                SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
+                bRet = proc.execute();
+                String outputStr = proc.getResults();
+                cmdFile.delete();
 
-                // Need to capture output into a file so I can parse it
-                try {
-                    File logFile = new File("a");
-                    Calendar nowDateCal = Calendar.getInstance();
-                    tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+                if (cmdLog==null)
+                    cmdLog = "\n";
 
-                    FileOutputStream fos = new FileOutputStream(tmpFile);
-                    StreamBuildListener os = new StreamBuildListener(fos);
-
-                    try {
-                        Launcher.ProcStarter ps = proc.launch();
-                        ps.cmds(cmd);
-                        ps.stdout(os.getLogger());
-                        ps.stdin(null);
-                        ps.pwd(wa);
-                        int cmdResult = ps.join();
-                        cmdFile.delete();
-                        if (cmdResult != 0) {
-                            listener.fatalError("Execution of checkout failed with exit code " + cmdResult);
-                            bRet = false;
-                        }
-                    } finally {
-                        os.getLogger().flush();
-                        fos.close();
-                        os = null;
-                        fos = null;
-                    }
-                } finally {
-                    tempFile.delete();
-                }
-
-                if (tmpFile != null) {
-                    // Get the log file into a string for processing...
-                    String outputStr = new String(fu.loadFile(tmpFile));
-                    tmpFile.delete();
-                    tmpFile = null;
-
-                    if (cmdLog==null)
-                        cmdLog = "\n";
-
-                    cmdLog += outputStr;
-                    cmdLog += "\n";
-                }
+                cmdLog += outputStr;
+                cmdLog += "\n";
             } else {
                 listener.getLogger().println("[DIMENSIONS] No build artifacts found for checking in");
             }
@@ -403,6 +351,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         }
         catch(Exception e)
         {
+            param.delete();
             String errMsg = e.getMessage();
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";

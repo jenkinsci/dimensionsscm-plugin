@@ -109,14 +109,8 @@ import hudson.remoting.DelegatingCallable;
 import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
-import hudson.Launcher;
-import hudson.model.StreamBuildListener;
-import hudson.Launcher.ProcStarter;
 
 // General imports
-import java.io.BufferedOutputStream;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
@@ -261,13 +255,13 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
      * @param File
      * @param File
      * @return boolean
+     * @throws IOException
      */
     public Boolean execute(final File exe, final File param, final File area)
                 throws IOException {
 
         FilePath wa = new FilePath(area);
         boolean bRet = true;
-        Launcher proc = new Launcher.LocalLauncher(listener);
 
         // Emulate SVN plugin
         // - if workspace exists and it is not managed by this project, blow it away
@@ -342,55 +336,23 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 cmd[3] = "cmd";
                 cmd[4] = cmdFile.getAbsolutePath();
 
-                File tmpFile = null;
+                SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
+                bRet = proc.execute();
+                String outputStr = proc.getResults();
+                cmdFile.delete();
 
-                // Need to capture output into a file so I can parse it
-                try {
-                    File logFile = new File("a");
-                    Calendar nowDateCal = Calendar.getInstance();
-                    tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
-
-                    FileOutputStream fos = new FileOutputStream(tmpFile);
-                    StreamBuildListener os = new StreamBuildListener(fos);
-
-                    try {
-                        Launcher.ProcStarter ps = proc.launch();
-                        ps.cmds(cmd);
-                        ps.stdout(os.getLogger());
-                        ps.stdin(null);
-                        ps.pwd(wa);
-                        int cmdResult = ps.join();
-                        cmdFile.delete();
-                        if (cmdResult != 0) {
-                            listener.fatalError("Execution of checkout failed with exit code " + cmdResult);
-                            bRet = false;
-                        }
-                    } finally {
-                        os.getLogger().flush();
-                        fos.close();
-                        os = null;
-                        fos = null;
-                    }
-                } finally {
-                }
-
-                if (tmpFile != null) {
-                    // Get the log file into a string for processing...
-                    String outputStr = new String(fu.loadFile(tmpFile));
-                    tmpFile.delete();
-                    tmpFile = null;
-
+                if (bRet) {
                     // Check if any conflicts were identified
                     int confl = outputStr.indexOf("C\t");
                     if (confl > 0)
                         bRet = false;
-
-                    if (cmdLog==null)
-                        cmdLog = "\n";
-
-                    cmdLog += outputStr;
-                    cmdLog += "\n";
                 }
+
+                if (cmdLog==null)
+                    cmdLog = "\n";
+
+                cmdLog += outputStr;
+                cmdLog += "\n";
 
                 if (!bRet && isForce)
                     bRet = true;
@@ -420,6 +382,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
             return bRet;
         } catch (Exception e) {
             String errMsg = e.getMessage();
+            param.delete();
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";
             }
