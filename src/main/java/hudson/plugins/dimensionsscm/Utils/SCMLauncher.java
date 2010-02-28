@@ -133,7 +133,7 @@ import java.lang.InterruptedException;
 import java.util.Calendar;
 
 /**
- * Class implementation of the checkout process.
+ * Class implementation of the launcher process.
  */
 public class SCMLauncher implements Serializable {
 
