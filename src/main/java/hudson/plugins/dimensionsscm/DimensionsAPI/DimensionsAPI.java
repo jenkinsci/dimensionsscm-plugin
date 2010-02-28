@@ -1219,19 +1219,28 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "CBL ";
             if (projectId != null && build != null) {
+                boolean wsBln = true;
                 cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
                 cmd += " /WORKSET=\""+projectId+"\"";
                 if (blnScope == null || blnScope.length() == 0) {
                     cmd += " /SCOPE=WORKSET ";
                 } else {
+                    wsBln = false;
                     cmd += " /SCOPE="+blnScope;
+                    if (blnScope.equals("WORKSET")) {
+                       wsBln = true;
+                    }
                 }
-                if (blnTemplate != null && blnTemplate.length() > 0) {
-                    cmd += " /TEMPLATE_ID=\""+blnTemplate+"\"";
+
+                if (!wsBln) {
+                    if (blnTemplate != null && blnTemplate.length() > 0) {
+                        cmd += " /TEMPLATE_ID=\""+blnTemplate+"\"";
+                    }
+                    if (blnOwningPart != null && blnOwningPart.length() > 0) {
+                        cmd += " /PART=\""+blnOwningPart+"\"";
+                    }
                 }
-                if (blnOwningPart != null && blnOwningPart.length() > 0) {
-                    cmd += " /PART=\""+blnOwningPart+"\"";
-                }
+
                 cmd += " /DESCRIPTION=\"Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {

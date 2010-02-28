@@ -222,7 +222,7 @@ public class SCMLauncher implements Serializable {
                 ps.masks(masks);
                 int cmdResult = ps.join();
                 if (cmdResult != 0) {
-                    listener.fatalError("Execution of checkout failed with exit code " + cmdResult);
+                    listener.fatalError("Execution of Dimensions command failed with exit code " + cmdResult);
                     bRet = false;
                 } else {
                     bRet = true;

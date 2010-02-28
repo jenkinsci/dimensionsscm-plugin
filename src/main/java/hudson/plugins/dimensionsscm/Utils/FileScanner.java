@@ -176,8 +176,7 @@ public class FileScanner implements Serializable {
         return xfiles;
     }
 
-    public File[] toArray()
-    {
+    public File[] toArray() {
         arr = new File[xfiles.size()];
         return xfiles.toArray(arr);
     }
@@ -200,14 +199,14 @@ public class FileScanner implements Serializable {
 
                     if (afile.getName().equals(".metadata")) {
                         continue;
-
                     }
+
                     dname = dname.substring(baseDir.getAbsolutePath().length()+1,afile.getAbsolutePath().length());
 
                     if (filter == null || filter.accept(dirName, dname)) {
-
                         files.add(afile);
                     }
+
                     if ((depth<=-1) || (depth>0 && afile.isDirectory())) {
                         depth--;
                         files.addAll(scanFiles(afile, filter, depth));
@@ -219,5 +218,4 @@ public class FileScanner implements Serializable {
         return files;
     }
 }
-
 
