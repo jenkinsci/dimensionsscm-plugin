@@ -187,7 +187,7 @@ public class DiffUtils implements Serializable {
 
         SCMLauncher proc = new SCMLauncher(cmd,null,null);
         result = proc.execute();
-        String outputStr = proc.getResults();
+        results = proc.getResults();
 
         return result;
     }
