@@ -119,6 +119,11 @@ public class PathUtils implements Serializable {
      */
      public static File getExecutable(String exeName) {
         // Get the path environment
+        String exec = exeName;
+        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            exec += ".exe";
+        }
+
         String path = System.getenv("PATH");
         if (path == null)
             path = System.getenv("path");
