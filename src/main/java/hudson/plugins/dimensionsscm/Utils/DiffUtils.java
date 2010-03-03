@@ -92,6 +92,10 @@
 
 package hudson.plugins.dimensionsscm;
 
+// Dimensions imports
+import hudson.plugins.dimensionsscm.SCMLauncher;
+import hudson.plugins.dimensionsscm.PathUtils;
+
 // Hudson imports
 import hudson.Util;
 import hudson.FilePath;
@@ -104,6 +108,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.Exception;
+import java.lang.InterruptedException;
 
 //
 // Utility class to get the differences between two files
@@ -166,13 +171,24 @@ public class DiffUtils implements Serializable {
      * Run difference
      * @return boolean
      * @throws IOException
+     * @throws InterruptedException
      */
-    public boolean diff() throws IOException {
+    public boolean diff() throws IOException, InterruptedException {
         boolean result = false;
-        File diffExe = getExecutable(exec);
-        if (diffExe == null) {
+        File exe = getExecutable(exec);
+        if (exe == null) {
             throw new IOException("The '"+exec+"' executable could not be located in the path");
         }
+
+        String[] cmd = new String[3];
+        cmd[0] = exe.getAbsolutePath();
+        cmd[1] = file1.getAbsolutePath();
+        cmd[2] = file2.getAbsolutePath();
+
+        SCMLauncher proc = new SCMLauncher(cmd,null,null);
+        result = proc.execute();
+        String outputStr = proc.getResults();
+
         return result;
     }
 }
