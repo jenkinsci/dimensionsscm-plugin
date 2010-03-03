@@ -83,67 +83,31 @@
  * ===========================================================================
  */
 
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
+/**
+ ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
+ **
+ ** @author Tim Payne
+ **
+ **/
 
-// Package name
 package hudson.plugins.dimensionsscm;
-
-// Dimensions imports
-import hudson.plugins.dimensionsscm.Logger;
-import hudson.plugins.dimensionsscm.SCMLauncher;
-import hudson.plugins.dimensionsscm.PathUtils;
 
 // Hudson imports
 import hudson.Util;
 import hudson.FilePath;
 import hudson.FilePath.FileCallable;
-import hudson.model.Node;
-import hudson.model.Computer;
-import hudson.model.Hudson.MasterComputer;
 import hudson.remoting.Callable;
 import hudson.remoting.DelegatingCallable;
-import hudson.remoting.Channel;
-import hudson.remoting.VirtualChannel;
-import hudson.model.TaskListener;
 
 // General imports
-import java.io.BufferedOutputStream;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.io.Serializable;
-import java.io.StringReader;
 import java.lang.Exception;
-import java.util.Calendar;
 
-/**
- * Class implementation of the command process.
- */
-public class GenericCmdTask implements FileCallable<Boolean> {
 
-    protected FilePath workspace = null;
-    protected TaskListener listener = null;
-    protected PathUtils pu;
-    protected String userName = "";
-    protected String passwd = "";
-    protected String database = "";
-    protected String server = "";
-    protected int version = 2009;
+public class PathUtils implements Serializable {
 
-    private String exec = "dmcli";
 
     protected static final long serialVersionUID = 1L;
 
@@ -153,130 +117,28 @@ public class GenericCmdTask implements FileCallable<Boolean> {
      * @param exeName
      * @return File
      */
-     protected File getExecutable(String exeName) {
+     public static File getExecutable(String exeName) {
         // Get the path environment
-        return pu.getExecutable(exeName);
+        String path = System.getenv("PATH");
+        if (path == null)
+            path = System.getenv("path");
+        if (path == null)
+            return null;
+
+        // Split it into directories
+        String[] pathDirs = path.split(File.pathSeparator);
+
+        // Hunt through the directories to find the file I want
+        File exe = null;
+        for (String pathDir : pathDirs) {
+            File file = new File(pathDir, exeName);
+            if (file.isFile()) {
+                exe = file;
+                break;
+            }
+        }
+        return exe;
      }
-
-
-    /**
-     * Utility routine to create parameter file for dmcli
-     *
-     * @return File
-     * @throws IOException
-     */
-     protected File createParamFile()
-            throws IOException {
-        Calendar nowDateCal = Calendar.getInstance();
-        File logFile = new File("a");
-        FileWriter logFileWriter = null;
-        PrintWriter fmtWriter = null;
-        File tmpFile = null;
-
-        try {
-            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
-            logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter,true);
-            fmtWriter.println("-host "+ server);
-            fmtWriter.println("-user "+ userName);
-            fmtWriter.println("-pass "+ passwd);
-            fmtWriter.println("-dbname "+ database);
-            fmtWriter.flush();
-        } catch (Exception e) {
-            throw new IOException("Unable to write command log - " + e.getMessage());
-        } finally {
-            fmtWriter.close();
-        }
-
-        return tmpFile;
-    }
-
-    /*
-     * Default constructor
-     */
-    public GenericCmdTask() {
-    }
-
-    /*
-     * Constructor
-     */
-    public GenericCmdTask(String userName, String passwd,
-                          String database, String server,
-                          int version,
-                          FilePath workspace,
-                          TaskListener listener) {
-
-        this.workspace = workspace;
-        this.listener = listener;
-
-        // Server details
-        this.userName = userName;
-        this.passwd = passwd;
-        this.database = database;
-        this.server = server;
-        this.version = version;
-    }
-
-
-    /*
-     * Invoke method
-     *
-     * @param File
-     * @param VirtualChannel
-     * @return boolean
-     * @throws IOException
-     */
-    public Boolean invoke(File area, VirtualChannel channel)
-              throws IOException {
-
-        boolean retStatus = false;
-
-        // This here code is executed on the slave.
-        try {
-            listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
-            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-                exec += ".exe";
-            }
-            File exe = getExecutable(exec);
-            if (exe == null) {
-                listener.getLogger().println("[DIMENSIONS] Error: Cannot locate '" + exec + "' on the slave node.");
-            } else {
-                listener.getLogger().println("[DIMENSIONS] Located '" + exe.getAbsolutePath() + "' on the slave node.");
-
-                File param = createParamFile();
-                if (param == null) {
-                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create parameter file for Dimensions login.");
-                    return false;
-                }
-
-                retStatus = execute(exe,param,area);
-                param.delete();
-            }
-            return retStatus;
-        } catch (Exception e) {
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run command callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run command callout - " + e.getMessage());
-            return false;
-        }
-    }
-
-    /*
-     * Process the task
-     *
-     * @param File
-     * @param File
-     * @param File
-     * @return boolean
-     */
-    public Boolean execute(final File exe, final File param, final File area)
-                throws IOException {
-        return true;
-    }
 }
 
 
