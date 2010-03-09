@@ -215,6 +215,11 @@ public class DimensionsSCM extends SCM implements Serializable
         return this.dmSCM;
     }
 
+
+    public DimensionsSCMRepositoryBrowser getBrowser() {
+        return this.browser;
+    }
+
     /*
      * Gets the project ID for the connection.
      * @return the project ID

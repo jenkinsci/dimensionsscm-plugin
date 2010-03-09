@@ -1346,6 +1346,11 @@ public class DimensionsAPI implements Serializable {
         List changeSet = new ArrayList(items.size());
         String key = null;
         DimensionsChangeSet cs = null;
+
+        // Internal
+        //int SBM_ID   = 49;
+        //int SBM_LINK = 17;
+
         for (int i = 0; i < items.size(); ++i) {
             Logger.Debug("Processing change set " + i + "/" + items.size());
             ItemRevision item = (ItemRevision) items.get(i);
@@ -1413,10 +1418,20 @@ public class DimensionsAPI implements Serializable {
                 DimensionsObject relType = obj.getRelationship();
                 if (SystemRelationship.IN_RESPONSE.equals(relType)) {
                     Request req = (Request) obj.getObject();
-                    req.queryAttribute(new int[]{SystemAttributes.TITLE,SystemAttributes.DESCRIPTION,SystemAttributes.OBJECT_SPEC});
+
+                    // Which attributes do I want
+                    req.queryAttribute(new int[]{SystemAttributes.TITLE,
+                                                 SystemAttributes.DESCRIPTION,
+                                                 SystemAttributes.OBJECT_SPEC
+                                                 /* ,SBM_ID,SBM_LINK */});
+
+                    //String requestUrl = (String)req.getAttribute(SBM_LINK);
+                    //String objectId = (String)req.getAttribute(SBM_ID);
+
                     String objectId = (String)req.getAttribute(SystemAttributes.OBJECT_SPEC);
-                    String titlex = (String)req.getAttribute(SystemAttributes.TITLE);
                     String requestUrl = constructRequestURL(objectId,url,getSCMDsn(),getSCMBaseDb());
+                    String titlex = (String)req.getAttribute(SystemAttributes.TITLE);
+
                     cs.addRequest(objectId,requestUrl,titlex);
                     Logger.Debug("Child Request Details IRT -" + objectId + " " + requestUrl + " " + titlex);
                 } else {

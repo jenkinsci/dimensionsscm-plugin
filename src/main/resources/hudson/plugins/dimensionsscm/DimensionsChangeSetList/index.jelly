@@ -1,4 +1,5 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <j:set var="browser" value="${it.build.parent.scm.effectiveBrowser}"/>
   <h2>${%Summary}</h2>
   <ol>
     <j:forEach var="cs" items="${it.logs}">
@@ -31,7 +32,12 @@
                       <td>${item.file}</td>
                   </j:if>
               </j:if>
-              <td></td>
+              <td>
+                <j:set var="diff" value="${browser.getDiffLink(item)}"/>
+                <j:if test="${diff!=null}">
+                  <a href="${diff}">(diff)</a>
+                </j:if>
+              </td>
             </tr>
           </j:forEach>
         </f:advanced>

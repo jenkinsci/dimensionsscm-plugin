@@ -92,12 +92,77 @@
 
 package hudson.plugins.dimensionsscm;
 
+// Dimensions imports
+import hudson.plugins.dimensionsscm.DimensionsAPI;
+import hudson.plugins.dimensionsscm.DimensionsSCM;
+import hudson.plugins.dimensionsscm.Logger;
+import com.serena.dmclient.api.DimensionsResult;
+
+
+// Hudson imports
 import hudson.scm.RepositoryBrowser;
 import hudson.plugins.dimensionsscm.DimensionsChangeSet;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.Descriptor.FormException;
+import hudson.model.Descriptor;
+import hudson.model.Result;
+import hudson.util.FormValidation;
+import hudson.Util;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+
+// General imports
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.URL;
+
+import javax.servlet.ServletException;
 
 
-public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet>
-{
+public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet> {
     private static final long serialVersionUID = 1L;
-}
 
+    /**
+     * Default constructor.
+     */
+    @DataBoundConstructor
+    public DimensionsSCMRepositoryBrowser() {
+    }
+
+    public URL getDiffLink(DimensionsChangeSet.DmFiles item)
+        throws IOException {
+
+        String link = "http://alink.com/link.html";
+        return new URL(link.toString());
+    }
+
+    @Extension
+    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return DESCRIPTOR;
+    }
+
+    /*
+     * Implementation class for Dimensions plugin
+     */
+    public static class DescriptorImpl extends Descriptor<RepositoryBrowser<?>> {
+
+        public DescriptorImpl() {
+            super(DimensionsSCMRepositoryBrowser.class);
+        }
+
+        public String getDisplayName()
+        {
+            return "Dimensions";
+        }
+    }
+}
