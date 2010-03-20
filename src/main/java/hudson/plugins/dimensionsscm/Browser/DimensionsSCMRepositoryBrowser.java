@@ -117,6 +117,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 // General imports
 import java.io.IOException;
@@ -125,7 +127,7 @@ import java.net.URL;
 
 import javax.servlet.ServletException;
 
-
+@ExportedBean(defaultVisibility=999)
 public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet> {
     private static final long serialVersionUID = 1L;
 
@@ -141,6 +143,11 @@ public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<D
 
         String link = "http://alink.com/link.html";
         return new URL(link.toString());
+    }
+
+    @Override
+    public URL getChangeSetLink(DimensionsChangeSet item) throws IOException {
+        return null;
     }
 
     @Extension
