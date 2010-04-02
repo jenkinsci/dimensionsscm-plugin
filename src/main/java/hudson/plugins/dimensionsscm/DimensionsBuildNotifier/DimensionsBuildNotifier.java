@@ -142,6 +142,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     private String blnScope = null;
     private String blnTemplate = null;
     private String blnOwningPart = null;
+    private String blnType = null;
 
     private boolean canBaselineBuild = false;
 
@@ -162,6 +163,14 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         return this.blnOwningPart;
     }
 
+    /*
+     * Gets the baseline type .
+     * @return String
+     */
+    public String getBlnType() {
+        return this.blnType;
+    }
+	
     /*
      * Gets the baseline template .
      * @return String
@@ -291,6 +300,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                    String area, String buildConfig,
                                    String buildOptions, String buildTargets,
                                    String blnScope, String blnTemplate, String blnOwningPart,
+								   String blnType,
                                    boolean batch, boolean buildClean, boolean capture) {
         this.canBaselineDeploy = canDeploy;
         this.canBaselineAction = canAction;
@@ -305,6 +315,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         this.blnScope = blnScope;
         this.blnTemplate = blnTemplate;
         this.blnOwningPart = blnOwningPart;
+		this.blnType = blnType;
 
         this.batch = batch;
         this.buildClean = buildClean;
@@ -346,7 +357,8 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         requests = requests.toUpperCase();
                     }
                     {
-                        DimensionsResult res = scm.getAPI().createBaseline(key,scm.getProject(),build,blnScope,blnTemplate,blnOwningPart);
+                        DimensionsResult res = scm.getAPI().createBaseline(key,scm.getProject(),build,blnScope,
+																		   blnTemplate,blnOwningPart,blnType);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
                             listener.getLogger().flush();
@@ -474,6 +486,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             String blnScope = req.getParameter("dimensionsbuildnotifier.blnScope");
             String blnTemplate = req.getParameter("dimensionsbuildnotifier.blnTemplate");
             String blnOwningPart = req.getParameter("dimensionsbuildnotifier.blnOwningPart");
+			String blnType = req.getParameter("dimensionsbuildnotifier.blnType");
 
             if (deploy != null)
                 deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
@@ -493,6 +506,8 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 blnTemplate = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnTemplate").trim());
             if (blnOwningPart != null)
                 blnOwningPart = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnOwningPart").trim());
+            if (blnType != null)
+                blnType = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnType").trim());
 
 
             DimensionsBuildNotifier notif = new DimensionsBuildNotifier(canDeploy,deploy,
@@ -500,6 +515,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                                                         area,buildConfig,
                                                                         buildOptions,buildTargets,
                                                                         blnScope,blnTemplate,blnOwningPart,
+																		blnType,
                                                                         batch,buildClean,capture);
 
             return notif;

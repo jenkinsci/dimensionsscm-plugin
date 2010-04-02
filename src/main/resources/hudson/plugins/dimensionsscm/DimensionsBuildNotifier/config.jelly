@@ -8,6 +8,9 @@
               <f:entry title="Baseline Template">
                <f:textbox name="dimensionsbuildnotifier.blnTemplate" value="${instance.blnTemplate}" />
               </f:entry>
+              <f:entry title="Baseline Type">
+               <f:textbox name="dimensionsbuildnotifier.blnType" value="${instance.blnType}" />
+              </f:entry>
               <f:entry title="Baseline Scope" field="blnScope"
                     help="/plugin/dimensionsscm/blnScope.html">
                 <select class="setting-input" name="dimensionsbuildnotifier.blnScope">

@@ -1205,11 +1205,13 @@ public class DimensionsAPI implements Serializable {
      * @param String
      * @param String
      * @param String
+     * @param String	 
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
     public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build,
-                                           String blnScope, String blnTemplate, String blnOwningPart)
+                                           String blnScope, String blnTemplate, 
+										   String blnOwningPart, String blnType)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1241,6 +1243,10 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
+				if (blnType != null && blnType.length() > 0) {
+					cmd += " /TYPE=\""+blnType+"\"";
+				}
+				
                 cmd += " /DESCRIPTION=\"Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
