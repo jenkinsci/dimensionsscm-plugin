@@ -572,6 +572,20 @@ public class DimensionsSCM extends SCM implements Serializable
             }
 
             if (isCanJobUpdate()) {
+				int version = 2009;
+				long key = dmSCM.login(getJobUserName(),getJobPasswd(),
+									   getJobDatabase(),getJobServer());
+				
+				if (key>0) {
+					// Get the server version
+					Logger.Debug("Login worked.");
+					version = dmSCM.getDmVersion();
+					if (version == 0) {
+						version = 2009;
+					}
+					dmSCM.logout(key);
+				}
+
                 // Get the details of the master
                 InetAddress netAddr = InetAddress.getLocalHost();
                 byte[] ipAddr = netAddr.getAddress();
@@ -589,24 +603,11 @@ public class DimensionsSCM extends SCM implements Serializable
                     // Using Java API because this allows the plugin to work on platforms
                     // where Dimensions has not been ported, e.g. MAC OS, which is what
                     // I use
-                    CheckOutAPITask task = new CheckOutAPITask(build,this,workspace,listener);
+                    CheckOutAPITask task = new CheckOutAPITask(build,this,workspace,listener,version);
                     bRet = workspace.act(task);
                 } else {
                     // Running on slave... Have to use the command line as Java API will not
                     // work on remote hosts. Cannot serialise it...
-                    int version = 2009;
-                    long key = dmSCM.login(getJobUserName(),getJobPasswd(),
-                                           getJobDatabase(),getJobServer());
-
-                    if (key>0) {
-                        // Get the server version
-                        Logger.Debug("Login worked.");
-                        version = dmSCM.getDmVersion();
-                        if (version == 0) {
-                            version = 2009;
-                        }
-                        dmSCM.logout(key);
-                    }
 
                     {
                         // VariableResolver does not appear to be serialisable either, so...

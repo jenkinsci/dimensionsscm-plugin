@@ -167,17 +167,20 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
     String projectId = "";
     String[] folders;
 
+	int version = 0;
+	
     /*
      * Default constructor
      */
     public CheckOutAPITask(AbstractBuild<?,?> build, DimensionsSCM parent,
-                        FilePath workspace, TaskListener listener) {
+                        FilePath workspace, TaskListener listener, int version) {
 
         Logger.Debug("Creating task - " + this.getClass().getName());
 
         this.workspace = workspace;
         this.listener = listener;
-
+		this.version = version;
+		
         // Server details
         userName = parent.getJobUserName();
         passwd = parent.getJobPasswd();
@@ -185,17 +188,17 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
         server = parent.getJobServer();
 
         // Config details
-        workarea = parent.getWorkarea();
-        isDelete = parent.isCanJobDelete();
-        projectId = parent.getProject();
-        isRevert = parent.isCanJobRevert();
-        isForce = parent.isCanJobForce();
-        folders = parent.getFolders();
+        this.workarea = parent.getWorkarea();
+        this.isDelete = parent.isCanJobDelete();
+        this.projectId = parent.getProject();
+        this.isRevert = parent.isCanJobRevert();
+        this.isForce = parent.isCanJobForce();
+        this.folders = parent.getFolders();
         permissions = parent.getPermissions();
 
         // Build details
-        bFreshBuild = (build.getPreviousBuild() == null);
-        myResolver = build.getBuildVariableResolver();
+        this.bFreshBuild = (build.getPreviousBuild() == null);
+        this.myResolver = build.getBuildVariableResolver();
     }
 
     /*
