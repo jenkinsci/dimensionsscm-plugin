@@ -103,6 +103,7 @@ import hudson.model.Hudson;
 import hudson.model.AbstractBuild;
 import hudson.model.Project;
 import hudson.util.DescribableList;
+import hudson.model.BuildListener;
 
 // General imports
 import java.io.IOException;
@@ -125,7 +126,7 @@ public class DimensionsChecker implements Serializable {
      * @param AbstractBuild
      * @return boolean
      */
-    public static boolean isValidPluginCombination(AbstractBuild build) {
+    public static boolean isValidPluginCombination(AbstractBuild build, BuildListener listener) {
         if (build.getProject() instanceof Project) {
             Project buildProject = (Project)build.getProject();
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
@@ -150,6 +151,7 @@ public class DimensionsChecker implements Serializable {
 
             // Tagging plugin needs lock plugin
             if (bnplugin != null && bwplugin == null) {
+                listener.fatalError("\n[DIMENSIONS] Tags can only be created when the 'Lock Dimensions project while the build is in progress' option is enabled.");
                 return false;
             }
 

@@ -563,7 +563,7 @@ public class DimensionsSCM extends SCM implements Serializable
             DimensionsBuildNotifier.DescriptorImpl bnplugin = (DimensionsBuildNotifier.DescriptorImpl)
                                 Hudson.getInstance().getDescriptor(DimensionsBuildNotifier.class);
 
-            if (DimensionsChecker.isValidPluginCombination(build)) {
+            if (DimensionsChecker.isValidPluginCombination(build,listener)) {
                 Logger.Debug("Plugins are ok");
             } else {
                 listener.fatalError("\n[DIMENSIONS] The plugin combinations you have selected are not valid.");
@@ -572,19 +572,19 @@ public class DimensionsSCM extends SCM implements Serializable
             }
 
             if (isCanJobUpdate()) {
-				int version = 2009;
-				long key = dmSCM.login(getJobUserName(),getJobPasswd(),
-									   getJobDatabase(),getJobServer());
-				
-				if (key>0) {
-					// Get the server version
-					Logger.Debug("Login worked.");
-					version = dmSCM.getDmVersion();
-					if (version == 0) {
-						version = 2009;
-					}
-					dmSCM.logout(key);
-				}
+                int version = 2009;
+                long key = dmSCM.login(getJobUserName(),getJobPasswd(),
+                                       getJobDatabase(),getJobServer());
+
+                if (key>0) {
+                    // Get the server version
+                    Logger.Debug("Login worked.");
+                    version = dmSCM.getDmVersion();
+                    if (version == 0) {
+                        version = 2009;
+                    }
+                    dmSCM.logout(key);
+                }
 
                 // Get the details of the master
                 InetAddress netAddr = InetAddress.getLocalHost();
