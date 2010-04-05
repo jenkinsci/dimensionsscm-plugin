@@ -136,7 +136,7 @@ public class PathUtils implements Serializable {
         // Hunt through the directories to find the file I want
         File exe = null;
         for (String pathDir : pathDirs) {
-            File file = new File(pathDir, exeName);
+            File file = new File(pathDir, exec);
             if (file.isFile()) {
                 exe = file;
                 break;

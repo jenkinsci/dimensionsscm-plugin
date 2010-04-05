@@ -147,11 +147,12 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
      * Utility routine to create command file for dmcli
      *
      * @param String
+     * @param String
      * @param File
      * @return File
      * @throws IOException
      */
-    private File createCmdFile(final String projDir, final File area)
+    private File createCmdFile(final String reqId, final String projDir, final File area)
             throws IOException {
         Calendar nowDateCal = Calendar.getInstance();
         File logFile = new File("a");
@@ -165,16 +166,24 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
             fmtWriter = new PrintWriter(logFileWriter,true);
 
             String coCmd = "UPDATE /BRIEF ";
-            if (version == 10)
+            if (version == 10) {
                 coCmd = "DOWNLOAD ";
+                if (requests != null) {
+                    coCmd = "FCDI ";
+                }
+            }
 
             String cmd = coCmd;
+
+            if (reqId != null && version == 10) {
+                cmd += reqId;
+            }
 
             if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null) {
                 cmd += "/DIR=\"" + projDir + "\"";
             }
 
-            if (requests != null) {
+            if (requests != null && version != 10) {
                 if (requests.indexOf(",")==0) {
                     cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                 } else {
@@ -194,7 +203,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 cmd += " /OVERWRITE";
 
             if (permissions != null && permissions.length() > 0) {
-                if (!permissions.equals("DEFAULT")) {
+                if (!permissions.equals("DEFAULT") && reqId == null) {
                     cmd += "/PERMS="+permissions;
                 }
             }
@@ -307,60 +316,114 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 listener.getLogger().flush();
             }
 
-            // Iterate through the project folders and process them in Dimensions
-            for (int ii=0;ii<folders.length; ii++) {
-                if (!bRet)
-                    break;
-
-                String folderN = folders[ii];
-                File fileName = new File(folderN);
-                FilePath projectDir = new FilePath(fileName);
-                String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
-
-                File cmdFile = createCmdFile(projDir,area);
-                if (cmdFile == null) {
-                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
-                    param.delete();
-                    return false;
+            if (version == 10 && requests != null) {
+                String[] requestsProcess = requests.split(",");
+                if (requestsProcess.length == 0) {
+                    requestsProcess[0] = requests;
                 }
 
-                if (requests == null) {
-                    listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
-                    listener.getLogger().flush();
+                listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
+
+                for (int xx=0;xx<requestsProcess.length; xx++) {
+                    if (!bRet)
+                        break;
+
+                    String folderN = "/";
+                    String reqId = requestsProcess[xx];
+                    File fileName = new File(folderN);
+                    FilePath projectDir = new FilePath(fileName);
+                    String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
+
+                    File cmdFile = createCmdFile(reqId,projDir,area);
+                    if (cmdFile == null) {
+                        listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
+                        param.delete();
+                        return false;
+                    }
+
+                    String[] cmd = new String[5];
+                    cmd[0] = exe.getAbsolutePath();
+                    cmd[1] = "-param";
+                    cmd[2] = param.getAbsolutePath();
+                    cmd[3] = "cmd";
+                    cmd[4] = cmdFile.getAbsolutePath();
+
+                    SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
+                    bRet = proc.execute();
+                    String outputStr = proc.getResults();
+                    cmdFile.delete();
+
+                    if (bRet) {
+                        // Check if any conflicts were identified
+                        int confl = outputStr.indexOf("C\t");
+                        if (confl > 0)
+                            bRet = false;
+                    }
+
+                    if (cmdLog==null)
+                        cmdLog = "\n";
+
+                    cmdLog += outputStr;
+                    cmdLog += "\n";
+
+                    if (!bRet && isForce)
+                        bRet = true;
                 }
+            } else {
+                // Iterate through the project folders and process them in Dimensions
+                for (int ii=0;ii<folders.length; ii++) {
+                    if (!bRet)
+                        break;
 
-                String[] cmd = new String[5];
-                cmd[0] = exe.getAbsolutePath();
-                cmd[1] = "-param";
-                cmd[2] = param.getAbsolutePath();
-                cmd[3] = "cmd";
-                cmd[4] = cmdFile.getAbsolutePath();
+                    String folderN = folders[ii];
+                    File fileName = new File(folderN);
+                    FilePath projectDir = new FilePath(fileName);
+                    String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
 
-                SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
-                bRet = proc.execute();
-                String outputStr = proc.getResults();
-                cmdFile.delete();
+                    File cmdFile = createCmdFile(null,projDir,area);
+                    if (cmdFile == null) {
+                        listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
+                        param.delete();
+                        return false;
+                    }
 
-                if (bRet) {
-                    // Check if any conflicts were identified
-                    int confl = outputStr.indexOf("C\t");
-                    if (confl > 0)
-                        bRet = false;
+                    if (requests == null) {
+                        listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
+                        listener.getLogger().flush();
+                    }
+
+                    String[] cmd = new String[5];
+                    cmd[0] = exe.getAbsolutePath();
+                    cmd[1] = "-param";
+                    cmd[2] = param.getAbsolutePath();
+                    cmd[3] = "cmd";
+                    cmd[4] = cmdFile.getAbsolutePath();
+
+                    SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
+                    bRet = proc.execute();
+                    String outputStr = proc.getResults();
+                    cmdFile.delete();
+
+                    if (bRet) {
+                        // Check if any conflicts were identified
+                        int confl = outputStr.indexOf("C\t");
+                        if (confl > 0)
+                            bRet = false;
+                    }
+
+                    if (cmdLog==null)
+                        cmdLog = "\n";
+
+                    cmdLog += outputStr;
+                    cmdLog += "\n";
+
+                    if (!bRet && isForce)
+                        bRet = true;
+
+                    if (requests != null)
+                        break;
                 }
-
-                if (cmdLog==null)
-                    cmdLog = "\n";
-
-                cmdLog += outputStr;
-                cmdLog += "\n";
-
-                if (!bRet && isForce)
-                    bRet = true;
-
-                if (requests != null)
-                    break;
             }
-
             param.delete();
 
             if (cmdLog.length() > 0 && listener.getLogger() != null) {
