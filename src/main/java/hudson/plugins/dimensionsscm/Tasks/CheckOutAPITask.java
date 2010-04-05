@@ -167,8 +167,8 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
     String projectId = "";
     String[] folders;
 
-	int version = 0;
-	
+    int version = 0;
+
     /*
      * Default constructor
      */
@@ -179,8 +179,8 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
         this.workspace = workspace;
         this.listener = listener;
-		this.version = version;
-		
+        this.version = version;
+
         // Server details
         userName = parent.getJobUserName();
         passwd = parent.getJobPasswd();
@@ -273,34 +273,72 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                 listener.getLogger().flush();
             }
 
-            // Iterate through the project folders and process them in Dimensions
-            for (int ii=0;ii<folders.length; ii++) {
-                if (!bRet)
-                    break;
+            if (version == 10 && requests != null) {
+                String[] requestsProcess = requests.split(",");
+                if (requestsProcess.length == 0) {
+                    requestsProcess[0] = requests;
+                }
 
-                String folderN = folders[ii];
-                File fileName = new File(folderN);
-                FilePath dname = new FilePath(fileName);
+                listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
 
-                Logger.Debug("Checking out '" + folderN + "'...");
+                for (int xx=0;xx<requestsProcess.length; xx++) {
+                    if (!bRet)
+                        break;
 
-                // Checkout the folder
-                bRet = dmSCM.checkout(key,projectId,dname,wa,
-                                      cmdOutput,baseline,requests,
-                                      isRevert,permissions);
-                Logger.Debug("SCM checkout returned " + bRet);
+                    String folderN = "/";
+                    File fileName = new File(folderN);
+                    FilePath dname = new FilePath(fileName);
+                    String reqId = requestsProcess[xx];
 
-                if (!bRet && isForce)
-                    bRet = true;
+                    Logger.Debug("Checking out '" + folderN + "'...");
 
-                if (cmdLog==null)
-                    cmdLog = "\n";
+                    // Checkout the folder
+                    bRet = dmSCM.checkout(key,projectId,dname,wa,
+                                          cmdOutput,baseline,reqId,
+                                          isRevert,"DEFAULT");
+                    Logger.Debug("SCM checkout returned " + bRet);
 
-                cmdLog += cmdOutput;
-                cmdOutput.setLength(0);
-                cmdLog += "\n";
-                if (requests != null)
-                    break;
+                    if (!bRet && isForce)
+                        bRet = true;
+
+                    if (cmdLog==null)
+                        cmdLog = "\n";
+
+                    cmdLog += cmdOutput;
+                    cmdOutput.setLength(0);
+                    cmdLog += "\n";
+                }
+            } else {
+
+                // Iterate through the project folders and process them in Dimensions
+                for (int ii=0;ii<folders.length; ii++) {
+                    if (!bRet)
+                        break;
+
+                    String folderN = folders[ii];
+                    File fileName = new File(folderN);
+                    FilePath dname = new FilePath(fileName);
+
+                    Logger.Debug("Checking out '" + folderN + "'...");
+
+                    // Checkout the folder
+                    bRet = dmSCM.checkout(key,projectId,dname,wa,
+                                          cmdOutput,baseline,requests,
+                                          isRevert,permissions);
+                    Logger.Debug("SCM checkout returned " + bRet);
+
+                    if (!bRet && isForce)
+                        bRet = true;
+
+                    if (cmdLog==null)
+                        cmdLog = "\n";
+
+                    cmdLog += cmdOutput;
+                    cmdOutput.setLength(0);
+                    cmdLog += "\n";
+                    if (requests != null)
+                        break;
+                }
             }
 
             if (cmdLog.length() > 0 && listener.getLogger() != null) {

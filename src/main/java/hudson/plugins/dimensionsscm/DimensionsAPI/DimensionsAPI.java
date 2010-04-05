@@ -614,20 +614,27 @@ public class DimensionsAPI implements Serializable {
 
         try
         {
-
             String coCmd = "UPDATE /BRIEF ";
-            if (version == 10)
+            if (version == 10) {
                 coCmd = "DOWNLOAD ";
+                if (requests != null) {
+                    coCmd = "FCDI ";
+                }
+            }
 
             {
                 String cmd = coCmd;
                 String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
 
+                if (requests != null && version == 10) {
+                    cmd += requests;
+                }
+
                 if (projDir != null && !projDir.equals("\\") && !projDir.equals("/") && requests == null) {
                     cmd += "/DIR=\"" + projDir + "\"";
                 }
 
-                if (requests != null) {
+                if (requests != null && version != 10) {
                     if (requests.indexOf(",")==0) {
                         cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                     } else {
@@ -1205,13 +1212,13 @@ public class DimensionsAPI implements Serializable {
      * @param String
      * @param String
      * @param String
-     * @param String	 
+     * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
     public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build,
-                                           String blnScope, String blnTemplate, 
-										   String blnOwningPart, String blnType)
+                                           String blnScope, String blnTemplate,
+                                           String blnOwningPart, String blnType)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1243,10 +1250,10 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-				if (blnType != null && blnType.length() > 0) {
-					cmd += " /TYPE=\""+blnType+"\"";
-				}
-				
+                if (blnType != null && blnType.length() > 0) {
+                    cmd += " /TYPE=\""+blnType+"\"";
+                }
+
                 cmd += " /DESCRIPTION=\"Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
