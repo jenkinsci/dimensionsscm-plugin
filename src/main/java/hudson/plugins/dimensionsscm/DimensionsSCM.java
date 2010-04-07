@@ -510,8 +510,12 @@ public class DimensionsSCM extends SCM implements Serializable
         String passwd = (Util.fixEmptyAndTrim(jobPasswd) == null ? getDescriptor().getPasswd() : jobPasswd);
         this.jobPasswd = Scrambler.scramble(passwd);
 
+        if ((Util.fixEmptyAndTrim(jobServer)) == null) {
+            this.canJobUpdate = getDescriptor().isCanUpdate();
+        } else {
+            this.canJobUpdate = canJobUpdate;
+        }
 
-        this.canJobUpdate = canJobUpdate;
         this.canJobDelete = canJobDelete;
         this.canJobForce = canJobForce;
         this.canJobRevert = canJobRevert;
