@@ -134,6 +134,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
     private boolean isDelete = false;
     private boolean isRevert = false;
     private boolean isForce = false;
+    private boolean isExpand = false;
 
     private String workarea = "";
     private String projectId = "";
@@ -201,6 +202,8 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
 
             if (isRevert)
                 cmd += " /OVERWRITE";
+            if (isExpand)
+                cmd += " /EXPAND";
 
             if (permissions != null && permissions.length() > 0) {
                 if (!permissions.equals("DEFAULT") && reqId == null) {
@@ -227,6 +230,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                              String projectId, String baselineId,
                              String requestId, boolean isDelete,
                              boolean isRevert, boolean isForce,
+                             boolean isExpand,
                              boolean freshBuild, String[] folders,
                              int version, String permissions,
                              FilePath workspace,
@@ -247,6 +251,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         this.projectId = projectId;
         this.isRevert = isRevert;
         this.isForce = isForce;
+        this.isExpand = isExpand;
         this.folders = folders;
         this.requests = requestId;
         this.baseline = baselineId;

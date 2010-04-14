@@ -160,6 +160,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
     boolean isDelete = false;
     boolean isRevert = false;
     boolean isForce = false;
+    boolean isExpand = false;
 
     VariableResolver<String> myResolver;
 
@@ -193,6 +194,8 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
         this.projectId = parent.getProject();
         this.isRevert = parent.isCanJobRevert();
         this.isForce = parent.isCanJobForce();
+        this.isExpand = parent.isCanJobExpand();
+
         this.folders = parent.getFolders();
         permissions = parent.getPermissions();
 
@@ -295,7 +298,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                     // Checkout the folder
                     bRet = dmSCM.checkout(key,projectId,dname,wa,
                                           cmdOutput,baseline,reqId,
-                                          isRevert,"DEFAULT");
+                                          isRevert,isExpand,"DEFAULT");
                     Logger.Debug("SCM checkout returned " + bRet);
 
                     if (!bRet && isForce)
@@ -324,7 +327,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                     // Checkout the folder
                     bRet = dmSCM.checkout(key,projectId,dname,wa,
                                           cmdOutput,baseline,requests,
-                                          isRevert,permissions);
+                                          isRevert,isExpand,permissions);
                     Logger.Debug("SCM checkout returned " + bRet);
 
                     if (!bRet && isForce)

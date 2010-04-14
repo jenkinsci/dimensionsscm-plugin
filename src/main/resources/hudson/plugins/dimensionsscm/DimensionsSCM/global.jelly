@@ -49,8 +49,8 @@
         <f:textbox name="dimensionsscm.timeZone" value="${descriptor.timeZone}"/>
         </f:entry>
 
-            <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
-                  with="dimensionsscm.timeZone"/>
+        <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
+              with="dimensionsscm.timeZone"/>
 
         <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
         <f:textbox name="dimensionsscm.webUrl" value="${descriptor.webUrl}"/>
