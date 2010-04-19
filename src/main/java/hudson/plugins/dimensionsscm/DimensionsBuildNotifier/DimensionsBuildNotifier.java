@@ -170,7 +170,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     public String getBlnType() {
         return this.blnType;
     }
-	
+
     /*
      * Gets the baseline template .
      * @return String
@@ -300,7 +300,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                    String area, String buildConfig,
                                    String buildOptions, String buildTargets,
                                    String blnScope, String blnTemplate, String blnOwningPart,
-								   String blnType,
+                                   String blnType,
                                    boolean batch, boolean buildClean, boolean capture) {
         this.canBaselineDeploy = canDeploy;
         this.canBaselineAction = canAction;
@@ -315,7 +315,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         this.blnScope = blnScope;
         this.blnTemplate = blnTemplate;
         this.blnOwningPart = blnOwningPart;
-		this.blnType = blnType;
+        this.blnType = blnType;
 
         this.batch = batch;
         this.buildClean = buildClean;
@@ -351,14 +351,27 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 {
                     VariableResolver<String> myResolver = build.getBuildVariableResolver();
                     String requests = myResolver.resolve("DM_TARGET_REQUEST");
+                    String blnId = myResolver.resolve("DM_BASELINE");
 
                     if (requests != null) {
                         requests = requests.replaceAll(" ","");
                         requests = requests.toUpperCase();
                     }
+
+                    if (blnScope != null && blnScope.length() > 0 && blnScope.equals("REVISED")) {
+                        if (requests == null || blnId == null ||
+                            requests.length() == 0 ||
+                            blnId.length() == 0) {
+                            listener.fatalError("[DIMENSIONS] A revised baseline is only valid if you have specified DM_TARGET_REQUEST and DM_BASELINE.");
+                            build.setResult(Result.FAILURE);
+                            return false;
+                        }
+                    }
+
                     {
                         DimensionsResult res = scm.getAPI().createBaseline(key,scm.getProject(),build,blnScope,
-																		   blnTemplate,blnOwningPart,blnType);
+                                                                           blnTemplate,blnOwningPart,blnType,
+                                                                           requests,blnId);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
                             listener.getLogger().flush();
@@ -486,7 +499,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             String blnScope = req.getParameter("dimensionsbuildnotifier.blnScope");
             String blnTemplate = req.getParameter("dimensionsbuildnotifier.blnTemplate");
             String blnOwningPart = req.getParameter("dimensionsbuildnotifier.blnOwningPart");
-			String blnType = req.getParameter("dimensionsbuildnotifier.blnType");
+            String blnType = req.getParameter("dimensionsbuildnotifier.blnType");
 
             if (deploy != null)
                 deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
@@ -515,7 +528,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                                                         area,buildConfig,
                                                                         buildOptions,buildTargets,
                                                                         blnScope,blnTemplate,blnOwningPart,
-																		blnType,
+                                                                        blnType,
                                                                         batch,buildClean,capture);
 
             return notif;

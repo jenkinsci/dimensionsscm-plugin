@@ -16,6 +16,7 @@
                 <select class="setting-input" name="dimensionsbuildnotifier.blnScope">
                     <f:option value="WORKSET" selected="${'WORKSET'==instance.blnScope}">Project</f:option>
                     <f:option value="PART" selected="${'PART'==instance.blnScope}">Part</f:option>
+                    <f:option value="REVISED" selected="${'REVISED'==instance.blnScope}">Revised</f:option>
                 </select>
               </f:entry>
               <f:entry>

@@ -1217,12 +1217,15 @@ public class DimensionsAPI implements Serializable {
      * @param String
      * @param String
      * @param String
+     * @param String
+     * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
     public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build,
                                            String blnScope, String blnTemplate,
-                                           String blnOwningPart, String blnType)
+                                           String blnOwningPart, String blnType,
+                                           String requestId, String blnId)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1231,26 +1234,45 @@ public class DimensionsAPI implements Serializable {
 
         try {
             String cmd = "CBL ";
+
             if (projectId != null && build != null) {
                 boolean wsBln = true;
-                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
-                cmd += " /WORKSET=\""+projectId+"\"";
-                if (blnScope == null || blnScope.length() == 0) {
-                    cmd += " /SCOPE=WORKSET ";
-                } else {
-                    wsBln = false;
-                    cmd += " /SCOPE="+blnScope;
-                    if (blnScope.equals("WORKSET")) {
-                       wsBln = true;
+                boolean revisedBln = false;
+
+                if (blnScope != null || blnScope.length() > 0) {
+                    if (blnScope.equals("REVISED")) {
+                        revisedBln = true;
+                        cmd = "CRB ";
                     }
                 }
 
-                if (!wsBln) {
-                    if (blnTemplate != null && blnTemplate.length() > 0) {
-                        cmd += " /TEMPLATE_ID=\""+blnTemplate+"\"";
+                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                cmd += " /WORKSET=\""+projectId+"\"";
+                if (!revisedBln) {
+                    if (blnScope == null || blnScope.length() == 0) {
+                        cmd += " /SCOPE=WORKSET ";
+                    } else {
+                        wsBln = false;
+                        cmd += " /SCOPE="+blnScope;
+                        if (blnScope.equals("WORKSET")) {
+                           wsBln = true;
+                        }
                     }
-                    if (blnOwningPart != null && blnOwningPart.length() > 0) {
-                        cmd += " /PART=\""+blnOwningPart+"\"";
+
+                    if (!wsBln) {
+                        if (blnTemplate != null && blnTemplate.length() > 0) {
+                            cmd += " /TEMPLATE_ID=\""+blnTemplate+"\"";
+                        }
+                        if (blnOwningPart != null && blnOwningPart.length() > 0) {
+                            cmd += " /PART=\""+blnOwningPart+"\"";
+                        }
+                    }
+                } else {
+                    if (requestId != null && requestId.length() > 0) {
+                        cmd += " /UPDATE_CHANGE_DOC_IDS=("+requestId+") /REMOVE_CHANGE_DOC_IDS=("+requestId+")";
+                    }
+                    if (blnId != null && blnId.length() > 0) {
+                        cmd += " /BASELINE1=\""+blnId+"\"";
                     }
                 }
 
