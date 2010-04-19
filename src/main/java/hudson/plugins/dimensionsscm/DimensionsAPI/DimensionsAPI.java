@@ -1280,7 +1280,11 @@ public class DimensionsAPI implements Serializable {
                     cmd += " /TYPE=\""+blnType+"\"";
                 }
 
-                cmd += " /DESCRIPTION=\"Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                if (!revisedBln) {
+                    cmd += " /DESCRIPTION=\"Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                }
+
+
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
                     Logger.Debug("Tagging project - "+res.getMessage());
