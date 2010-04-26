@@ -80,6 +80,10 @@
                <f:checkbox name="dimensionsscm.canJobExpand" default="false" checked="${scm.canJobExpand}"/>
             </f:entry>
 
+            <f:entry title="${%Checkout files with no metadata}" help="/plugin/dimensionsscm/canexport.html">
+               <f:checkbox name="dimensionsscm.canJobNoMetadata" default="false" checked="${scm.canJobNoMetadata}"/>
+            </f:entry>
+
             <f:entry title="Default Permissions for updated files" field="permissions">
                 <select class="setting-input" name="dimensionsscm.permissions">
                     <f:option value="DEFAULT" selected="${'DEFAULT'==scm.permissions}">(Default)</f:option>

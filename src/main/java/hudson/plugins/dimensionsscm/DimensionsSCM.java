@@ -204,6 +204,7 @@ public class DimensionsSCM extends SCM implements Serializable
     private boolean canJobForce;
     private boolean canJobRevert;
     private boolean canJobExpand;
+    private boolean canJobNoMetadata;
 
     DimensionsAPI dmSCM;
     DimensionsSCMRepositoryBrowser browser;
@@ -315,6 +316,14 @@ public class DimensionsSCM extends SCM implements Serializable
      */
     public boolean isCanJobExpand() {
         return this.canJobExpand;
+    }
+
+    /*
+     * Gets the no metadata .
+     * @return the nometadata
+     */
+    public boolean isCanJobNoMetadata() {
+        return this.canJobNoMetadata;
     }
 
     /*
@@ -444,7 +453,7 @@ public class DimensionsSCM extends SCM implements Serializable
              jobUserName,jobPasswd,
              jobServer,jobDatabase,
              canJobUpdate,jobTimeZone,
-             jobWebUrl,directory,"DEFAULT",false);
+             jobWebUrl,directory,"DEFAULT",false,false);
     }
 
 
@@ -469,7 +478,7 @@ public class DimensionsSCM extends SCM implements Serializable
              jobUserName,jobPasswd,
              jobServer,jobDatabase,
              canJobUpdate,jobTimeZone,
-             jobWebUrl,directory,permissions,false);
+             jobWebUrl,directory,permissions,false,false);
     }
 
 
@@ -492,6 +501,7 @@ public class DimensionsSCM extends SCM implements Serializable
      *      @param String directory
      *      @param String permissions
      *      @param boolean canJobExpand
+     *      @param boolean canJobNoMetadata
      *  Return:
      *      @return void
      *-----------------------------------------------------------------
@@ -512,7 +522,8 @@ public class DimensionsSCM extends SCM implements Serializable
                          String jobWebUrl,
                          String directory,
                          String permissions,
-                         boolean canJobExpand)
+                         boolean canJobExpand,
+                         boolean canJobNoMetadata)
     {
         // Check the folders specified have data specified
         if (folders != null) {
@@ -557,6 +568,7 @@ public class DimensionsSCM extends SCM implements Serializable
         this.canJobForce = canJobForce;
         this.canJobRevert = canJobRevert;
         this.canJobExpand = canJobExpand;
+        this.canJobNoMetadata = canJobNoMetadata;
 
         this.jobTimeZone = (Util.fixEmptyAndTrim(jobTimeZone) == null ? getDescriptor().getTimeZone() : jobTimeZone);
         this.jobWebUrl = (Util.fixEmptyAndTrim(jobWebUrl) == null ? getDescriptor().getWebUrl() : jobWebUrl);
@@ -666,7 +678,7 @@ public class DimensionsSCM extends SCM implements Serializable
                                                                    getProject(), baseline, requests,
                                                                    isCanJobDelete(),
                                                                    isCanJobRevert(), isCanJobForce(),
-                                                                   isCanJobExpand(),
+                                                                   isCanJobExpand(), isCanJobNoMetadata(),
                                                                    (build.getPreviousBuild() == null),
                                                                    getFolders(),version,
                                                                    permissions,
@@ -1051,7 +1063,7 @@ public class DimensionsSCM extends SCM implements Serializable
             Boolean canJobRevert = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert")));
             Boolean canJobUpdate = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobUpdate")));
             Boolean canJobExpand = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobExpand")));
-
+            Boolean canJobNoMetadata = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoMetadata")));
             String jobUserName = req.getParameter("dimensionsscm.jobUserName");
             String jobPasswd = req.getParameter("dimensionsscm.jobPasswd");
             String jobServer = req.getParameter("dimensionsscm.jobServer");
@@ -1065,7 +1077,8 @@ public class DimensionsSCM extends SCM implements Serializable
                                                   jobServer,jobDatabase,
                                                   canJobUpdate,jobTimeZone,
                                                   jobWebUrl,directory,
-                                                  permissions,canJobExpand);
+                                                  permissions,canJobExpand,
+                                                  canJobNoMetadata);
 
             scm.browser = RepositoryBrowsers.createInstance(DimensionsSCMRepositoryBrowser.class,req,formData,"browser");
             if (scm.dmSCM == null)
