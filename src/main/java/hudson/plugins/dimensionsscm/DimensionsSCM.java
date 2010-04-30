@@ -935,6 +935,9 @@ public class DimensionsSCM extends SCM implements Serializable
             dmSCM.logout(key);
         }
 
+        if (bChanged)
+            Logger.Debug("Polling returned true");
+
         return bChanged;
     }
 

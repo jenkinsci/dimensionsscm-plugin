@@ -1589,6 +1589,9 @@ public class DimensionsAPI implements Serializable {
         }
         if (path.equals("\\/") || path.equals("/"))
             path = "";
+        if (path.indexOf('\\') != 0) {
+            path = path.replace('\\','/');
+        }
         return path;
     }
 
