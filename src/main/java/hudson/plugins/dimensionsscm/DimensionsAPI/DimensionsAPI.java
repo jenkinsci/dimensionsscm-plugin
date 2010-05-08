@@ -960,6 +960,7 @@ public class DimensionsAPI implements Serializable {
      * @param String requests
      * @param String targets
      * @param AbstractBuild build
+     * @param String blnName
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
@@ -967,7 +968,8 @@ public class DimensionsAPI implements Serializable {
                                           boolean buildClean, String buildConfig,
                                           String options, boolean capture,
                                           String requests, String targets,
-                                          AbstractBuild build)
+                                          AbstractBuild build,
+                                          String blnName)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -977,7 +979,18 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "BLDB ";
             if (projectId != null && build != null) {
-                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                Integer buildNo = build.getNumber();
+                if (blnName == null) {
+                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
+                } else {
+                    String cId = blnName;
+
+                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
+                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
+                    cId = cId.replace("[BUILDNO]",buildNo.toString());
+                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
+                    cmd += "\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"";
+                }
                 if (area != null && area.length() > 0) {
                     cmd += " /AREA=\""+area+"\"";
                 }
@@ -1258,11 +1271,11 @@ public class DimensionsAPI implements Serializable {
                 } else {
                     String cId = blnName;
 
-                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1));
-                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName());
+                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
+                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
                     cId = cId.replace("[BUILDNO]",buildNo.toString());
-                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose());
-                    cmd += "\""+cId+"\"";
+                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
+                    cmd += "\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"";
                 }
 
                 cmd += " /WORKSET=\""+projectId+"\"";
@@ -1322,10 +1335,11 @@ public class DimensionsAPI implements Serializable {
      * @param String
      * @param String
      * @param AbstractBuild
+     * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult deployBaseline(long key, String projectId, AbstractBuild build, String state)
+    public DimensionsResult deployBaseline(long key, String projectId, AbstractBuild build, String state, String blnName)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1335,7 +1349,18 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "DPB ";
             if (projectId != null && build != null) {
-                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                Integer buildNo = build.getNumber();
+                if (blnName == null) {
+                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
+                } else {
+                    String cId = blnName;
+
+                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
+                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
+                    cId = cId.replace("[BUILDNO]",buildNo.toString());
+                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
+                    cmd += "\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"";
+                }
                 cmd += " /WORKSET=\""+projectId+"\"";
                 if (state != null && state.length() > 0) {
                     cmd += " /STAGE=\""+state+"\"";
@@ -1360,10 +1385,11 @@ public class DimensionsAPI implements Serializable {
      * @param String
      * @param String
      * @param AbstractBuild
+     * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult actionBaseline(long key, String projectId, AbstractBuild build, String state)
+    public DimensionsResult actionBaseline(long key, String projectId, AbstractBuild build, String state, String blnName)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1373,7 +1399,18 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "ABL ";
             if (projectId != null && build != null) {
-                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                Integer buildNo = build.getNumber();
+                if (blnName == null) {
+                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
+                } else {
+                    String cId = blnName;
+
+                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
+                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
+                    cId = cId.replace("[BUILDNO]",buildNo.toString());
+                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
+                    cmd += "\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"";
+                }
                 cmd += " /WORKSET=\""+projectId+"\"";
                 if (state != null && state.length() > 0) {
                     cmd += " /STATUS=\""+state+"\"";
