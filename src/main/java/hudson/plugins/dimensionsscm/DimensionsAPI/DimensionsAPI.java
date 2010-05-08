@@ -983,13 +983,7 @@ public class DimensionsAPI implements Serializable {
                 if (blnName == null) {
                     cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
                 } else {
-                    String cId = blnName;
-
-                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
-                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
-                    cId = cId.replace("[BUILDNO]",buildNo.toString());
-                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
-                    cmd += "\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"";
+                    cmd += blnName;
                 }
                 if (area != null && area.length() > 0) {
                     cmd += " /AREA=\""+area+"\"";
@@ -1237,6 +1231,7 @@ public class DimensionsAPI implements Serializable {
      * @param String
      * @param String
      * @param String
+     * @param StringBuffer
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
@@ -1244,7 +1239,8 @@ public class DimensionsAPI implements Serializable {
                                            String blnScope, String blnTemplate,
                                            String blnOwningPart, String blnType,
                                            String requestId, String blnId,
-                                           String blnName)
+                                           String blnName,
+                                           StringBuffer cblId)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1267,7 +1263,7 @@ public class DimensionsAPI implements Serializable {
                 }
 
                 if (blnName == null) {
-                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
+                    cblId.append("\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"");
                 } else {
                     String cId = blnName;
 
@@ -1275,10 +1271,11 @@ public class DimensionsAPI implements Serializable {
                     cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
                     cId = cId.replace("[BUILDNO]",buildNo.toString());
                     cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
-                    cmd += "\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"";
+
+                    cblId.append("\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"");
                 }
 
-                cmd += " /WORKSET=\""+projectId+"\"";
+                cmd += cblId.toString() + " /WORKSET=\""+projectId+"\"";
                 if (!revisedBln) {
                     if (blnScope == null || blnScope.length() == 0) {
                         cmd += " /SCOPE=WORKSET ";
@@ -1353,13 +1350,7 @@ public class DimensionsAPI implements Serializable {
                 if (blnName == null) {
                     cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
                 } else {
-                    String cId = blnName;
-
-                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
-                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
-                    cId = cId.replace("[BUILDNO]",buildNo.toString());
-                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
-                    cmd += "\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"";
+                    cmd += blnName;
                 }
                 cmd += " /WORKSET=\""+projectId+"\"";
                 if (state != null && state.length() > 0) {
@@ -1403,13 +1394,7 @@ public class DimensionsAPI implements Serializable {
                 if (blnName == null) {
                     cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
                 } else {
-                    String cId = blnName;
-
-                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
-                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
-                    cId = cId.replace("[BUILDNO]",buildNo.toString());
-                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
-                    cmd += "\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"";
+                    cmd += blnName;
                 }
                 cmd += " /WORKSET=\""+projectId+"\"";
                 if (state != null && state.length() > 0) {
