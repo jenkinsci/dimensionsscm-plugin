@@ -1223,13 +1223,15 @@ public class DimensionsAPI implements Serializable {
      * @param String
      * @param String
      * @param String
+     * @param String
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
     public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build,
                                            String blnScope, String blnTemplate,
                                            String blnOwningPart, String blnType,
-                                           String requestId, String blnId)
+                                           String requestId, String blnId,
+                                           String blnName)
                             throws DimensionsRuntimeException
     {
         DimensionsConnection connection = getCon(key);
@@ -1242,6 +1244,7 @@ public class DimensionsAPI implements Serializable {
             if (projectId != null && build != null) {
                 boolean wsBln = true;
                 boolean revisedBln = false;
+                Integer buildNo = build.getNumber();
 
                 if (blnScope != null || blnScope.length() > 0) {
                     if (blnScope.equals("REVISED")) {
@@ -1250,7 +1253,18 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-                cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+build.getNumber()+"\"";
+                if (blnName == null) {
+                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
+                } else {
+                    String cId = blnName;
+
+                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1));
+                    cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName());
+                    cId = cId.replace("[BUILDNO]",buildNo.toString());
+                    cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose());
+                    cmd += "\""+cId+"\"";
+                }
+
                 cmd += " /WORKSET=\""+projectId+"\"";
                 if (!revisedBln) {
                     if (blnScope == null || blnScope.length() == 0) {

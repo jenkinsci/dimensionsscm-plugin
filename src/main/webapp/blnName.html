@@ -1,0 +1,15 @@
+This option allows you to specify a template that will be used as
+a basis for creating the name of the baseline used to tag this build.
+<BR><BR>
+The template supports the following variables which will be substituted
+when the baseline is created.
+<BR><BR>
+&nbsp;&nbsp;&nbsp;&nbsp;[PROJECTID]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is the name of the Dimensions project or stream being monitored.<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;[HUDSON_PROJECT]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is the name of the Hudson project<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;[BUILDNO]&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+is the build number<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;[CURRENT_DATE]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is the current date in
+"yyyy.MMMMM.dd hh:mm:ss aaa z" format, e.g. "2010.May.15 12:15:01 PM BST"<BR><BR>
+If you specify a value that contains no variables in it, then only that value will be used as the baseline identifier.

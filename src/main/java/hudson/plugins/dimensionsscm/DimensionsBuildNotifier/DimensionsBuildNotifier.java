@@ -140,6 +140,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     private String  deployState = null;
 
     private String blnScope = null;
+    private String blnName = null;
     private String blnTemplate = null;
     private String blnOwningPart = null;
     private String blnType = null;
@@ -177,6 +178,14 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
      */
     public String getBlnTemplate() {
         return this.blnTemplate;
+    }
+
+    /*
+     * Gets the baseline name .
+     * @return boolean
+     */
+    public String getBlnName() {
+        return this.blnName;
     }
 
     /*
@@ -290,7 +299,6 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     }
 
 
-
     /**
      * Default constructor.
      */
@@ -300,7 +308,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                    String area, String buildConfig,
                                    String buildOptions, String buildTargets,
                                    String blnScope, String blnTemplate, String blnOwningPart,
-                                   String blnType,
+                                   String blnType, String blnName,
                                    boolean batch, boolean buildClean, boolean capture) {
         this.canBaselineDeploy = canDeploy;
         this.canBaselineAction = canAction;
@@ -316,6 +324,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         this.blnTemplate = blnTemplate;
         this.blnOwningPart = blnOwningPart;
         this.blnType = blnType;
+        this.blnName = blnName;
 
         this.batch = batch;
         this.buildClean = buildClean;
@@ -371,7 +380,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     {
                         DimensionsResult res = scm.getAPI().createBaseline(key,scm.getProject(),build,blnScope,
                                                                            blnTemplate,blnOwningPart,blnType,
-                                                                           requests,blnId);
+                                                                           requests,blnId,blnName);
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
                             listener.getLogger().flush();
@@ -500,6 +509,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             String blnTemplate = req.getParameter("dimensionsbuildnotifier.blnTemplate");
             String blnOwningPart = req.getParameter("dimensionsbuildnotifier.blnOwningPart");
             String blnType = req.getParameter("dimensionsbuildnotifier.blnType");
+            String blnName = req.getParameter("dimensionsbuildnotifier.blnName");
 
             if (deploy != null)
                 deploy = Util.fixNull(req.getParameter("dimensionsbuildnotifier.deployState").trim());
@@ -521,6 +531,8 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 blnOwningPart = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnOwningPart").trim());
             if (blnType != null)
                 blnType = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnType").trim());
+            if (blnName != null)
+                blnName = Util.fixNull(req.getParameter("dimensionsbuildnotifier.blnName").trim());
 
 
             DimensionsBuildNotifier notif = new DimensionsBuildNotifier(canDeploy,deploy,
@@ -528,7 +540,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                                                                         area,buildConfig,
                                                                         buildOptions,buildTargets,
                                                                         blnScope,blnTemplate,blnOwningPart,
-                                                                        blnType,
+                                                                        blnType,blnName,
                                                                         batch,buildClean,capture);
 
             return notif;

@@ -26,6 +26,9 @@
                          a knowledgeable Dimensions user).
                  </p>
               </f:entry>
+              <f:entry title="Baseline Name" help="/plugin/dimensionsscm/blnName.html">
+               <f:textbox name="dimensionsbuildnotifier.blnName" value="${instance.blnName}" />
+              </f:entry>
           </f:advanced>
 
           <f:optionalBlock name="dimensionsbuildnotifier.canBaselineDeploy" title="Automatically deploy the baseline"

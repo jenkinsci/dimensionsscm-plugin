@@ -263,6 +263,17 @@ public class DateUtils implements Serializable {
     }
 
     /**
+     * Gets "now" in verbose format
+     * @return  a String containing a date in verbose format
+     */
+    public static String getNowStrDateVerbose() {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy.MMMMM.dd hh:mm:ss aaa z");
+        Calendar opDate = Calendar.getInstance();
+        df.setTimeZone(tzl);
+        return df.format(opDate.getTime());
+    }
+
+    /**
      * Gets a date in RFC format
      * @param calendar date
      * @return  a String containing a date in known RFC
