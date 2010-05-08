@@ -165,7 +165,6 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
     VariableResolver<String> myResolver;
 
-    String workarea = "";
     String projectId = "";
     String[] folders;
 
@@ -190,7 +189,6 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
         server = parent.getJobServer();
 
         // Config details
-        this.workarea = parent.getWorkarea();
         this.isDelete = parent.isCanJobDelete();
         this.projectId = parent.getProject();
         this.isRevert = parent.isCanJobRevert();
@@ -221,14 +219,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
         try
         {
             StringBuffer cmdOutput = new StringBuffer();
-            FilePath wa = null;
-            if (workarea != null)
-            {
-                File waN = new File(workarea);
-                wa = new FilePath(waN);
-            }
-            else
-                wa = new FilePath(area);
+            FilePath wa = new FilePath(area);
 
             // Emulate SVN plugin
             // - if workspace exists and it is not managed by this project, blow it away

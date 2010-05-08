@@ -139,7 +139,6 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
     int buildNo = 0;
     private String jobId = "";
 
-    private String workarea = "";
     private String projectId = "";
     private String requests = null;
     private String owningPart = null;

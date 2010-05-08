@@ -186,7 +186,6 @@ public class DimensionsSCM extends SCM implements Serializable
     // Hudson details
     private String project;
     private String directory;
-    private String workarea;
     private String permissions;
 
     private String jobUserName;
@@ -252,14 +251,6 @@ public class DimensionsSCM extends SCM implements Serializable
      */
     public String[] getFolders() {
         return this.folders;
-    }
-
-    /*
-     * Gets the workarea path.
-     * @return the workarea path
-     */
-    public String getWorkarea() {
-        return this.workarea;
     }
 
     /*
@@ -548,7 +539,6 @@ public class DimensionsSCM extends SCM implements Serializable
 
         // Copying arguments to fields
         this.project = (Util.fixEmptyAndTrim(project) == null ? "${JOB_NAME}" : project);
-        this.workarea = (Util.fixEmptyAndTrim(workarea) == null ? null : workarea);
         this.directory = (Util.fixEmptyAndTrim(directory) == null ? null : directory);
         this.permissions = (Util.fixEmptyAndTrim(permissions) == null ? "DEFAULT" : permissions);
 
@@ -1058,7 +1048,6 @@ public class DimensionsSCM extends SCM implements Serializable
 
             String project = req.getParameter("dimensionsscm.project");
             String directory = req.getParameter("dimensionsscm.directory");
-            String workarea = req.getParameter("dimensionsscm.workarea");
             String permissions = req.getParameter("dimensionsscm.permissions");
 
             Boolean canJobDelete = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete")));
@@ -1074,7 +1063,7 @@ public class DimensionsSCM extends SCM implements Serializable
             String jobTimeZone = req.getParameter("dimensionsscm.jobTimeZone");
             String jobWebUrl = req.getParameter("dimensionsscm.jobWebUrl");
 
-            DimensionsSCM scm = new DimensionsSCM(project,folders,workarea,canJobDelete,
+            DimensionsSCM scm = new DimensionsSCM(project,folders,null,canJobDelete,
                                                   canJobForce,canJobRevert,
                                                   jobUserName,jobPasswd,
                                                   jobServer,jobDatabase,

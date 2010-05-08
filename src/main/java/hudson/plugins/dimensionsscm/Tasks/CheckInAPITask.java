@@ -169,7 +169,6 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
 
     private String jobId = "";
 
-    private String workarea = "";
     private String projectId = "";
     private String owningPart = "";
     private String[] patterns;
@@ -195,7 +194,6 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
         this.version = version;
 
         // Config details
-        this.workarea = parent.getWorkarea();
         this.projectId = parent.getProject();
         this.isForceCheckIn = artifact.isForceCheckIn();
         this.isForceTip = artifact.isForceTip();

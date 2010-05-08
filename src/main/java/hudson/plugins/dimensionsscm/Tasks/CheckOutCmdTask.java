@@ -137,7 +137,6 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
     private boolean isExpand = false;
     private boolean isNoMetadata = false;
 
-    private String workarea = "";
     private String projectId = "";
     private String baseline = null;
     private String requests = null;

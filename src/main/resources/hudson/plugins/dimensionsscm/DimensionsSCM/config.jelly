@@ -22,11 +22,6 @@
        </f:repeatable>
     </f:entry>
 
-    <f:entry title="Workspace Location" help="/plugin/dimensionsscm/workarea.html">
-       <f:textbox name="dimensionsscm.workarea" value="${scm.workarea}"/>
-       <i>(this folder name is optional)</i>
-    </f:entry>
-
     <f:entry title="${%Clear the contents of the workspace}" help="/plugin/dimensionsscm/candelete.html">
     <f:checkbox name="dimensionsscm.canJobDelete" default="false" checked="${scm.canJobDelete}"/>
     </f:entry>
