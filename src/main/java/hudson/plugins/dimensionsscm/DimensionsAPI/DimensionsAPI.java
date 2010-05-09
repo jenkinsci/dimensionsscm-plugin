@@ -980,7 +980,7 @@ public class DimensionsAPI implements Serializable {
             String cmd = "BLDB ";
             if (projectId != null && build != null) {
                 Integer buildNo = build.getNumber();
-                if (blnName != null || blnName.length() > 0) {
+                if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
                     cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
@@ -1262,7 +1262,7 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-                if (blnName != null || blnName.length() > 0) {
+                if (blnName != null && blnName.length() > 0) {
                     String cId = blnName;
 
                     cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
@@ -1347,7 +1347,7 @@ public class DimensionsAPI implements Serializable {
             String cmd = "DPB ";
             if (projectId != null && build != null) {
                 Integer buildNo = build.getNumber();
-                if (blnName != null || blnName.length() > 0) {
+                if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
                     cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
@@ -1391,7 +1391,7 @@ public class DimensionsAPI implements Serializable {
             String cmd = "ABL ";
             if (projectId != null && build != null) {
                 Integer buildNo = build.getNumber();
-                if (blnName != null || blnName.length() > 0) {
+                if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
                     cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
