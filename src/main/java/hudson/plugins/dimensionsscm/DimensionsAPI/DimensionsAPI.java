@@ -980,10 +980,10 @@ public class DimensionsAPI implements Serializable {
             String cmd = "BLDB ";
             if (projectId != null && build != null) {
                 Integer buildNo = build.getNumber();
-                if (blnName == null) {
-                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
-                } else {
+                if (blnName != null || blnName.length() > 0) {
                     cmd += blnName;
+                } else {
+                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
                 }
                 if (area != null && area.length() > 0) {
                     cmd += " /AREA=\""+area+"\"";
@@ -1262,9 +1262,7 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-                if (blnName == null) {
-                    cblId.append("\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"");
-                } else {
+                if (blnName != null || blnName.length() > 0) {
                     String cId = blnName;
 
                     cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
@@ -1273,6 +1271,8 @@ public class DimensionsAPI implements Serializable {
                     cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
 
                     cblId.append("\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"");
+                } else {
+                    cblId.append("\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"");
                 }
 
                 cmd += cblId.toString() + " /WORKSET=\""+projectId+"\"";
@@ -1347,10 +1347,10 @@ public class DimensionsAPI implements Serializable {
             String cmd = "DPB ";
             if (projectId != null && build != null) {
                 Integer buildNo = build.getNumber();
-                if (blnName == null) {
-                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
-                } else {
+                if (blnName != null || blnName.length() > 0) {
                     cmd += blnName;
+                } else {
+                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
                 }
                 cmd += " /WORKSET=\""+projectId+"\"";
                 if (state != null && state.length() > 0) {
@@ -1391,10 +1391,10 @@ public class DimensionsAPI implements Serializable {
             String cmd = "ABL ";
             if (projectId != null && build != null) {
                 Integer buildNo = build.getNumber();
-                if (blnName == null) {
-                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
-                } else {
+                if (blnName != null || blnName.length() > 0) {
                     cmd += blnName;
+                } else {
+                    cmd += "\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"";
                 }
                 cmd += " /WORKSET=\""+projectId+"\"";
                 if (state != null && state.length() > 0) {
