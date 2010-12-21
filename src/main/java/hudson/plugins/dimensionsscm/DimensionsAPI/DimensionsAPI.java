@@ -592,6 +592,7 @@ public class DimensionsAPI implements Serializable {
      *      @param final boolean doExpand
      *      @param final boolean doNoMetadata
      *      @param final String permissions
+     *      @param final String eol	 
      *  Return:
      *      @return boolean
      *-----------------------------------------------------------------
@@ -606,7 +607,8 @@ public class DimensionsAPI implements Serializable {
                             final boolean doRevert,
                             final boolean doExpand,
                             final boolean doNoMetadata,
-                            final String permissions)
+                            final String permissions,
+							final String eol)
                     throws IOException, InterruptedException
     {
         boolean bRet = false;
@@ -658,6 +660,12 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
+				if (eol != null && eol.length() > 0) {
+                    if (!eol.equals("DEFAULT")) {
+                        cmd += "/EOL="+eol;
+                    }
+                }
+				
                 cmd += "/USER_DIR=\"" + workspaceName.getRemote() + "\" ";
 
                 if (doRevert)
@@ -1269,6 +1277,8 @@ public class DimensionsAPI implements Serializable {
                     cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
                     cId = cId.replace("[BUILDNO]",buildNo.toString());
                     cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
+                    if (blnId != null && blnId.length() > 0)
+						cId = cId.replace("[DM_BASELINE]",blnId.trim());
 
                     cblId.append("\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"");
                 } else {
@@ -1643,6 +1653,8 @@ public class DimensionsAPI implements Serializable {
 
             if (host.startsWith("http:"))
                 host = host.substring(7,host.length());
+            else if (host.startsWith("https:"))
+                host = host.substring(8,host.length());
 
             String page = "/dimensions/";
             String urlQuery = "jsp=api&command=openi&object_id=";
@@ -1675,8 +1687,10 @@ public class DimensionsAPI implements Serializable {
             if (host.endsWith("/"))
                 host = host.substring(0,host.length()-1);
 
-            if (host.startsWith("http:"))
+			if (host.startsWith("http:"))
                 host = host.substring(7,host.length());
+            else if (host.startsWith("https:"))
+                host = host.substring(8,host.length());
 
             String page = "/dimensions/";
             String urlQuery = "jsp=api&command=opencd&object_id=";

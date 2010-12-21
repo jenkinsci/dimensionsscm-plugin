@@ -86,6 +86,16 @@
                     <f:option value="WRITABLE" selected="${'WRITABLE'==scm.permissions}">Writeable</f:option>
                 </select>
             </f:entry>
+
+            <f:entry title="Perform End of Line Conversion for updated files" field="eol">
+                <select class="setting-input" name="dimensionsscm.eol">
+                    <f:option value="DEFAULT" selected="${'DEFAULT'==scm.eol}">(Default)</f:option>
+                    <f:option value="UNIX" selected="${'UNIX'==scm.eol}">Unix style end-of-line</f:option>
+                    <f:option value="WINDOWS" selected="${'WINDOWS'==scm.eol}">Windows style end-of-line</f:option>
+                    <f:option value="UNCHANGED" selected="${'UNCHANGED'==scm.eol}">Leave files as they are</f:option>
+                </select>
+            </f:entry>
+
         </f:optionalBlock>
 
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">

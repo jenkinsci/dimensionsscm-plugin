@@ -141,6 +141,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
     private String baseline = null;
     private String requests = null;
     private String permissions = null;
+    private String eol = null;
 
     private String[] folders;
 
@@ -213,6 +214,12 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 }
             }
 
+			if (eol != null && eol.length() > 0) {
+                if (!eol.equals("DEFAULT")) {
+                    cmd += "/EOL="+eol;
+                }
+            }
+			
             fmtWriter.println(cmd);
             fmtWriter.flush();
         } catch (Exception e) {
@@ -235,6 +242,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                              boolean isExpand, boolean isNoMetadata,
                              boolean freshBuild, String[] folders,
                              int version, String permissions,
+						     String eol,
                              FilePath workspace,
                              TaskListener listener) {
 
@@ -259,6 +267,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         this.requests = requestId;
         this.baseline = baselineId;
         this.permissions = permissions;
+        this.eol = eol;
 
         // Build details
         this.bFreshBuild = freshBuild;

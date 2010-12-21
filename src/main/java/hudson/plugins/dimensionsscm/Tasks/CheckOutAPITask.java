@@ -167,7 +167,8 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
     String projectId = "";
     String[] folders;
-
+	String eol = "";
+	
     int version = 0;
 
     /*
@@ -198,7 +199,8 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
         this.folders = parent.getFolders();
         permissions = parent.getPermissions();
-
+		this.eol = parent.getEol();
+		
         // Build details
         this.bFreshBuild = (build.getPreviousBuild() == null);
         this.myResolver = build.getBuildVariableResolver();
@@ -291,7 +293,8 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                     // Checkout the folder
                     bRet = dmSCM.checkout(key,projectId,dname,wa,
                                           cmdOutput,baseline,reqId,
-                                          isRevert,isExpand,isNoMetadata,"DEFAULT");
+                                          isRevert,isExpand,isNoMetadata,"DEFAULT",
+										  eol);
                     Logger.Debug("SCM checkout returned " + bRet);
 
                     if (!bRet && isForce)
@@ -321,7 +324,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                     bRet = dmSCM.checkout(key,projectId,dname,wa,
                                           cmdOutput,baseline,requests,
                                           isRevert,isExpand,isNoMetadata,
-                                          permissions);
+                                          permissions,eol);
                     Logger.Debug("SCM checkout returned " + bRet);
 
                     if (!bRet && isForce)
