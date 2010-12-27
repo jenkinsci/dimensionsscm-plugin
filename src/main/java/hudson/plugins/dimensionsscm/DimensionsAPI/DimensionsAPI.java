@@ -1278,7 +1278,7 @@ public class DimensionsAPI implements Serializable {
                     cId = cId.replace("[BUILDNO]",buildNo.toString());
                     cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
                     if (blnId != null && blnId.length() > 0)
-						cId = cId.replace("[DM_BASELINE]",blnId.trim());
+						cId = cId.replace("[DM_BASELINE]",blnId.substring(blnId.indexOf(":")+1).trim());
 
                     cblId.append("\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"");
                 } else {
