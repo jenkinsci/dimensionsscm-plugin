@@ -11,7 +11,7 @@
   <groupId>hudson.plugins</groupId>
   <artifactId>dimensionsscm</artifactId>
   <packaging>hpi</packaging>
-  <version>0.7.8</version>
+  <version>0.7.9-SNAPSHOT</version>
   <name>Dimensions SCM plugin</name>
   <description>Dimension SCM plugin for Hudson</description>
   <url>http://wiki.hudson-ci.org/display/HUDSON/Dimensions+Plugin</url>
@@ -64,10 +64,4 @@
         <id>serena-lib</id>
         <url>file:${project.basedir}/lib/</url></repository>
   </repositories>
-
-  <scm>
-    <connection>scm:svn:https://guest@svn.java.net/svn/hudson~svn/tags/dimensionsscm-0.7.8</connection>
-    <developerConnection>scm:svn:https://svn.java.net/svn/hudson~svn/tags/dimensionsscm-0.7.8</developerConnection>
-    <url>https://svn.java.net/svn/hudson~svn/tags/dimensionsscm-0.7.8</url>
-  </scm>
 </project>
