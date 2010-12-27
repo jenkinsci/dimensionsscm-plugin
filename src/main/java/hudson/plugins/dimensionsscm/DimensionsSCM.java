@@ -127,6 +127,9 @@ import hudson.remoting.Channel;
 import hudson.remoting.DelegatingCallable;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogParser;
+import hudson.scm.PollingResult;
+import hudson.scm.PollingResult.Change;
+import hudson.scm.SCMRevisionState;
 import hudson.scm.RepositoryBrowsers;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
@@ -187,6 +190,7 @@ public class DimensionsSCM extends SCM implements Serializable
     private String project;
     private String directory;
     private String permissions;
+    private String eol;
 
     private String jobUserName;
     private String jobPasswd;
@@ -245,6 +249,14 @@ public class DimensionsSCM extends SCM implements Serializable
         return this.permissions;
     }
 
+	/*
+     * Gets the eol .
+     * @return the eol
+     */
+    public String getEol() {
+        return this.eol;
+    }
+	
     /*
      * Gets the project paths.
      * @return the project paths
@@ -399,7 +411,7 @@ public class DimensionsSCM extends SCM implements Serializable
      *-----------------------------------------------------------------
      */
     @Override
-    public void buildEnvVars(AbstractBuild build, Map<String, String> env)
+    public void buildEnvVars(AbstractBuild<?,?> build, Map<String,String> env)
     {
         // To be implemented when build support put in
         super.buildEnvVars(build, env);
@@ -444,7 +456,8 @@ public class DimensionsSCM extends SCM implements Serializable
              jobUserName,jobPasswd,
              jobServer,jobDatabase,
              canJobUpdate,jobTimeZone,
-             jobWebUrl,directory,"DEFAULT",false,false);
+             jobWebUrl,directory,"DEFAULT","DEFAULT",
+			 false,false);
     }
 
 
@@ -462,14 +475,15 @@ public class DimensionsSCM extends SCM implements Serializable
                          String jobTimeZone,
                          String jobWebUrl,
                          String directory,
-                         String permissions)
+                         String permissions,
+						 String  eol)
     {
         this(project,null,workarea,canJobDelete,
              canJobForce,canJobRevert,
              jobUserName,jobPasswd,
              jobServer,jobDatabase,
              canJobUpdate,jobTimeZone,
-             jobWebUrl,directory,permissions,false,false);
+             jobWebUrl,directory,permissions,eol,false,false);
     }
 
 
@@ -491,6 +505,7 @@ public class DimensionsSCM extends SCM implements Serializable
      *      @param String jobDatabase
      *      @param String directory
      *      @param String permissions
+	 *      @param String eol
      *      @param boolean canJobExpand
      *      @param boolean canJobNoMetadata
      *  Return:
@@ -513,6 +528,7 @@ public class DimensionsSCM extends SCM implements Serializable
                          String jobWebUrl,
                          String directory,
                          String permissions,
+						 String eol,
                          boolean canJobExpand,
                          boolean canJobNoMetadata)
     {
@@ -541,6 +557,7 @@ public class DimensionsSCM extends SCM implements Serializable
         this.project = (Util.fixEmptyAndTrim(project) == null ? "${JOB_NAME}" : project);
         this.directory = (Util.fixEmptyAndTrim(directory) == null ? null : directory);
         this.permissions = (Util.fixEmptyAndTrim(permissions) == null ? "DEFAULT" : permissions);
+        this.eol = (Util.fixEmptyAndTrim(eol) == null ? "DEFAULT" : eol);
 
         this.jobServer = (Util.fixEmptyAndTrim(jobServer) == null ? getDescriptor().getServer() : jobServer);
         this.jobUserName = (Util.fixEmptyAndTrim(jobUserName) == null ? getDescriptor().getUserName() : jobUserName);
@@ -606,7 +623,9 @@ public class DimensionsSCM extends SCM implements Serializable
                                 Hudson.getInstance().getDescriptor(DimensionsBuildWrapper.class);
             DimensionsBuildNotifier.DescriptorImpl bnplugin = (DimensionsBuildNotifier.DescriptorImpl)
                                 Hudson.getInstance().getDescriptor(DimensionsBuildNotifier.class);
-
+			
+			String nodeName = build.getBuiltOn().getNodeName();
+			
             if (DimensionsChecker.isValidPluginCombination(build,listener)) {
                 Logger.Debug("Plugins are ok");
             } else {
@@ -635,9 +654,12 @@ public class DimensionsSCM extends SCM implements Serializable
                 byte[] ipAddr = netAddr.getAddress();
                 String hostname = netAddr.getHostName();
 
-                boolean master = false;
-                GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
-                master = workspace.act(buildHost);
+                boolean master = true;
+                // GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
+                //master = workspace.act(buildHost);
+				if (nodeName != null && nodeName.length() > 0)
+					master = false;
+				
 
                 if (master) {
                     // Running on master...
@@ -671,7 +693,7 @@ public class DimensionsSCM extends SCM implements Serializable
                                                                    isCanJobExpand(), isCanJobNoMetadata(),
                                                                    (build.getPreviousBuild() == null),
                                                                    getFolders(),version,
-                                                                   permissions,
+                                                                   permissions,eol,
                                                                    workspace,listener);
                         bRet = workspace.act(task);
                     }
@@ -830,7 +852,93 @@ public class DimensionsSCM extends SCM implements Serializable
      *-----------------------------------------------------------------
      *  FUNCTION SPECIFICATION
      *  Name:
-     *      pollChanges
+     *      calcRevisionsFromBuild
+     *  Description:
+     *      Has the repository had any changes since last build?
+     * Parameters:
+     *      @param AbstractBuild project
+     *      @param Launcher launcher
+     *      @param TaskListener listener
+     *  Return:
+     *      @return SCMRevisionState
+     *-----------------------------------------------------------------
+     */
+	@Override
+    public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build, 
+												   Launcher launcher, 
+												   TaskListener listener) 
+	                                              throws IOException, InterruptedException {
+		// Stub function for now
+        return null;
+    }
+
+    /*
+     *-----------------------------------------------------------------
+     *  FUNCTION SPECIFICATION
+     *  Name:
+     *      compareRemoteRevisionWith
+     *  Description:
+     *      Has the repository had any changes?
+     * Parameters:
+     *      @param AbstractProject project
+     *      @param Launcher launcher
+     *      @param FilePath workspace
+     *      @param TaskListener listener
+     *      @param SCMRevisionState baseline	 
+     *  Return:
+     *      @return PollingResult
+     *-----------------------------------------------------------------
+     */
+	@Override
+    protected PollingResult compareRemoteRevisionWith(AbstractProject<?,?> project, 
+													  Launcher launcher, 
+													  FilePath workspace,
+													  TaskListener listener, 
+													  SCMRevisionState baseline) 
+											         throws IOException, InterruptedException {
+		// New polling function - to use old polling function for the moment
+		Change change = Change.NONE;
+
+		try {											 
+			if (pollCMChanges(project,launcher,workspace,listener)) {
+				return PollingResult.BUILD_NOW;
+			}
+		} catch (Exception e) {
+		}
+		return new PollingResult(change);
+    }	
+	
+
+	/*
+     *-----------------------------------------------------------------
+     *  FUNCTION SPECIFICATION
+     *  Name:
+     *      processWorkspaceBeforeDeletion
+     *  Description:
+     *      Okay to clear the area?
+     * Parameters:
+     *      @param AbstractProject project
+     *      @param FilePath workspace
+     *      @param Node node
+     *  Return:
+     *      @return boolean
+     *-----------------------------------------------------------------
+     */
+    @Override
+	public boolean processWorkspaceBeforeDeletion(AbstractProject<?,?> project,
+												  FilePath workspace,
+												  Node node)
+												throws IOException,InterruptedException {
+		// Not used at the moment, so we have a stub...
+		return true;
+	}
+    
+	
+	/*
+     *-----------------------------------------------------------------
+     *  FUNCTION SPECIFICATION
+     *  Name:
+     *      pollCMChanges
      *  Description:
      *      Has the repository had any changes?
      * Parameters:
@@ -842,8 +950,7 @@ public class DimensionsSCM extends SCM implements Serializable
      *      @return boolean
      *-----------------------------------------------------------------
      */
-    @Override
-    public boolean pollChanges(final AbstractProject project, final Launcher launcher,
+    private boolean pollCMChanges(final AbstractProject project, final Launcher launcher,
                                final FilePath workspace, final TaskListener listener)
                               throws IOException, InterruptedException
     {
@@ -1049,6 +1156,7 @@ public class DimensionsSCM extends SCM implements Serializable
             String project = req.getParameter("dimensionsscm.project");
             String directory = req.getParameter("dimensionsscm.directory");
             String permissions = req.getParameter("dimensionsscm.permissions");
+            String eol = req.getParameter("dimensionsscm.eol");
 
             Boolean canJobDelete = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete")));
             Boolean canJobForce = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce")));
@@ -1069,7 +1177,7 @@ public class DimensionsSCM extends SCM implements Serializable
                                                   jobServer,jobDatabase,
                                                   canJobUpdate,jobTimeZone,
                                                   jobWebUrl,directory,
-                                                  permissions,canJobExpand,
+                                                  permissions,eol,canJobExpand,
                                                   canJobNoMetadata);
 
             scm.browser = RepositoryBrowsers.createInstance(DimensionsSCMRepositoryBrowser.class,req,formData,"browser");

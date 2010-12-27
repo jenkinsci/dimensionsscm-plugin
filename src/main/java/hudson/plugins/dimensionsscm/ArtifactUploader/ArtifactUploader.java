@@ -240,6 +240,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
             if (build.getResult() == Result.SUCCESS) {
                 DimensionsSCM scm = (DimensionsSCM)build.getProject().getScm();
                 DimensionsAPI dmSCM = new DimensionsAPI();
+				String nodeName = build.getBuiltOn().getNodeName();
 
                 Logger.Debug("Calculating version of Dimensions...");
 
@@ -273,9 +274,11 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
                 Logger.Debug("Checking if master or slave...");
 
-                boolean master = false;
-                GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
-                master = workspace.act(buildHost);
+                boolean master = true;
+                // GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
+                //master = workspace.act(buildHost);
+				if (nodeName != null && nodeName.length() > 0)
+					master = false;
 
                 if (master) {
                     // Running on master...
