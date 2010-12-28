@@ -309,7 +309,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                 cmd[0] = exe.getAbsolutePath();
                 cmd[1] = "-param";
                 cmd[2] = param.getAbsolutePath();
-                cmd[3] = "cmd";
+                cmd[3] = "-file";
                 cmd[4] = cmdFile.getAbsolutePath();
 
                 SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
