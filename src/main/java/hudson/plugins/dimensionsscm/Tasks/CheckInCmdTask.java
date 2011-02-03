@@ -172,7 +172,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
             ciCmd += " /USER_FILELIST=\""+tempFile.getAbsolutePath()+"\"";
             ciCmd += " /WORKSET=\""+projectId+"\"";
-            ciCmd += " /COMMENT=\"Build artifacts saved by Hudson for job '"+jobId+"' - build "+buildNo+"\"";
+            ciCmd += " /COMMENT=\"Build artifacts saved by Hudson/Jenkins for job '"+jobId+"' - build "+buildNo+"\"";
             ciCmd += " /USER_DIRECTORY=\""+area.getAbsolutePath()+"\"";
             if (requests != null && requests.length() > 0) {
                 if (requests.indexOf(",")==0) {
@@ -284,7 +284,10 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                     fmtWriter = new PrintWriter(logFileWriter,true);
 
                     for (File f : validFiles) {
-                        fmtWriter.println(f.getAbsolutePath());
+                        if (f.isDirectory()) {
+                        } else {
+                            fmtWriter.println(f.getAbsolutePath());
+                        }
                     }
                     fmtWriter.flush();
                 } catch (Exception e) {

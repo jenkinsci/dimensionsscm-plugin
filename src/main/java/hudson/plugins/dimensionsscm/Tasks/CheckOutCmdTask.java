@@ -175,6 +175,10 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 }
             }
 
+            if (version == 2010) {
+                coCmd += " /LEGACY_MODE ";
+            }
+
             String cmd = coCmd;
 
             if (reqId != null && version == 10) {
@@ -214,12 +218,12 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 }
             }
 
-			if (eol != null && eol.length() > 0) {
+            if (eol != null && eol.length() > 0) {
                 if (!eol.equals("DEFAULT")) {
                     cmd += "/EOL="+eol;
                 }
             }
-			
+
             fmtWriter.println(cmd);
             fmtWriter.flush();
         } catch (Exception e) {
@@ -242,7 +246,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                              boolean isExpand, boolean isNoMetadata,
                              boolean freshBuild, String[] folders,
                              int version, String permissions,
-						     String eol,
+                             String eol,
                              FilePath workspace,
                              TaskListener listener) {
 

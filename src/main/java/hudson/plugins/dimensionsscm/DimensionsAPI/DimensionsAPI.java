@@ -435,6 +435,8 @@ public class DimensionsAPI implements Serializable {
                                 version = 2009;
                             else if (serverx.startsWith("201"))
                                 version = 2010;
+                            else if (serverx.startsWith("12.1"))
+                                version = 2010;
                             else
                                 version = 2009;
                             Logger.Debug("Version to process set to " + version);
@@ -592,7 +594,7 @@ public class DimensionsAPI implements Serializable {
      *      @param final boolean doExpand
      *      @param final boolean doNoMetadata
      *      @param final String permissions
-     *      @param final String eol	 
+     *      @param final String eol
      *  Return:
      *      @return boolean
      *-----------------------------------------------------------------
@@ -608,7 +610,7 @@ public class DimensionsAPI implements Serializable {
                             final boolean doExpand,
                             final boolean doNoMetadata,
                             final String permissions,
-							final String eol)
+                            final String eol)
                     throws IOException, InterruptedException
     {
         boolean bRet = false;
@@ -629,6 +631,11 @@ public class DimensionsAPI implements Serializable {
             }
 
             {
+                // Disable the new refactoring UPDATE options
+                if (version == 2010) {
+                    coCmd += " /LEGACY_MODE ";
+                }
+
                 String cmd = coCmd;
                 String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
 
@@ -660,12 +667,12 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-				if (eol != null && eol.length() > 0) {
+                if (eol != null && eol.length() > 0) {
                     if (!eol.equals("DEFAULT")) {
                         cmd += "/EOL="+eol;
                     }
                 }
-				
+
                 cmd += "/USER_DIR=\"" + workspaceName.getRemote() + "\" ";
 
                 if (doRevert)
@@ -1194,7 +1201,7 @@ public class DimensionsAPI implements Serializable {
             if (projectId != null) {
                 ciCmd += " /USER_FILELIST=\""+cmdFile.getAbsolutePath()+"\"";
                 ciCmd += " /WORKSET=\""+projectId+"\"";
-                ciCmd += " /COMMENT=\"Build artifacts saved by Hudson for job '"+projectName+"' - build "+buildNo+"\"";
+                ciCmd += " /COMMENT=\"Build artifacts saved by Hudson/Jenkins for job '"+projectName+"' - build "+buildNo+"\"";
                 ciCmd += " /USER_DIRECTORY=\""+rootDir.getRemote()+"\"";
                 if (requests != null && requests.length() > 0) {
                     if (requests.indexOf(",")==0) {
@@ -1278,7 +1285,7 @@ public class DimensionsAPI implements Serializable {
                     cId = cId.replace("[BUILDNO]",buildNo.toString());
                     cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
                     if (blnId != null && blnId.length() > 0)
-						cId = cId.replace("[DM_BASELINE]",blnId.substring(blnId.indexOf(":")+1).trim());
+                        cId = cId.replace("[DM_BASELINE]",blnId.substring(blnId.indexOf(":")+1).trim());
 
                     cblId.append("\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"");
                 } else {
@@ -1319,7 +1326,7 @@ public class DimensionsAPI implements Serializable {
                 }
 
                 if (!revisedBln) {
-                    cmd += " /DESCRIPTION=\"Baseline created by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                    cmd += " /DESCRIPTION=\"Baseline created by Hudson/Jenkins for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 }
 
 
@@ -1366,7 +1373,7 @@ public class DimensionsAPI implements Serializable {
                 if (state != null && state.length() > 0) {
                     cmd += " /STAGE=\""+state+"\"";
                 }
-                cmd += " /COMMENT=\"Project Baseline deployed by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                cmd += " /COMMENT=\"Project Baseline deployed by Hudson/Jenkins for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
                     Logger.Debug("Deploying baseline - "+res.getMessage());
@@ -1410,7 +1417,7 @@ public class DimensionsAPI implements Serializable {
                 if (state != null && state.length() > 0) {
                     cmd += " /STATUS=\""+state+"\"";
                 }
-                cmd += " /COMMENT=\"Project Baseline action by Hudson for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
+                cmd += " /COMMENT=\"Project Baseline action by Hudson/Jenkins for job '"+build.getProject().getName()+"' - build "+build.getNumber()+"\"";
                 DimensionsResult res = run(connection,cmd);
                 if (res != null ) {
                     Logger.Debug("Actioning baseline - "+res.getMessage());
@@ -1687,7 +1694,7 @@ public class DimensionsAPI implements Serializable {
             if (host.endsWith("/"))
                 host = host.substring(0,host.length()-1);
 
-			if (host.startsWith("http:"))
+            if (host.startsWith("http:"))
                 host = host.substring(7,host.length());
             else if (host.startsWith("https:"))
                 host = host.substring(8,host.length());

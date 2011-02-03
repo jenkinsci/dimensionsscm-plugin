@@ -244,8 +244,11 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
                     fmtWriter = new PrintWriter(logFileWriter,true);
 
                     for (File f : validFiles) {
-                        Logger.Debug("Found file '"+ f.getAbsolutePath() + "'");
-                        fmtWriter.println(f.getAbsolutePath());
+                        if (f.isDirectory()) {
+                        } else {
+                            Logger.Debug("Found file '"+ f.getAbsolutePath() + "'");
+                            fmtWriter.println(f.getAbsolutePath());
+                        }
                     }
                     fmtWriter.flush();
                 } catch (Exception e) {
