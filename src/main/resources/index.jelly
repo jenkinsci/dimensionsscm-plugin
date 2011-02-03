@@ -1,9 +1,7 @@
 <!--
   This view is used to render the plugin list page.
-
   Since we don't really have anything dynamic here, let's just use static HTML.
 -->
 <div>
-  This plugin integrates Hudson with <a href="http://www.serena.com/products/dimensions-cm-configuration-management/index.html">Dimensions SCM</a>.
+  This plugin integrates Hudson/Jenkins with <a href="http://www.serena.com/products/dimensions-cm-configuration-management/index.html">Dimensions SCM</a>.
 </div>
-

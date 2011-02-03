@@ -31,7 +31,7 @@
     <f:entry>
         <p>
         Note: The installation details entered above will be used as the default Dimensions SCM repository for
-        every Hudson job unless specifically overriden in a job configuration.
+        every job unless specifically overriden in a job configuration.
         </p>
     </f:entry>
 
@@ -39,7 +39,7 @@
         <f:checkbox name="dimensionsscm.canUpdate" default="true" checked="${descriptor.canUpdate}"/>
         <p>
         If this option is checked, then the workspace will be automatically populated with the changed
-        code from Dimensions. This option should only be used if you intend Hudson to populate the workspace
+        code from Dimensions. This option should only be used if you intend this tool to populate the workspace
         for you.
         </p>
     </f:entry>
