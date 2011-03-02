@@ -2,19 +2,19 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-        <groupId>org.jvnet.hudson.plugins</groupId>
+        <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.389</version>
+        <version>1.399</version>
         <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <groupId>hudson.plugins</groupId>
+  <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>dimensionsscm</artifactId>
   <packaging>hpi</packaging>
   <version>0.7.10-SNAPSHOT</version>
   <name>Dimensions SCM plugin</name>
   <description>Dimension SCM plugin for Hudson and Jenkins</description>
-  <url>http://wiki.hudson-ci.org/display/HUDSON/Dimensions+Plugin</url>
+  <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
 
   <developers>
     <developer>
@@ -58,14 +58,23 @@
     </plugins>
   </build>
 
+  <scm>
+      <connection>scm:git:git://github.com/jenkinsci/dimensionsscm-plugin.git</connection>
+      <developerConnection>scm:git:git@github.com:jenkinsci/dimensionsscm-plugin.git</developerConnection>
+  </scm>
+
   <distributionManagement>
-	<repository>
-            <id>java.net-m2-repository</id>
-            <url>http://maven.hudson-labs.org/content/repositories/releases/</url>
-        </repository>
+    <repository>
+      <id>maven.jenkins-ci.org</id>
+      <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
+    </repository>
   </distributionManagement>
 
   <repositories>
+    <repository>
+      <id>m.g.o-public</id>
+      <url>http://maven.glassfish.org/content/groups/public/</url>
+    </repository>
     <repository>
         <id>serena-lib</id>
         <url>file:${project.basedir}/lib/</url></repository>
