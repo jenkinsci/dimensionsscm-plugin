@@ -133,7 +133,7 @@ import net.sf.json.JSONObject;
 
 public class DimensionsBuilder extends Builder {
 
-    private static DimensionsSCM scm = null;
+    private DimensionsSCM scm = null;
 
     private String projectArea = null;
     private String projectConfig = null;

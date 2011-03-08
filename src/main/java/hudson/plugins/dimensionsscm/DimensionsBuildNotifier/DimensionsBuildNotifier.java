@@ -132,7 +132,7 @@ import javax.servlet.ServletException;
 
 public class DimensionsBuildNotifier extends Notifier implements Serializable {
 
-    private static DimensionsSCM scm = null;
+    private DimensionsSCM scm = null;
     private boolean canBaselineDeploy = false;
     private boolean canBaselineAction = false;
 

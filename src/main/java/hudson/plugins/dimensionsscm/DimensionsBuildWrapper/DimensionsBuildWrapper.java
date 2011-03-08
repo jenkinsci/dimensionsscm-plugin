@@ -123,7 +123,7 @@ import java.util.Map;
 
 public class DimensionsBuildWrapper extends BuildWrapper {
 
-    private static DimensionsSCM scm = null;
+    private DimensionsSCM scm = null;
 
     /**
      * Descriptor should be singleton.
