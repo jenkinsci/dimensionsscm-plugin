@@ -79,6 +79,10 @@
                <f:checkbox name="dimensionsscm.canJobNoMetadata" default="false" checked="${scm.canJobNoMetadata}"/>
             </f:entry>
 
+            <f:entry title="${%Maintain file timestamp from Dimensions}" help="/plugin/dimensionsscm/cannotouch.html">
+               <f:checkbox name="dimensionsscm.canJobNoTouch" default="false" checked="${scm.canJobNoTouch}"/>
+            </f:entry>
+
             <f:entry title="Default Permissions for updated files" field="permissions">
                 <select class="setting-input" name="dimensionsscm.permissions">
                     <f:option value="DEFAULT" selected="${'DEFAULT'==scm.permissions}">(Default)</f:option>

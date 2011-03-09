@@ -593,6 +593,7 @@ public class DimensionsAPI implements Serializable {
      *      @param final boolean doRevert
      *      @param final boolean doExpand
      *      @param final boolean doNoMetadata
+     *      @param final boolean doNoTouch
      *      @param final String permissions
      *      @param final String eol
      *  Return:
@@ -609,6 +610,7 @@ public class DimensionsAPI implements Serializable {
                             final boolean doRevert,
                             final boolean doExpand,
                             final boolean doNoMetadata,
+							final boolean doNoTouch,
                             final String permissions,
                             final String eol)
                     throws IOException, InterruptedException
@@ -681,6 +683,8 @@ public class DimensionsAPI implements Serializable {
                     cmd += " /EXPAND";
                 if (doNoMetadata)
                     cmd += " /NOMETADATA";
+                if (doNoTouch)
+                    cmd += " /NOTOUCH";
 
                 if (requests == null) {
                     getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
