@@ -147,7 +147,8 @@ public class FileScanner implements Serializable {
             final Iterator<String> artifactList = artifactFilter.iterator();
 
             // Skip metadata no matter what
-            if (name.equals(".metadata")) {
+            if (name.equals(".metadata") ||
+				name.equals(".dm")) {
                 return false;
             }
 
@@ -191,13 +192,16 @@ public class FileScanner implements Serializable {
         Vector<File> files = new Vector<File>();
         File[] entFiles = dirName.listFiles();
 
-        if (dirName.isDirectory() && dirName.getName().equals(".metadata")) {
+        if (dirName.isDirectory() && 
+			(dirName.getName().equals(".metadata") ||
+			 dirName.getName().equals(".dm"))) {
         } else {
             if (entFiles != null) {
                 for (File afile : entFiles) {
                     String dname = afile.getAbsolutePath();
 
-                    if (afile.getName().equals(".metadata")) {
+                    if (afile.getName().equals(".metadata") ||
+						afile.getName().equals(".dm")) {
                         continue;
                     }
 
