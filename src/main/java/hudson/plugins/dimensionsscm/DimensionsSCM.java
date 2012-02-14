@@ -981,11 +981,7 @@ public class DimensionsSCM extends SCM implements Serializable
 
         try
         {
-            Calendar lastBuildCal = null;
-            if (project.getLastSuccessfulBuild() != null && project.getLastSuccessfulBuild().getTimestamp() != null)
-                lastBuildCal = project.getLastSuccessfulBuild().getTimestamp();
-            else
-                lastBuildCal = project.getLastBuild().getTimestamp();
+            Calendar lastBuildCal = project.getLastBuild().getTimestamp();
 
             Calendar nowDateCal = Calendar.getInstance();
             TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0) ? TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
