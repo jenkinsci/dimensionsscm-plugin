@@ -4,7 +4,7 @@
   <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.437</version>
+        <version>1.471</version>
         <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -34,7 +34,13 @@
       <version>10.2</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>10.0.1</version>
+    </dependency>
   </dependencies>
+
 
   <build>
     <finalName>${project.artifactId}</finalName>
