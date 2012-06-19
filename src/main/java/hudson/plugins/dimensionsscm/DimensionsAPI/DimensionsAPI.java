@@ -437,6 +437,8 @@ public class DimensionsAPI implements Serializable {
                                 version = 2010;
                             else if (serverx.startsWith("12.1"))
                                 version = 2010;
+                            else if (serverx.startsWith("12.2"))
+                                version = 2010;
                             else
                                 version = 2009;
                             Logger.Debug("Version to process set to " + version);
@@ -595,7 +597,7 @@ public class DimensionsAPI implements Serializable {
      *      @param final boolean doNoMetadata
      *      @param final boolean doNoTouch
      *      @param final String permissions
-     *      @param final String eol
+     *      @param final String eol	 
      *  Return:
      *      @return boolean
      *-----------------------------------------------------------------
@@ -669,12 +671,12 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-                if (eol != null && eol.length() > 0) {
+				if (eol != null && eol.length() > 0) {
                     if (!eol.equals("DEFAULT")) {
                         cmd += "/EOL="+eol;
                     }
                 }
-
+				
                 cmd += "/USER_DIR=\"" + workspaceName.getRemote() + "\" ";
 
                 if (doRevert)
