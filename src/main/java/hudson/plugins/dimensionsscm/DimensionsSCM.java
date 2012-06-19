@@ -761,8 +761,8 @@ public class DimensionsSCM extends SCM implements Serializable
             // When are we building files for?
             // Looking for the last successful build and then going forward from there - could use the last build as well
             //
-            // Calendar lastBuildCal = (build.getPreviousBuild() != null) ? build.getPreviousBuild().getTimestamp() : null;
-            Calendar lastBuildCal = (build.getPreviousNotFailedBuild() != null) ? build.getPreviousNotFailedBuild().getTimestamp() : null;
+            Calendar lastBuildCal = (build.getPreviousBuild() != null) ? build.getPreviousBuild().getTimestamp() : null;
+            //Calendar lastBuildCal = (build.getPreviousNotFailedBuild() != null) ? build.getPreviousNotFailedBuild().getTimestamp() : null;
             Calendar nowDateCal = Calendar.getInstance();
 
             TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0) ? TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
@@ -981,11 +981,7 @@ public class DimensionsSCM extends SCM implements Serializable
 
         try
         {
-            Calendar lastBuildCal = null;
-            if (project.getLastSuccessfulBuild() != null && project.getLastSuccessfulBuild().getTimestamp() != null)
-                lastBuildCal = project.getLastSuccessfulBuild().getTimestamp();
-            else
-                lastBuildCal = project.getLastBuild().getTimestamp();
+            Calendar lastBuildCal = project.getLastBuild().getTimestamp();
 
             Calendar nowDateCal = Calendar.getInstance();
             TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0) ? TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
