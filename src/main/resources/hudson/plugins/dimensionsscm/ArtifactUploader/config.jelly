@@ -30,5 +30,8 @@
       <f:entry title="Owning part for files">
        <f:textbox name="artifactuploader.owningPart" value="${instance.owningPart}" />
       </f:entry>
+      <f:entry title="${%Force checkin processing as if a slave}" help="/plugin/dimensionsscm/forceAsSlave.html">
+      <f:checkbox name="artifactuploader.forceAsSlave" default="false" checked="${instance.forceAsSlave}"/>
+      </f:entry>
     </f:advanced>
 </j:jelly>

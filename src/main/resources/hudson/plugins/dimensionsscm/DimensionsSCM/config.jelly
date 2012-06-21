@@ -99,7 +99,11 @@
                     <f:option value="UNCHANGED" selected="${'UNCHANGED'==scm.eol}">Leave files as they are</f:option>
                 </select>
             </f:entry>
-
+			
+            <f:entry title="${%Use slave based checkout}" help="/plugin/dimensionsscm/forceAsSlave.html">
+               <f:checkbox name="dimensionsscm.forceAsSlave" default="false" checked="${scm.forceAsSlave}"/>
+            </f:entry>
+			
         </f:optionalBlock>
 
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">

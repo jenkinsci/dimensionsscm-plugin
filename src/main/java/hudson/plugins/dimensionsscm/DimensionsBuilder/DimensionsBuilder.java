@@ -289,7 +289,7 @@ public class DimensionsBuilder extends Builder {
                 key = scm.getAPI().login(scm.getJobUserName(),
                                        scm.getJobPasswd(),
                                        scm.getJobDatabase(),
-                                       scm.getJobServer());
+                                       scm.getJobServer(), build);
                 if (key>0)
                 {
                     VariableResolver<String> myResolver = build.getBuildVariableResolver();
@@ -348,7 +348,7 @@ public class DimensionsBuilder extends Builder {
         finally
         {
             if (scm != null)
-                scm.getAPI().logout(key);
+                scm.getAPI().logout(key, build);
         }
         return true;
     }

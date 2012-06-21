@@ -163,12 +163,17 @@ public class ArtifactUploader extends Notifier implements Serializable {
     private boolean forceCheckIn = false;
     private boolean forceTip = false;
     private String owningPart = null;
-
+	private boolean forceAsSlave = false;
+	
+	public ArtifactUploader(String[] patterns, boolean fTip, boolean fMerge, String part) {
+		this(patterns, fTip, fMerge, part, false);
+	}
+	
     /**
      * Default constructor.
      */
     @DataBoundConstructor
-    public ArtifactUploader(String[] patterns, boolean fTip, boolean fMerge, String part) {
+    public ArtifactUploader(String[] patterns, boolean fTip, boolean fMerge, String part, boolean fAsSlave) {
         // Check the folders specified have data specified
         if (patterns != null) {
             Logger.Debug("patterns are populated");
@@ -186,6 +191,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
         this.forceCheckIn = fTip;
         this.forceTip = fMerge;
         this.owningPart = part;
+		this.forceAsSlave = fAsSlave;
     }
 
     /*
@@ -205,8 +211,8 @@ public class ArtifactUploader extends Notifier implements Serializable {
     }
 
     /*
-     * Gets force tip
-     * @return forceTip
+     * Gets force checkin
+     * @return forceCheckIn
      */
     public boolean isForceCheckIn() {
         return this.forceCheckIn;
@@ -219,8 +225,15 @@ public class ArtifactUploader extends Notifier implements Serializable {
     public boolean isForceTip() {
         return this.forceTip;
     }
-
-
+	
+    /*
+     * Gets force as slave
+     * @return forceAsSlave
+     */
+    public boolean isForceAsSlave() {
+        return this.forceAsSlave;
+    }
+	
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws IOException, InterruptedException {
@@ -248,7 +261,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 key = dmSCM.login(scm.getJobUserName(),
                                   scm.getJobPasswd(),
                                   scm.getJobDatabase(),
-                                  scm.getJobServer());
+                                  scm.getJobServer(), build);
 
                 if (key>0) {
                     // Get the server version
@@ -260,7 +273,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                     if (version != 10) {
                         isStream = dmSCM.isStream(key,scm.getProject());
                     }
-                    dmSCM.logout(key);
+                    dmSCM.logout(key, build);
                 }
 
 
@@ -271,15 +284,17 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
                 String projectName = build.getProject().getName();
                 int buildNo = build.getNumber();
-
-                Logger.Debug("Checking if master or slave...");
-
+				
                 boolean master = true;
-                // GetHostDetailsTask buildHost = new GetHostDetailsTask(hostname);
-                //master = workspace.act(buildHost);
-				if (nodeName != null && nodeName.length() > 0)
-					master = false;
-
+		if (isForceAsSlave()) {
+			master = false;
+			Logger.Debug("Forced processing as slave...");
+		} else {
+			Logger.Debug("Checking if master or slave...");
+			if (nodeName != null && nodeName.length() > 0)
+				master = false;
+		}
+				
                 if (master) {
                     // Running on master...
                     listener.getLogger().println("[DIMENSIONS] Running checkin on master...");
@@ -381,6 +396,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
             Boolean fMerge = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceTip")));
 
             String oPart = req.getParameter("artifactuploader.owningPart");
+	    Boolean fAsSlave = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceAsSlave")));
 
             if (oPart != null)
                 oPart = Util.fixNull(req.getParameter("artifactuploader.owningPart").trim());

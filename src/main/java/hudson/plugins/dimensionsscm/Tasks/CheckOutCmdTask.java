@@ -247,7 +247,8 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                              String requestId, boolean isDelete,
                              boolean isRevert, boolean isForce,
                              boolean isExpand, boolean isNoMetadata,
-						     boolean isNoTouch,boolean freshBuild, String[] folders,
+			     boolean isNoTouch,boolean freshBuild, 
+                             String[] folders,
                              int version, String permissions,
                              String eol,
                              FilePath workspace,
@@ -270,7 +271,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         this.isForce = isForce;
         this.isExpand = isExpand;
         this.isNoMetadata = isNoMetadata;
-		this.isNoTouch = isNoTouch;
+	this.isNoTouch = isNoTouch;
         this.folders = folders;
         this.requests = requestId;
         this.baseline = baselineId;

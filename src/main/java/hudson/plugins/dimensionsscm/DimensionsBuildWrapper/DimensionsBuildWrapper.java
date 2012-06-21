@@ -158,7 +158,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                 key = scm.getAPI().login(scm.getJobUserName(),
                                        scm.getJobPasswd(),
                                        scm.getJobDatabase(),
-                                       scm.getJobServer());
+                                       scm.getJobServer(), build);
                 if (key>0)
                 {
                     DimensionsResult res = scm.getAPI().lockProject(key,scm.getProject());
@@ -177,7 +177,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             }
             finally
             {
-                scm.getAPI().logout(key);
+                scm.getAPI().logout(key, build);
             }
         } else {
             listener.fatalError("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
@@ -269,7 +269,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                     key = scm.getAPI().login(scm.getJobUserName(),
                                            scm.getJobPasswd(),
                                            scm.getJobDatabase(),
-                                           scm.getJobServer());
+                                           scm.getJobServer(), build);
                     if (key>0)
                     {
                         Logger.Debug("Unlocking the project");
@@ -296,7 +296,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                 }
                 finally
                 {
-                    scm.getAPI().logout(key);
+                    scm.getAPI().logout(key, build);
                 }
             }
             return true;
