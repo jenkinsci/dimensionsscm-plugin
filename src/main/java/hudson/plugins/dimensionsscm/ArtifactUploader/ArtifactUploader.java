@@ -159,39 +159,76 @@ public class ArtifactUploader extends Notifier implements Serializable {
         return BuildStepMonitor.NONE;
     }
 
-    private String[] patterns = new String[0];
+    private String[] patternsRegEx = new String[0];
+    private String[] patternsAnt = new String[0];
+    
     private boolean forceCheckIn = false;
     private boolean forceTip = false;
-    private String owningPart = null;
+    private String  owningPart = null;
 	private boolean forceAsSlave = false;
+    private String  patternType = "regEx";
 	
-	public ArtifactUploader(String[] patterns, boolean fTip, boolean fMerge, String part) {
-		this(patterns, fTip, fMerge, part, false);
+	public ArtifactUploader(String[] patternsRegEx, boolean fTip, boolean fMerge, String part) {
+		this(patternsRegEx, fTip, fMerge, part, false, "regEx", null);
 	}
-	
+
+    public ArtifactUploader(String[] patternsRegEx, boolean fTip, boolean fMerge, String part, boolean fAsSlave) {
+		this(patternsRegEx, fTip, fMerge, part, fAsSlave, "regEx", null);
+	}
+
     /**
      * Default constructor.
      */
     @DataBoundConstructor
-    public ArtifactUploader(String[] patterns, boolean fTip, boolean fMerge, String part, boolean fAsSlave) {
+    public ArtifactUploader(String[] pregEx, boolean fTip, boolean fMerge, String part, boolean fAsSlave,
+                            String patternType, String[] pAnt) {
         // Check the folders specified have data specified
-        if (patterns != null) {
-            Logger.Debug("patterns are populated");
+        if (pregEx != null) {
+            Logger.Debug("PatternsRegEx are populated");
             Vector<String> x = new Vector<String>();
-            for(int t=0;t<patterns.length;t++) {
-                if (StringUtils.isNotEmpty(patterns[t]))
-                    x.add(patterns[t]);
+            for(int t=0;t<pregEx.length;t++) {
+                if (StringUtils.isNotEmpty(pregEx[t]))
+                    x.add(pregEx[t]);
             }
-            this.patterns = (String[])x.toArray(new String[1]);
+            this.patternsRegEx = (String[])x.toArray(new String[1]);
         }
         else {
-            this.patterns[0] = ".*";
+            this.patternsRegEx[0] = ".*";
+        }
+        if (pAnt != null) {
+            Logger.Debug("pAnt are populated");
+            Vector<String> x = new Vector<String>();
+            for(int t=0;t<pAnt.length;t++) {
+                if (StringUtils.isNotEmpty(pAnt[t]))
+                    x.add(pAnt[t]);
+            }
+            this.patternsAnt = (String[])x.toArray(new String[1]);
+        }
+        else {
+            this.patternsAnt[0] = "**/*";
         }
 
         this.forceCheckIn = fTip;
         this.forceTip = fMerge;
         this.owningPart = part;
 		this.forceAsSlave = fAsSlave;
+        this.patternType = patternType;
+    }
+
+    /*
+     * Gets the patterns to upload
+     * @return patterns
+     */
+    public String[] getPatternsRegEx() {
+        return this.patternsRegEx;
+    }
+
+    /*
+     * Gets the patterns to upload
+     * @return patterns
+     */
+    public String[] getPatternsAnt() {
+        return this.patternsAnt;
     }
 
     /*
@@ -199,17 +236,29 @@ public class ArtifactUploader extends Notifier implements Serializable {
      * @return patterns
      */
     public String[] getPatterns() {
-        return this.patterns;
+        if (getPatternType().equals("Ant")) {
+            return this.patternsAnt;
+        } else {
+            return this.patternsRegEx;
+        }
     }
 
     /*
      * Gets the owning part
-     * @return patterns
+     * @return owningPart
      */
     public String getOwningPart() {
         return this.owningPart;
     }
 
+    /*
+     * Gets the pattern type
+     * @return patternType
+     */
+    public String getPatternType() {
+        return this.patternType;
+    }
+    
     /*
      * Gets force checkin
      * @return forceCheckIn
@@ -286,14 +335,14 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 int buildNo = build.getNumber();
 				
                 boolean master = true;
-		if (isForceAsSlave()) {
-			master = false;
-			Logger.Debug("Forced processing as slave...");
-		} else {
-			Logger.Debug("Checking if master or slave...");
-			if (nodeName != null && nodeName.length() > 0)
-				master = false;
-		}
+                if (isForceAsSlave()) {
+                    master = false;
+                    Logger.Debug("Forced processing as slave...");
+                } else {
+                    Logger.Debug("Checking if master or slave...");
+                    if (nodeName != null && nodeName.length() > 0)
+                        master = false;
+                }
 				
                 if (master) {
                     // Running on master...
@@ -326,7 +375,9 @@ public class ArtifactUploader extends Notifier implements Serializable {
                                                                  scm.getJobServer(),
                                                                  scm.getProject(),
                                                                  requests,isForceCheckIn(),isForceTip(),
-                                                                 getPatterns(),version,isStream,
+                                                                 getPatterns(),
+                                                                 getPatternType(),
+                                                                 version,isStream,
                                                                  buildNo, projectName,
                                                                  getOwningPart(),
                                                                  workspace,listener);
@@ -391,17 +442,25 @@ public class ArtifactUploader extends Notifier implements Serializable {
         @Override
         public Notifier newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             // Get variables and then construct a new object
-            String[] patterns = req.getParameterValues("artifactuploader.patterns");
+            String[] pregEx = req.getParameterValues("artifactuploader.patternsRegEx");
+            String[] pAnt = req.getParameterValues("artifactuploader.patternsAnt");
+            String  pType = req.getParameter("artifactuploader.patternType");
             Boolean fTip = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceCheckIn")));
             Boolean fMerge = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceTip")));
 
             String oPart = req.getParameter("artifactuploader.owningPart");
-	    Boolean fAsSlave = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceAsSlave")));
+            Boolean fAsSlave = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceAsSlave")));
 
-            if (oPart != null)
+            if (oPart != null) {
                 oPart = Util.fixNull(req.getParameter("artifactuploader.owningPart").trim());
-
-            ArtifactUploader artifactor = new ArtifactUploader(patterns,fTip,fMerge,oPart);
+            }
+            if (pType != null) {
+                pType = Util.fixNull(req.getParameter("artifactuploader.patternType").trim());
+            } else {
+                pType = "regEx";
+            }
+            
+            ArtifactUploader artifactor = new ArtifactUploader(pregEx,fTip,fMerge,oPart,fAsSlave,pType,pAnt);
 
             return artifactor;
         }

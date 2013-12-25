@@ -95,6 +95,7 @@ package hudson.plugins.dimensionsscm;
 
 // Dimensions imports
 import hudson.plugins.dimensionsscm.FileScanner;
+import hudson.plugins.dimensionsscm.FileAntScanner;
 import hudson.plugins.dimensionsscm.GenericCmdTask;
 import hudson.plugins.dimensionsscm.Logger;
 
@@ -142,7 +143,8 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
     private String projectId = "";
     private String requests = null;
     private String owningPart = null;
-
+    private String patternType = null;
+    
     private String[] patterns;
 
     /**
@@ -211,7 +213,8 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                              String database, String server,
                              String projectId, String requestId,
                              boolean forceCheckIn, boolean forceTip,
-                             String[] patterns, int version,
+                             String[] patterns, String patternType,
+                             int version,
                              boolean isStream,
                              int buildNo, String jobId,
                              String owningPart,
@@ -234,6 +237,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         this.forceCheckIn = forceCheckIn;
         this.forceTip = forceTip;
         this.patterns = patterns;
+        this.patternType = patternType;
         this.requests = requestId;
         this.buildNo = buildNo;
         this.jobId = jobId;
@@ -259,13 +263,26 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         {
             listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
             listener.getLogger().flush();
+        
             FilePath wd = new FilePath(area);
             File dir = new File (wd.getRemote());
-            FileScanner fs = new FileScanner(dir,patterns,-1);
-            File[] validFiles = fs.toArray();
+            File[] validFiles = new File[0];
+
+            if (patternType.equals("regEx")) {
+                listener.getLogger().println("[DIMENSIONS] Running RegEx pattern scanner...");
+                FileScanner fs = new FileScanner(dir,patterns,-1);
+                validFiles = fs.toArray();
+            } else if (patternType.equals("Ant")) {
+                listener.getLogger().println("[DIMENSIONS] Running Ant pattern scanner...");
+                FileAntScanner fs = new FileAntScanner(dir,patterns,-1);
+                validFiles = fs.toArray();
+            }
+        
+            listener.getLogger().flush();
+        
             String cmdLog = null;
 
-            if (fs.getFiles().size() > 0) {
+            if (validFiles.length > 0) {
 
                 if (requests != null) {
                     requests = requests.replaceAll(" ","");

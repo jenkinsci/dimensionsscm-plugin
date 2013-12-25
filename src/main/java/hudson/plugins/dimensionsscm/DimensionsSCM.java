@@ -1226,7 +1226,8 @@ public class DimensionsSCM extends SCM implements Serializable
             String jobTimeZone = req.getParameter("dimensionsscm.jobTimeZone");
             String jobWebUrl = req.getParameter("dimensionsscm.jobWebUrl");
 
-            DimensionsSCM scm = new DimensionsSCM(project,folders,null,canJobDelete,
+            DimensionsSCM scm = new DimensionsSCM(project,folders,null,
+                                                  canJobDelete,
                                                   canJobForce,canJobRevert,
                                                   jobUserName,jobPasswd,
                                                   jobServer,jobDatabase,

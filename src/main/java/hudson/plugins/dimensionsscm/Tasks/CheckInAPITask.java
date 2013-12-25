@@ -101,6 +101,7 @@ import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
 import hudson.plugins.dimensionsscm.DimensionsSCM;
 import hudson.plugins.dimensionsscm.DimensionsSCMRepositoryBrowser;
 import hudson.plugins.dimensionsscm.FileScanner;
+import hudson.plugins.dimensionsscm.FileAntScanner;
 import hudson.plugins.dimensionsscm.GenericAPITask;
 import hudson.plugins.dimensionsscm.Logger;
 
@@ -172,6 +173,7 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
     private String projectId = "";
     private String owningPart = "";
     private String[] patterns;
+    private String patternType = "";
 
     /*
      * Default constructor
@@ -199,6 +201,7 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
         this.isForceTip = artifact.isForceTip();
         this.owningPart = artifact.getOwningPart();
         this.patterns = artifact.getPatterns();
+        this.patternType = artifact.getPatternType();
 
         // Build details
         this.myResolver = build.getBuildVariableResolver();
@@ -225,10 +228,22 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
             FilePath wd = new FilePath(area);
             Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
             File dir = new File (wd.getRemote());
-            FileScanner fs = new FileScanner(dir,patterns,-1);
-            File[] validFiles = fs.toArray();
-
-            if (fs.getFiles().size() > 0) {
+        
+            File[] validFiles = new File[0];
+        
+            if (patternType.equals("regEx")) {
+                listener.getLogger().println("[DIMENSIONS] Running RegEx pattern scanner...");
+                FileScanner fs = new FileScanner(dir,patterns,-1);
+                validFiles = fs.toArray();
+            } else if (patternType.equals("Ant")) {
+                listener.getLogger().println("[DIMENSIONS] Running Ant pattern scanner...");
+                FileAntScanner fs = new FileAntScanner(dir,patterns,-1);
+                validFiles = fs.toArray();
+            }
+        
+            listener.getLogger().flush();
+        
+            if (validFiles.length > 0) {
                 listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+projectId+"\"...");
                 listener.getLogger().flush();
 
@@ -276,9 +291,9 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
                     }
 
                     DimensionsResult res = dmSCM.UploadFiles(key,wd,projectId,tmpFile,jobId,
-                                                                      buildNo,requests,
-                                                                      isForceCheckIn,isForceTip,
-                                                                      owningPart);
+                                                             buildNo,requests,
+                                                             isForceCheckIn,isForceTip,
+                                                             owningPart);
                     if (res==null) {
                         listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
                         listener.getLogger().flush();
