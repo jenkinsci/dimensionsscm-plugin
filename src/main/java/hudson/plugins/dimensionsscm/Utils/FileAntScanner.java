@@ -125,6 +125,7 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.types.FileSet;
+import org.apache.commons.lang.StringUtils;
 
 public class FileAntScanner implements Serializable {
 
@@ -140,19 +141,29 @@ public class FileAntScanner implements Serializable {
         private FileSet taskFile = null;
         private Project antProject = null;
         
-        public ScannerFilter(String[] extensions,File dirName) {
+        public ScannerFilter(String[] inclusionsx,String[] exclusionsx,File dirName) {
             taskFile = new FileSet();
             antProject = new Project();
             antProject.setBaseDir(dirName);
             taskFile.setProject(antProject);
             taskFile.setDir(dirName);
-            Iterator<String> artifactList = Arrays.asList(extensions).iterator();
+            Iterator<String> artifactList = Arrays.asList(inclusionsx).iterator();
             while (artifactList.hasNext()) {
                 String xx = artifactList.next().trim();
                 if (xx != null && !xx.isEmpty()) {
                     taskFile.setIncludes(xx);
                 }
             }
+            if (exclusionsx != null && exclusionsx.length > 0) {
+                artifactList = Arrays.asList(exclusionsx).iterator();
+                while (artifactList.hasNext()) {
+                    String txt = artifactList.next();
+                    if (txt != null && StringUtils.isNotEmpty(txt)) {
+                        taskFile.setExcludes(txt.trim());
+                    }
+                }
+            }
+
             taskFile.setExcludes("**/.dm/*");
             taskFile.setExcludes("**/.metadata/*");
             taskFile.setExcludes("**/.dm");
@@ -173,9 +184,11 @@ public class FileAntScanner implements Serializable {
     /**
      * Constructor.
      */
-    public FileAntScanner(File dirName, String[] patterns, int depth) {
+    public FileAntScanner(File dirName, String[] patterns,
+                          String[] patternsExc,
+                          int depth) {
          baseDir = dirName;
-         filter = new ScannerFilter(patterns,dirName);
+         filter = new ScannerFilter(patterns,patternsExc,dirName);
          xfiles = scanFiles(dirName,filter,depth);
     }
 

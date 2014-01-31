@@ -161,7 +161,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
     private String[] patternsRegEx = new String[0];
     private String[] patternsAnt = new String[0];
-    
+
+    private String[] patternsRegExExc = new String[0];
+    private String[] patternsAntExc = new String[0];
+
     private boolean forceCheckIn = false;
     private boolean forceTip = false;
     private String  owningPart = null;
@@ -176,12 +179,18 @@ public class ArtifactUploader extends Notifier implements Serializable {
 		this(patternsRegEx, fTip, fMerge, part, fAsSlave, "regEx", null);
 	}
 
+    public ArtifactUploader(String[] patternsRegEx, boolean fTip, boolean fMerge,
+                            String part, boolean fAsSlave, String patternType, String[] pAnt) {
+		this(patternsRegEx, fTip, fMerge, part, fAsSlave, patternType, pAnt, null, null);
+	}
+    
     /**
      * Default constructor.
      */
     @DataBoundConstructor
     public ArtifactUploader(String[] pregEx, boolean fTip, boolean fMerge, String part, boolean fAsSlave,
-                            String patternType, String[] pAnt) {
+                            String patternType, String[] pAnt,
+                            String[] pregExExc, String[] pAntExc) {
         // Check the folders specified have data specified
         if (pregEx != null) {
             Logger.Debug("PatternsRegEx are populated");
@@ -208,6 +217,29 @@ public class ArtifactUploader extends Notifier implements Serializable {
             this.patternsAnt[0] = "**/*";
         }
 
+        if (pregExExc != null) {
+            Logger.Debug("PatternsRegEx are populated");
+            Vector<String> x = new Vector<String>();
+            for(int t=0;t<pregExExc.length;t++) {
+                if (StringUtils.isNotEmpty(pregExExc[t]))
+                    x.add(pregExExc[t]);
+            }
+            this.patternsRegExExc = (String[])x.toArray(new String[1]);
+        }
+        else {
+        }
+        if (pAntExc != null) {
+            Logger.Debug("pAnt are populated");
+            Vector<String> x = new Vector<String>();
+            for(int t=0;t<pAntExc.length;t++) {
+                if (StringUtils.isNotEmpty(pAntExc[t]))
+                    x.add(pAntExc[t]);
+            }
+            this.patternsAntExc = (String[])x.toArray(new String[1]);
+        }
+        else {
+        }
+        
         this.forceCheckIn = fTip;
         this.forceTip = fMerge;
         this.owningPart = part;
@@ -229,6 +261,34 @@ public class ArtifactUploader extends Notifier implements Serializable {
      */
     public String[] getPatternsAnt() {
         return this.patternsAnt;
+    }
+
+    /*
+     * Gets the patterns to upload
+     * @return patterns
+     */
+    public String[] getPatternsRegExExc() {
+        return this.patternsRegExExc;
+    }
+    
+    /*
+     * Gets the patterns to upload
+     * @return patterns
+     */
+    public String[] getPatternsAntExc() {
+        return this.patternsAntExc;
+    }
+    
+    /*
+     * Gets the patterns to upload
+     * @return patterns
+     */
+    public String[] getPatternsExc() {
+        if (getPatternType().equals("Ant")) {
+            return this.patternsAntExc;
+        } else {
+            return this.patternsRegExExc;
+        }
     }
 
     /*
@@ -380,7 +440,8 @@ public class ArtifactUploader extends Notifier implements Serializable {
                                                                  version,isStream,
                                                                  buildNo, projectName,
                                                                  getOwningPart(),
-                                                                 workspace,listener);
+                                                                 workspace,listener,
+                                                                 getPatternsExc());
                         bRet = workspace.act(task);
                     }
                 }
@@ -444,6 +505,8 @@ public class ArtifactUploader extends Notifier implements Serializable {
             // Get variables and then construct a new object
             String[] pregEx = req.getParameterValues("artifactuploader.patternsRegEx");
             String[] pAnt = req.getParameterValues("artifactuploader.patternsAnt");
+            String[] pregExExc = req.getParameterValues("artifactuploader.patternsRegExExc");
+            String[] pAntExc = req.getParameterValues("artifactuploader.patternsAntExc");
             String  pType = req.getParameter("artifactuploader.patternType");
             Boolean fTip = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceCheckIn")));
             Boolean fMerge = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceTip")));
@@ -460,7 +523,8 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 pType = "regEx";
             }
             
-            ArtifactUploader artifactor = new ArtifactUploader(pregEx,fTip,fMerge,oPart,fAsSlave,pType,pAnt);
+            ArtifactUploader artifactor = new ArtifactUploader(pregEx,fTip,fMerge,oPart,fAsSlave,pType,pAnt,
+                                                               pregExExc,pAntExc);
 
             return artifactor;
         }

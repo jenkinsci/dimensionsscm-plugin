@@ -146,6 +146,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
     private String patternType = null;
     
     private String[] patterns;
+    private String[] patternsExc;
 
     /**
      * Utility routine to create command file for dmcli
@@ -219,7 +220,8 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                              int buildNo, String jobId,
                              String owningPart,
                              FilePath workspace,
-                             TaskListener listener) {
+                             TaskListener listener,
+                             String[] patternsExc) {
 
         this.workspace = workspace;
         this.listener = listener;
@@ -237,6 +239,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         this.forceCheckIn = forceCheckIn;
         this.forceTip = forceTip;
         this.patterns = patterns;
+        this.patternsExc = patternsExc;
         this.patternType = patternType;
         this.requests = requestId;
         this.buildNo = buildNo;
@@ -270,12 +273,14 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
             if (patternType.equals("regEx")) {
                 listener.getLogger().println("[DIMENSIONS] Running RegEx pattern scanner...");
-                FileScanner fs = new FileScanner(dir,patterns,-1);
+                FileScanner fs = new FileScanner(dir,patterns,patternsExc,-1);
                 validFiles = fs.toArray();
+                listener.getLogger().println("[DIMENSIONS] Found "+validFiles.length+" file(s) to check in...");
             } else if (patternType.equals("Ant")) {
                 listener.getLogger().println("[DIMENSIONS] Running Ant pattern scanner...");
-                FileAntScanner fs = new FileAntScanner(dir,patterns,-1);
+                FileAntScanner fs = new FileAntScanner(dir,patterns,patternsExc,-1);
                 validFiles = fs.toArray();
+                listener.getLogger().println("[DIMENSIONS] Found "+validFiles.length+" file(s) to check in...");
             }
         
             listener.getLogger().flush();

@@ -121,6 +121,7 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.*;
 
+import org.apache.commons.lang.StringUtils;
 
 public class FileScanner implements Serializable {
 
@@ -133,23 +134,45 @@ public class FileScanner implements Serializable {
      * File pattern matcher class.
      */
     public class ScannerFilter implements FilenameFilter {
-        private TreeSet<String> artifactFilter = new TreeSet<String>() ;
+        private TreeSet<String> artifactIncFilter = new TreeSet<String>() ;
+        private TreeSet<String> artifactExcFilter = new TreeSet<String>() ;
 
-        public ScannerFilter(String[] extensions) {
-            Iterator<String> artifactList = Arrays.asList(extensions).iterator();
+        public ScannerFilter(String[] inclusionsx, String[] exclusionsx) {
+ 
+            Iterator<String> artifactList = Arrays.asList(inclusionsx).iterator();
             while (artifactList.hasNext()) {
-                artifactFilter.add(artifactList.next().trim());
+                artifactIncFilter.add(artifactList.next().trim());
             }
-            artifactFilter.remove("");
+            artifactIncFilter.remove("");
+            
+            if (exclusionsx != null && exclusionsx.length > 0) {
+                artifactList = Arrays.asList(exclusionsx).iterator();
+                while (artifactList.hasNext()) {
+                    String txt = artifactList.next();
+                    if (txt != null && StringUtils.isNotEmpty(txt)) {
+                        artifactExcFilter.add(txt.trim());
+                    }
+                }
+                artifactExcFilter.remove("");
+            }
         }
 
         public boolean accept(File dir, String name) {
-            final Iterator<String> artifactList = artifactFilter.iterator();
+            final Iterator<String> artifactList = artifactIncFilter.iterator();
+            final Iterator<String> artifactListEx = artifactExcFilter.iterator();
 
             // Skip metadata no matter what
             if (name.equals(".metadata") ||
 				name.equals(".dm")) {
                 return false;
+            }
+
+            
+            while (artifactListEx.hasNext()) {
+                String filter = artifactListEx.next();
+                if (Pattern.matches(filter,name)) {
+                    return false;
+                }
             }
 
             while (artifactList.hasNext()) {
@@ -167,9 +190,9 @@ public class FileScanner implements Serializable {
     /**
      * Constructor.
      */
-    public FileScanner(File dirName, String[] patterns, int depth) {
+    public FileScanner(File dirName, String[] patterns, String[] patternsExc, int depth) {
          baseDir = dirName;
-         filter = new ScannerFilter(patterns);
+         filter = new ScannerFilter(patterns,patternsExc);
          xfiles = scanFiles(dirName,filter,depth);
     }
 

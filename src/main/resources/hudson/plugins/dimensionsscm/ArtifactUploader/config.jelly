@@ -6,12 +6,27 @@
        <f:entry>
          <f:repeatable var="patternsRegEx" items="${instance.patternsRegEx}" noAddButton="true" minimum="1">
            <table width="98%" cellpadding="2" cellspacing="2">
-              <f:entry title="Pattern">
+              <f:entry title="Pattern for Inclusions">
                 <f:textbox name="artifactuploader.patternsRegEx" value="${h.defaulted(patternsRegEx, '.*')}"/>
               </f:entry>
               <f:entry>
                   <div align="right">
-                    <input type="button" value="${%Add Pattern...}" class="repeatable-add show-if-last" />
+                    <input type="button" value="${%Add Pattern for inclusion...}" class="repeatable-add show-if-last" />
+                    <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+                  </div>
+              </f:entry>
+           </table>
+         </f:repeatable>
+       </f:entry>
+       <f:entry>
+         <f:repeatable var="patternsRegExExc" items="${instance.patternsRegExExc}" noAddButton="true" minimum="1">
+           <table width="98%" cellpadding="2" cellspacing="2">
+              <f:entry title="Pattern for Exclusions">
+                <f:textbox name="artifactuploader.patternsRegExExc" value="${h.defaulted(patternsRegExExc, '')}"/>
+              </f:entry>
+              <f:entry>
+                  <div align="right">
+                    <input type="button" value="${%Add Pattern for exclusion...}" class="repeatable-add show-if-last" />
                     <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                   </div>
               </f:entry>
@@ -24,12 +39,27 @@
        <f:entry>
          <f:repeatable var="patternsAnt" items="${instance.patternsAnt}" noAddButton="true" minimum="1">
            <table width="98%" cellpadding="2" cellspacing="2">
-              <f:entry title="Pattern">
+              <f:entry title="Pattern for Inclusions">
                 <f:textbox name="artifactuploader.patternsAnt" value="${h.defaulted(patternsAnt, '**/*')}"/>
               </f:entry>
               <f:entry>
                   <div align="right">
-                    <input type="button" value="${%Add Pattern...}" class="repeatable-add show-if-last" />
+                    <input type="button" value="${%Add Pattern for inclusion...}" class="repeatable-add show-if-last" />
+                    <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+                  </div>
+              </f:entry>
+           </table>
+         </f:repeatable>
+       </f:entry>
+       <f:entry>
+         <f:repeatable var="patternsAntExc" items="${instance.patternsAntExc}" noAddButton="true" minimum="1">
+           <table width="98%" cellpadding="2" cellspacing="2">
+              <f:entry title="Pattern for Exclusions">
+                <f:textbox name="artifactuploader.patternsAntExc" value="${h.defaulted(patternsAntExc, '')}"/>
+              </f:entry>
+              <f:entry>
+                  <div align="right">
+                    <input type="button" value="${%Add Pattern for exclusion...}" class="repeatable-add show-if-last" />
                     <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                   </div>
               </f:entry>

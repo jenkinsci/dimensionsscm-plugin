@@ -172,7 +172,10 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
 
     private String projectId = "";
     private String owningPart = "";
+    
     private String[] patterns;
+    private String[] patternsExc;
+    
     private String patternType = "";
 
     /*
@@ -201,6 +204,8 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
         this.isForceTip = artifact.isForceTip();
         this.owningPart = artifact.getOwningPart();
         this.patterns = artifact.getPatterns();
+        this.patternsExc = artifact.getPatternsExc();
+        
         this.patternType = artifact.getPatternType();
 
         // Build details
@@ -233,12 +238,14 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
         
             if (patternType.equals("regEx")) {
                 listener.getLogger().println("[DIMENSIONS] Running RegEx pattern scanner...");
-                FileScanner fs = new FileScanner(dir,patterns,-1);
+                FileScanner fs = new FileScanner(dir,patterns,patternsExc,-1);
                 validFiles = fs.toArray();
+                listener.getLogger().println("[DIMENSIONS] Found "+validFiles.length+" file(s) to check in...");
             } else if (patternType.equals("Ant")) {
                 listener.getLogger().println("[DIMENSIONS] Running Ant pattern scanner...");
-                FileAntScanner fs = new FileAntScanner(dir,patterns,-1);
+                FileAntScanner fs = new FileAntScanner(dir,patterns,patternsExc,-1);
                 validFiles = fs.toArray();
+                listener.getLogger().println("[DIMENSIONS] Found "+validFiles.length+" file(s) to check in...");
             }
         
             listener.getLogger().flush();
