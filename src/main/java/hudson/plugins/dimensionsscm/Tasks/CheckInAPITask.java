@@ -199,7 +199,7 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
         this.version = version;
 
         // Config details
-        this.projectId = parent.getProject();
+        this.projectId = parent.getProjectName(build);
         this.isForceCheckIn = artifact.isForceCheckIn();
         this.isForceTip = artifact.isForceTip();
         this.owningPart = artifact.getOwningPart();

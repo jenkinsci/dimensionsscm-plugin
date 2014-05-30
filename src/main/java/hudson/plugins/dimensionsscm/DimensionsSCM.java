@@ -106,6 +106,7 @@ import hudson.plugins.dimensionsscm.CheckOutCmdTask;
 import hudson.plugins.dimensionsscm.GetHostDetailsTask;
 
 
+import hudson.EnvVars;
 // Hudson imports
 import hudson.Extension;
 import hudson.FilePath.FileCallable;
@@ -136,6 +137,7 @@ import hudson.scm.SCMDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.Scrambler;
 import hudson.util.VariableResolver;
+
 
 // General imports
 import java.lang.IllegalStateException;
@@ -230,11 +232,45 @@ public class DimensionsSCM extends SCM implements Serializable
     }
 
     /*
-     * Gets the project ID for the connection.
+     * Gets the unexpanded project ID for the connection.
      * @return the project ID
      */
     public String getProject() {
         return this.project;
+    }
+
+    /*
+     * Gets the expanded project name for the connection. Any variables in the project value will be expanded.
+     * @return the project ID without a trailing version number (if there is one).
+     */
+    public String getProjectName(Run<?, ?> run) {
+        String projectVersion = getProjectVersion(run);
+        int sc = projectVersion.lastIndexOf(';');
+        return (sc >= 0) ? projectVersion.substring(0, sc) : projectVersion;
+    }
+
+    /*
+     * Gets the expanded project version for the connection. Any variables in the project value will be expanded.
+     * @return the project ID including its trailing version (if there is one).
+     */
+    public String getProjectVersion(Run<?, ?> run) {
+        EnvVars env = null;
+        if (run != null) {
+            try {
+                env = run.getEnvironment();
+            } catch (IOException e) {
+                /* don't expand */
+            } catch (InterruptedException e) {
+                /* don't expand */
+            }
+        }
+        String ret;
+        if (env != null) {
+            ret = env.expand(this.project);
+        } else {
+            ret = this.project;
+        }
+        return ret;
     }
 
     /*
@@ -742,7 +778,7 @@ public class DimensionsSCM extends SCM implements Serializable
 
                         CheckOutCmdTask task = new CheckOutCmdTask(getJobUserName(), getJobPasswd(),
                                                                    getJobDatabase(), getJobServer(),
-                                                                   getProject(), baseline, requests,
+                                                                   getProjectVersion(build), baseline, requests,
                                                                    isCanJobDelete(),
                                                                    isCanJobRevert(), isCanJobForce(),
                                                                    isCanJobExpand(), isCanJobNoMetadata(),
@@ -860,7 +896,7 @@ public class DimensionsSCM extends SCM implements Serializable
                     Logger.Debug("Looking for changes in '" + folderN + "'...");
 
                     // Checkout the folder
-                    bRet = dmSCM.createChangeSetLogs(key,getProject(),dname,
+                    bRet = dmSCM.createChangeSetLogs(key,getProjectName(build),dname,
                                           lastBuildCal,nowDateCal,
                                           changelogFile, tz,
                                           jobWebUrl,
@@ -1062,7 +1098,7 @@ public class DimensionsSCM extends SCM implements Serializable
                     Logger.Debug("Polling using key "+key);
                     Logger.Debug("Polling '" + folderN + "'...");
 
-                    bChanged = dmSCM.hasRepositoryBeenUpdated(key,getProject(),
+                    bChanged = dmSCM.hasRepositoryBeenUpdated(key,getProjectName(project.getLastBuild()),
                                                               dname,lastBuildCal,
                                                               nowDateCal, tz);
                 }

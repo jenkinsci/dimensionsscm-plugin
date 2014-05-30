@@ -380,7 +380,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                         version = 2009;
                     }
                     if (version != 10) {
-                        isStream = dmSCM.isStream(key,scm.getProject());
+                        isStream = dmSCM.isStream(key,scm.getProjectName(build));
                     }
                     dmSCM.logout(key, build);
                 }
@@ -433,7 +433,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                                                                  scm.getJobPasswd(),
                                                                  scm.getJobDatabase(),
                                                                  scm.getJobServer(),
-                                                                 scm.getProject(),
+                                                                 scm.getProjectName(build),
                                                                  requests,isForceCheckIn(),isForceTip(),
                                                                  getPatterns(),
                                                                  getPatternType(),

@@ -308,7 +308,7 @@ public class DimensionsBuilder extends Builder {
                         // This will active the build baseline functionality
                         listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().buildProject(key,projectArea,scm.getProject(),
+                        DimensionsResult res = scm.getAPI().buildProject(key,projectArea,scm.getProjectName(build),
                                                                          batch,buildClean,projectConfig,
                                                                          projectOptions,
                                                                          capture,requests,

@@ -1306,7 +1306,7 @@ public class DimensionsAPI implements Serializable {
      * @return DimensionsResult
      * @throws DimensionsRuntimeException
      */
-    public DimensionsResult createBaseline(long key, String projectId, AbstractBuild build,
+    public DimensionsResult createBaseline(long key, String projectVersion, AbstractBuild build,
                                            String blnScope, String blnTemplate,
                                            String blnOwningPart, String blnType,
                                            String requestId, String blnId,
@@ -1321,7 +1321,7 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "CBL ";
 
-            if (projectId != null && build != null) {
+            if (projectVersion != null && build != null) {
                 boolean wsBln = true;
                 boolean revisedBln = false;
                 Integer buildNo = build.getNumber();
@@ -1333,22 +1333,32 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
+                // Split "PRODUCT:PROJECT;VERSION".
+                int colon = projectVersion.indexOf(':');
+                int semicolon = projectVersion.lastIndexOf(';');
+                if (semicolon <= colon) {
+                    semicolon = -1;
+                }
+                String productName = projectVersion.substring(0, colon).trim();
+                String projectName = (semicolon >= 0) ? projectVersion.substring(colon+1, semicolon).trim()
+                        : projectVersion.substring(colon+1).trim();
+
                 if (blnName != null && blnName.length() > 0) {
                     String cId = blnName;
 
-                    cId = cId.replace("[PROJECTID]",projectId.substring(projectId.indexOf(":")+1).trim());
+                    cId = cId.replace("[PROJECTID]", projectName);
                     cId = cId.replace("[HUDSON_PROJECT]",build.getProject().getName().trim());
                     cId = cId.replace("[BUILDNO]",buildNo.toString());
                     cId = cId.replace("[CURRENT_DATE]",DateUtils.getNowStrDateVerbose().trim());
                     if (blnId != null && blnId.length() > 0)
                         cId = cId.replace("[DM_BASELINE]",blnId.substring(blnId.indexOf(":")+1).trim());
 
-                    cblId.append("\""+projectId.substring(0,projectId.indexOf(":"))+":"+cId+"\"");
+                    cblId.append("\""+productName+":"+cId+"\"");
                 } else {
-                    cblId.append("\""+projectId+"_"+build.getProject().getName()+"_"+buildNo+"\"");
+                    cblId.append("\""+productName+":"+projectName+"_"+build.getProject().getName()+"_"+buildNo+"\"");
                 }
 
-                cmd += cblId.toString() + " /WORKSET=\""+projectId+"\"";
+                cmd += cblId.toString() + " /WORKSET=\""+projectVersion+"\"";
                 if (!revisedBln) {
                     if (blnScope == null || blnScope.length() == 0) {
                         cmd += " /SCOPE=WORKSET ";
