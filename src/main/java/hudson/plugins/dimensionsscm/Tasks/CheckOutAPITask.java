@@ -192,7 +192,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
         // Config details
         this.isDelete = parent.isCanJobDelete();
-        this.projectId = parent.getProject();
+        this.projectId = parent.getProjectVersion(build);
         this.isRevert = parent.isCanJobRevert();
         this.isForce = parent.isCanJobForce();
         this.isExpand = parent.isCanJobExpand();

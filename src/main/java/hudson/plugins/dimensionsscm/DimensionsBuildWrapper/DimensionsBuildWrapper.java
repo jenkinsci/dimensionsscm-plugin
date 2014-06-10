@@ -161,7 +161,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                                        scm.getJobServer(), build);
                 if (key>0)
                 {
-                    DimensionsResult res = scm.getAPI().lockProject(key,scm.getProject());
+                    DimensionsResult res = scm.getAPI().lockProject(key,scm.getProjectName(build));
                     if (res==null) {
                         listener.getLogger().println("[DIMENSIONS] Locking the project in Dimensions failed");
                         build.setResult(Result.FAILURE);
@@ -273,7 +273,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                     if (key>0)
                     {
                         Logger.Debug("Unlocking the project");
-                        DimensionsResult res = scm.getAPI().unlockProject(key,scm.getProject());
+                        DimensionsResult res = scm.getAPI().unlockProject(key,scm.getProjectName(build));
                         if (res==null) {
                             listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");
                             build.setResult(Result.FAILURE);
