@@ -215,7 +215,7 @@ public class DimensionsSCM extends SCM implements Serializable
     private boolean forceAsSlave;
 
 	
-    DimensionsAPI dmSCM;
+    private transient DimensionsAPI cachedAPI;
     DimensionsSCMRepositoryBrowser browser;
 
     public DimensionsSCM getSCM() {
@@ -223,7 +223,12 @@ public class DimensionsSCM extends SCM implements Serializable
     }
 
     public DimensionsAPI getAPI() {
-        return this.dmSCM;
+        DimensionsAPI api = this.cachedAPI;
+        if (api == null) {
+            api = new DimensionsAPI();
+            this.cachedAPI = api;
+        }
+        return api;
     }
 
 
@@ -723,6 +728,7 @@ public class DimensionsSCM extends SCM implements Serializable
             }
 
             if (isCanJobUpdate()) {
+                DimensionsAPI dmSCM = getAPI();
                 int version = 2009;
                 long key = dmSCM.login(getJobUserName(),getJobPasswd(),
                                        getJobDatabase(),getJobServer(),build);
@@ -1058,6 +1064,7 @@ public class DimensionsSCM extends SCM implements Serializable
         if (project.getLastBuild() == null)
             return true;
 
+        DimensionsAPI dmSCM = getAPI();
         try
         {
             Calendar lastBuildCal = project.getLastBuild().getTimestamp();
@@ -1069,12 +1076,6 @@ public class DimensionsSCM extends SCM implements Serializable
 
             Logger.Debug("Checking for any updates between " + ((lastBuildCal != null) ? DateUtils.getStrDate(lastBuildCal,tz) : "0") +
                             " -> " + DateUtils.getStrDate(nowDateCal,tz) + " (" + tz.getID() + ")");
-
-            if (dmSCM == null)
-            {
-                Logger.Debug("Creating new API interface object");
-                dmSCM = new DimensionsAPI();
-            }
 
             dmSCM.setLogger(listener.getLogger());
 
@@ -1276,8 +1277,7 @@ public class DimensionsSCM extends SCM implements Serializable
 												  forceAsSlave);
 
             scm.browser = RepositoryBrowsers.createInstance(DimensionsSCMRepositoryBrowser.class,req,formData,"browser");
-            if (scm.dmSCM == null)
-                scm.dmSCM = new DimensionsAPI();
+            scm.getAPI();
             return scm;
         }
 
