@@ -92,34 +92,23 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.DimensionsAPI;
-import hudson.plugins.dimensionsscm.DimensionsSCM;
-import hudson.plugins.dimensionsscm.Logger;
 import com.serena.dmclient.api.DimensionsResult;
-
-// Hudson imports
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Descriptor.FormException;
 import hudson.model.Descriptor;
+import hudson.model.Descriptor.FormException;
 import hudson.model.Result;
-import hudson.tasks.BuildWrapper.Environment;
 import hudson.tasks.BuildWrapper;
+import hudson.tasks.BuildWrapper.Environment;
 import hudson.tasks.BuildWrapperDescriptor;
-import hudson.util.FormValidation;
-import net.sf.json.JSONObject;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
-
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Map;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 public class DimensionsBuildWrapper extends BuildWrapper {
 

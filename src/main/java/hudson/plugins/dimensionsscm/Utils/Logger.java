@@ -90,25 +90,13 @@
  *
  */
 
-// Package name
 package hudson.plugins.dimensionsscm;
 
-// Hudson imports
-import hudson.plugins.dimensionsscm.DateUtils;
-import hudson.FilePath;
-
-// General imports
-import java.io.IOException;
-import java.util.Map;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.Serializable;
-
-
-// General imports
+import java.util.Map;
 
 /**
  * @author Tim Payne

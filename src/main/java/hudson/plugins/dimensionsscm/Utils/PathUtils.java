@@ -92,19 +92,8 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Hudson imports
-import hudson.Util;
-import hudson.FilePath;
-import hudson.FilePath.FileCallable;
-import hudson.remoting.Callable;
-import hudson.remoting.DelegatingCallable;
-
-// General imports
 import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
-import java.lang.Exception;
-
 
 public class PathUtils implements Serializable {
 

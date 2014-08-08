@@ -92,30 +92,18 @@
 
 package hudson.plugins.dimensionsscm;
 
-import hudson.plugins.dimensionsscm.Logger;
-import hudson.plugins.dimensionsscm.DateUtils;
-
-import com.serena.dmclient.api.DimensionsRuntimeException;
-
 import hudson.model.User;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.EditType;
-
-import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.export.ExportedBean;
-
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.TimeZone;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.text.Collator;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
+import java.util.TimeZone;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * Represents a change set.

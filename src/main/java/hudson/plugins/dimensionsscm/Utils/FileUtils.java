@@ -92,30 +92,11 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Hudson imports
-import hudson.Util;
-import hudson.FilePath;
-import hudson.FilePath.FileCallable;
-import hudson.remoting.Callable;
-import hudson.remoting.DelegatingCallable;
-
-// General imports
-import java.io.BufferedOutputStream;
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.io.Serializable;
-import java.io.StringReader;
-import java.lang.Exception;
-
 
 public class FileUtils implements Serializable {
 

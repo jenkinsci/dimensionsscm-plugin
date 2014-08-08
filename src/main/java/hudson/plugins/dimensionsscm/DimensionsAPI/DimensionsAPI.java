@@ -90,78 +90,46 @@
  *
  */
 
-// Package name
 package hudson.plugins.dimensionsscm;
 
-// Hudson imports
-import hudson.FilePath;
-import hudson.plugins.dimensionsscm.DateUtils;
-import hudson.plugins.dimensionsscm.Logger;
-
-// Dimensions imports
-import com.serena.dmclient.api.Filter;
-import com.serena.dmclient.api.ItemRevision;
-import com.serena.dmclient.api.Project;
 import com.serena.dmclient.api.Baseline;
-import com.serena.dmclient.api.Request;
-
-import com.serena.dmclient.api.DimensionsRelatedObject;
-import com.serena.dmclient.api.SystemAttributes;
-import com.serena.dmclient.api.SystemRelationship;
-
-import com.serena.dmclient.api.DimensionsNetworkException;
-import com.serena.dmclient.api.DimensionsRuntimeException;
-import com.serena.dmclient.api.DimensionsResult;
-import com.serena.dmclient.api.DimensionsObjectFactory;
-
-import com.serena.dmclient.objects.DimensionsObject;
-import com.serena.dmclient.objects.RequestRelationshipType;
-
-import com.serena.dmclient.api.DimensionsDatabaseAdmin.CommandFailedException;
+import com.serena.dmclient.api.BulkOperator;
 import com.serena.dmclient.api.DimensionsConnection;
 import com.serena.dmclient.api.DimensionsConnectionDetails;
 import com.serena.dmclient.api.DimensionsConnectionManager;
-import com.serena.dmclient.api.BulkOperator;
-import com.serena.dmclient.api.ItemRevisionHistoryRec;
-import com.serena.dmclient.api.ActionHistoryRec;
+import com.serena.dmclient.api.DimensionsNetworkException;
+import com.serena.dmclient.api.DimensionsObjectFactory;
 import com.serena.dmclient.api.DimensionsRelatedObject;
+import com.serena.dmclient.api.DimensionsResult;
+import com.serena.dmclient.api.DimensionsRuntimeException;
+import com.serena.dmclient.api.Filter;
+import com.serena.dmclient.api.ItemRevision;
+import com.serena.dmclient.api.Project;
 import com.serena.dmclient.api.Request;
-
-// Hudson imports
+import com.serena.dmclient.api.SystemAttributes;
+import com.serena.dmclient.api.SystemRelationship;
+import com.serena.dmclient.objects.DimensionsObject;
+import hudson.FilePath;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.TaskListener;
-
-// General imports
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.lang.IllegalArgumentException;
-import java.net.URLDecoder;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.text.Collator;
-
-import java.net.URI;
-import java.net.URL;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-
-import org.apache.commons.lang.StringEscapeUtils;
-
 
 /*
  * Main Dimensions API class

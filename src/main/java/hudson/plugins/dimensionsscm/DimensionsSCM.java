@@ -90,85 +90,48 @@
  *
  */
 
-// Package name
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.DimensionsAPI;
-import hudson.plugins.dimensionsscm.DimensionsSCMRepositoryBrowser;
-import hudson.plugins.dimensionsscm.Logger;
-import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
-import hudson.plugins.dimensionsscm.DimensionsBuildWrapper;
-import hudson.plugins.dimensionsscm.DimensionsBuildNotifier;
-import hudson.plugins.dimensionsscm.DimensionsChecker;
-import hudson.plugins.dimensionsscm.CheckOutAPITask;
-import hudson.plugins.dimensionsscm.CheckOutCmdTask;
-import hudson.plugins.dimensionsscm.GetHostDetailsTask;
-
-
 import hudson.EnvVars;
-// Hudson imports
 import hudson.Extension;
-import hudson.FilePath.FileCallable;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Computer;
-import hudson.model.Hudson.MasterComputer;
 import hudson.model.Hudson;
 import hudson.model.ModelObject;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.remoting.Callable;
-import hudson.remoting.Channel;
-import hudson.remoting.DelegatingCallable;
-import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
 import hudson.scm.PollingResult.Change;
-import hudson.scm.SCMRevisionState;
 import hudson.scm.RepositoryBrowsers;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
+import hudson.scm.SCMRevisionState;
 import hudson.util.FormValidation;
 import hudson.util.Scrambler;
 import hudson.util.VariableResolver;
-
-
-// General imports
-import java.lang.IllegalStateException;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.net.InetAddress;
 import java.util.Calendar;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.Vector;
-import java.net.InetSocketAddress;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import javax.servlet.ServletException;
-
 import net.sf.json.JSONObject;
-
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
-import org.apache.commons.lang.StringUtils;
 
 /*
  * Hudson requires the following functions to be implemented

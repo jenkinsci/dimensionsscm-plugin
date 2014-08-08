@@ -92,43 +92,24 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.DimensionsAPI;
-import hudson.plugins.dimensionsscm.DimensionsSCM;
-import hudson.plugins.dimensionsscm.Logger;
 import com.serena.dmclient.api.DimensionsResult;
-
-// Hudson imports
 import hudson.Extension;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor.FormException;
-import hudson.model.Descriptor;
 import hudson.model.Result;
-import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
-import hudson.util.FormValidation;
-import hudson.Util;
 import hudson.util.VariableResolver;
-import hudson.tasks.BuildStepMonitor;
-
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
-
-// General imports
 import java.io.IOException;
 import java.io.Serializable;
-
-import javax.servlet.ServletException;
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.StaplerRequest;
 
 public class DimensionsBuildNotifier extends Notifier implements Serializable {
 

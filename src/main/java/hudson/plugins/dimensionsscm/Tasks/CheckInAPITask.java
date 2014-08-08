@@ -90,67 +90,20 @@
  *
  */
 
-// Package name
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
 import com.serena.dmclient.api.DimensionsResult;
-import hudson.plugins.dimensionsscm.ArtifactUploader;
-import hudson.plugins.dimensionsscm.DimensionsAPI;
-import hudson.plugins.dimensionsscm.DimensionsChangeLogParser;
-import hudson.plugins.dimensionsscm.DimensionsSCM;
-import hudson.plugins.dimensionsscm.DimensionsSCMRepositoryBrowser;
-import hudson.plugins.dimensionsscm.FileScanner;
-import hudson.plugins.dimensionsscm.FileAntScanner;
-import hudson.plugins.dimensionsscm.GenericAPITask;
-import hudson.plugins.dimensionsscm.Logger;
-
-
-// Hudson imports
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.Util;
-import hudson.model.Hudson;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.ModelObject;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import hudson.scm.ChangeLogParser;
-import hudson.scm.RepositoryBrowsers;
-import hudson.scm.SCM;
-import hudson.scm.SCMDescriptor;
-import hudson.util.Scrambler;
-import hudson.util.VariableResolver;
 import hudson.FilePath;
 import hudson.FilePath.FileCallable;
-import hudson.model.Node;
-import hudson.model.Computer;
-import hudson.model.Hudson.MasterComputer;
-import hudson.remoting.Callable;
-import hudson.remoting.DelegatingCallable;
-import hudson.remoting.Channel;
+import hudson.model.AbstractBuild;
+import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
-
-// General imports
+import hudson.util.VariableResolver;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Serializable;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.Vector;
-
-import org.apache.commons.lang.StringUtils;
 
 /*
  * Main Checkin

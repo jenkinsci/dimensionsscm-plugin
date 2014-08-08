@@ -92,35 +92,15 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Hudson imports
-import hudson.Util;
-import hudson.FilePath;
-import hudson.FilePath.FileCallable;
-import hudson.model.Node;
-import hudson.model.Computer;
-import hudson.model.Hudson.MasterComputer;
-import hudson.remoting.Callable;
-import hudson.remoting.DelegatingCallable;
-import hudson.remoting.Channel;
-import hudson.remoting.VirtualChannel;
-import hudson.model.TaskListener;
-
-// General imports
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
-import java.util.regex.*;
-
+import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 
 public class FileScanner implements Serializable {

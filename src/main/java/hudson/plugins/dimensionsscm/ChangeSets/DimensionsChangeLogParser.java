@@ -92,25 +92,17 @@
 
 package hudson.plugins.dimensionsscm;
 
-import hudson.plugins.dimensionsscm.DimensionsChangeSet;
-import hudson.plugins.dimensionsscm.DimensionsChangeSetList;
-import hudson.plugins.dimensionsscm.Logger;
-
-import org.apache.commons.digester.Digester;
-import org.apache.commons.io.IOUtils;
-import org.xml.sax.SAXException;
-
 import hudson.model.AbstractBuild;
 import hudson.scm.ChangeLogParser;
 import hudson.util.Digester2;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
-
+import org.apache.commons.digester.Digester;
+import org.apache.commons.io.IOUtils;
+import org.xml.sax.SAXException;
 
 /**
  * Represents a change set.

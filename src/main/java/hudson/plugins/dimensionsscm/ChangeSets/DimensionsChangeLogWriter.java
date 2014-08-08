@@ -92,27 +92,15 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Dimensions plugin imports
-import hudson.plugins.dimensionsscm.DimensionsChangeSet;
-import hudson.plugins.dimensionsscm.DimensionsChangeSetList;
-import hudson.plugins.dimensionsscm.DateUtils;
-import hudson.plugins.dimensionsscm.Logger;
-
-// General Hudson imports
 import hudson.Util;
-
-// Java imports
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.util.List;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringEscapeUtils;
+import java.util.List;
 
 /**
  * Write a change set.

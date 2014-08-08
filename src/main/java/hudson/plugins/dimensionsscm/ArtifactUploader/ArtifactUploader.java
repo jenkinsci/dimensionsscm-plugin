@@ -92,66 +92,28 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.DimensionsAPI;
-import hudson.plugins.dimensionsscm.DimensionsSCM;
-import hudson.plugins.dimensionsscm.Logger;
-import hudson.plugins.dimensionsscm.CheckInAPITask;
-import hudson.plugins.dimensionsscm.CheckInCmdTask;
-import hudson.plugins.dimensionsscm.GetHostDetailsTask;
-import com.serena.dmclient.api.DimensionsResult;
-
-// Hudson imports
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor.FormException;
-import hudson.model.Descriptor;
 import hudson.model.Result;
-import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
-import hudson.util.FormValidation;
-import hudson.Util;
-import hudson.FilePath;
 import hudson.util.VariableResolver;
-import hudson.tasks.BuildStepMonitor;
-
-import net.sf.json.JSONArray;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.InetAddress;
+import java.util.Vector;
 import net.sf.json.JSONObject;
-
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
-
-// General imports
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
-import java.util.Vector;
-import java.util.Calendar;
-import java.net.InetSocketAddress;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-import javax.servlet.ServletException;
 
 public class ArtifactUploader extends Notifier implements Serializable {
 

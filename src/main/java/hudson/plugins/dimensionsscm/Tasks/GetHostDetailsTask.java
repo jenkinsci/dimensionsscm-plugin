@@ -90,33 +90,14 @@
  *
  */
 
-// Package name
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.Logger;
-
-
-// Hudson imports
-import hudson.Util;
-import hudson.FilePath;
 import hudson.FilePath.FileCallable;
-import hudson.model.Node;
-import hudson.model.Computer;
-import hudson.model.Hudson.MasterComputer;
-import hudson.remoting.Callable;
-import hudson.remoting.DelegatingCallable;
-import hudson.remoting.Channel;
 import hudson.remoting.VirtualChannel;
-
-// General imports
-import java.net.InetSocketAddress;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
-
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /*
  * Find out the remote host name

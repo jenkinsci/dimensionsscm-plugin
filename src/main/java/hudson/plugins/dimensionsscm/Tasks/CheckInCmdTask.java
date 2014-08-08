@@ -90,42 +90,15 @@
  *
  */
 
-// Package name
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.FileScanner;
-import hudson.plugins.dimensionsscm.FileAntScanner;
-import hudson.plugins.dimensionsscm.GenericCmdTask;
-import hudson.plugins.dimensionsscm.Logger;
-
-// Hudson imports
-import hudson.Util;
 import hudson.FilePath;
 import hudson.FilePath.FileCallable;
-import hudson.model.Node;
-import hudson.model.Computer;
-import hudson.model.Hudson.MasterComputer;
-import hudson.remoting.Callable;
-import hudson.remoting.DelegatingCallable;
-import hudson.remoting.Channel;
-import hudson.remoting.VirtualChannel;
 import hudson.model.TaskListener;
-
-// General imports
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.Serializable;
-import java.io.StringReader;
-import java.lang.Exception;
 import java.util.Calendar;
 
 /**

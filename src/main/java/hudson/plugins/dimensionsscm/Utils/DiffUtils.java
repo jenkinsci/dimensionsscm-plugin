@@ -92,23 +92,9 @@
 
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.SCMLauncher;
-import hudson.plugins.dimensionsscm.PathUtils;
-
-// Hudson imports
-import hudson.Util;
-import hudson.FilePath;
-import hudson.FilePath.FileCallable;
-import hudson.remoting.Callable;
-import hudson.remoting.DelegatingCallable;
-
-// General imports
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.Exception;
-import java.lang.InterruptedException;
 
 //
 // Utility class to get the differences between two files

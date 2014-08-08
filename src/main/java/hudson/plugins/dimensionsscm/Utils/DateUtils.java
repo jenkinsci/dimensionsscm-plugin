@@ -90,17 +90,15 @@
  *
  */
 
-// Package name
 package hudson.plugins.dimensionsscm;
 
-// General imports
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.io.Serializable;
 
 /**
  * A set of methods for converting Date objects to and from strings in a valid

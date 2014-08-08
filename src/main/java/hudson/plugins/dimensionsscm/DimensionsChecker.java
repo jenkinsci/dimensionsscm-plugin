@@ -90,30 +90,12 @@
  *
  */
 
-// Package name
 package hudson.plugins.dimensionsscm;
 
-// Dimensions imports
-import hudson.plugins.dimensionsscm.Logger;
-import hudson.plugins.dimensionsscm.DimensionsBuildWrapper;
-import hudson.plugins.dimensionsscm.DimensionsBuildNotifier;
-
-// Hudson imports
-import hudson.model.Hudson;
 import hudson.model.AbstractBuild;
-import hudson.model.Project;
-import hudson.util.DescribableList;
 import hudson.model.BuildListener;
-
-// General imports
-import java.io.IOException;
+import hudson.model.Project;
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Iterator;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Vector;
 
 /**
  * A set of methods for checking the consistency of data passed into the plugin

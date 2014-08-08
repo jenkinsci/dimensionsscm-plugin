@@ -93,10 +93,7 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.AbstractBuild;
-import hudson.model.Build;
-
 import hudson.scm.ChangeLogSet;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
