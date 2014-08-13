@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.AbstractBuild;
@@ -105,20 +96,19 @@ import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
 
 /**
- * Represents a change set.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Represents a change set.
+ *
+ * @author Tim Payne
  */
-public class DimensionsChangeLogParser extends ChangeLogParser
-{
+public class DimensionsChangeLogParser extends ChangeLogParser {
     @Override
     public DimensionsChangeSetList parse(AbstractBuild build, File changelogFile) throws IOException, SAXException {
         Logger.Debug("Looking for '" + changelogFile.getPath() + "'");
-        if (!changelogFile.exists())
-        {
+        if (!changelogFile.exists()) {
             Logger.Debug("Change log file does not exist");
             throw new IOException("Specified change log file does not exist - " + changelogFile.getPath());
-        }
-        else
-        {
+        } else {
             FileReader reader = new FileReader(changelogFile);
             try {
                 return parse(build, reader);
@@ -128,9 +118,7 @@ public class DimensionsChangeLogParser extends ChangeLogParser
         }
     }
 
-    public DimensionsChangeSetList parse(AbstractBuild build, FileReader reader)
-                                            throws IOException, SAXException
-    {
+    public DimensionsChangeSetList parse(AbstractBuild build, FileReader reader) throws IOException, SAXException {
         List<DimensionsChangeSet> changesetList = new ArrayList<DimensionsChangeSet>();
         Digester digester = new Digester2();
         digester.push(changesetList);
@@ -153,6 +141,6 @@ public class DimensionsChangeLogParser extends ChangeLogParser
         digester.addSetNext("*/changeset/requests/request", "addRequest");
 
         digester.parse(reader);
-        return new DimensionsChangeSetList(build,changesetList);
+        return new DimensionsChangeSetList(build, changesetList);
     }
 }

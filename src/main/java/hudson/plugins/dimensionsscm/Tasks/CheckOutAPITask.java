@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
@@ -101,50 +92,44 @@ import hudson.util.VariableResolver;
 import java.io.File;
 import java.io.IOException;
 
-/*
- * Main Checkout
- */
-
 /**
- * Class implementation of the checkout process.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Class implementation of the checkout process.
+ *
+ * @author Tim Payne
  */
 public class CheckOutAPITask extends GenericAPITask implements FileCallable<Boolean> {
-
-    boolean bFreshBuild = false;
-    boolean isDelete = false;
-    boolean isRevert = false;
-    boolean isForce = false;
-    boolean isExpand = false;
-    boolean isNoMetadata = false;
-    boolean isNoTouch = false;
+    boolean bFreshBuild;
+    boolean isDelete;
+    boolean isRevert;
+    boolean isForce;
+    boolean isExpand;
+    boolean isNoMetadata;
+    boolean isNoTouch;
 
     VariableResolver<String> myResolver;
 
     String projectId = "";
     String[] folders;
-	String eol = "";
-	
+    String eol = "";
+
     int version = 0;
 
-    /*
-     * Default constructor
-     */
-    public CheckOutAPITask(AbstractBuild<?,?> build, DimensionsSCM parent,
-                        FilePath workspace, TaskListener listener, int version) {
-
+    public CheckOutAPITask(AbstractBuild<?, ?> build, DimensionsSCM parent, FilePath workspace, TaskListener listener,
+            int version) {
         Logger.Debug("Creating task - " + this.getClass().getName());
 
         this.workspace = workspace;
         this.listener = listener;
         this.version = version;
 
-        // Server details
+        // Server details.
         userName = parent.getJobUserName();
         passwd = parent.getJobPasswd();
         database = parent.getJobDatabase();
         server = parent.getJobServer();
 
-        // Config details
+        // Config details.
         this.isDelete = parent.isCanJobDelete();
         this.projectId = parent.getProjectVersion(build);
         this.isRevert = parent.isCanJobRevert();
@@ -155,33 +140,21 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
         this.folders = parent.getFolders();
         permissions = parent.getPermissions();
-		this.eol = parent.getEol();
-		
-        // Build details
+        this.eol = parent.getEol();
+
+        // Build details.
         this.bFreshBuild = (build.getPreviousBuild() == null);
         this.myResolver = build.getBuildVariableResolver();
     }
 
-    /*
-     * Execute method
-     *
-     * @param File
-     * @param VirtualChannel
-     * @return boolean
-     * @throws IOException
-     */
+    @Override
     public Boolean execute(File area, VirtualChannel channel) throws IOException {
-
         boolean bRet = true;
-
-        try
-        {
+        try {
             StringBuffer cmdOutput = new StringBuffer();
             FilePath wa = new FilePath(area);
 
-            // Emulate SVN plugin
-            // - if workspace exists and it is not managed by this project, blow it away
-            //
+            // Emulate SVN plugin - if workspace exists and it is not managed by this project, blow it away.
             if (bFreshBuild) {
                 if (listener.getLogger() != null) {
                     listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
@@ -204,7 +177,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                 baseline = baseline.toUpperCase();
             }
             if (requests != null) {
-                requests = requests.replaceAll(" ","");
+                requests = requests.replaceAll(" ", "");
                 requests = requests.toUpperCase();
             }
 
@@ -212,18 +185,20 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
             String cmdLog = null;
 
-            if (baseline != null && baseline.length() == 0)
+            if (baseline != null && baseline.length() == 0) {
                 baseline = null;
-            if (requests != null && requests.length() == 0)
+            }
+            if (requests != null && requests.length() == 0) {
                 requests = null;
-
+            }
             if (listener.getLogger() != null) {
-                if (requests != null)
+                if (requests != null) {
                     listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
-                else if (baseline != null)
+                } else if (baseline != null) {
                     listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
-                else
+                } else {
                     listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
+                }
                 listener.getLogger().flush();
             }
 
@@ -235,10 +210,10 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
                 listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
 
-                for (int xx=0;xx<requestsProcess.length; xx++) {
-                    if (!bRet)
+                for (int xx = 0; xx < requestsProcess.length; xx++) {
+                    if (!bRet) {
                         break;
-
+                    }
                     String folderN = "/";
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
@@ -246,64 +221,58 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
                     Logger.Debug("Checking out '" + folderN + "'...");
 
-                    // Checkout the folder
-                    bRet = dmSCM.checkout(key,projectId,dname,wa,
-                                          cmdOutput,baseline,reqId,
-                                          isRevert,isExpand,isNoMetadata,
-					  isNoTouch, "DEFAULT",
-					  eol);
+                    // Checkout the folder.
+                    bRet = dmSCM.checkout(key, projectId, dname, wa, cmdOutput, baseline, reqId, isRevert, isExpand,
+                            isNoMetadata, isNoTouch, "DEFAULT", eol);
                     Logger.Debug("SCM checkout returned " + bRet);
 
-                    if (!bRet && isForce)
+                    if (!bRet && isForce) {
                         bRet = true;
-
-                    if (cmdLog==null)
+                    }
+                    if (cmdLog == null) {
                         cmdLog = "\n";
-
+                    }
                     cmdLog += cmdOutput;
                     cmdOutput.setLength(0);
                     cmdLog += "\n";
                 }
             } else {
-
-                // Iterate through the project folders and process them in Dimensions
-                for (int ii=0;ii<folders.length; ii++) {
-                    if (!bRet)
+                // Iterate through the project folders and process them in Dimensions.
+                for (int ii = 0; ii < folders.length; ii++) {
+                    if (!bRet) {
                         break;
-
+                    }
                     String folderN = folders[ii];
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
                     Logger.Debug("Checking out '" + folderN + "'...");
 
-                    // Checkout the folder
-                    bRet = dmSCM.checkout(key,projectId,dname,wa,
-                                          cmdOutput,baseline,requests,
-                                          isRevert,isExpand,isNoMetadata,
-					  isNoTouch,
-                                          permissions,eol);
+                    // Checkout the folder.
+                    bRet = dmSCM.checkout(key, projectId, dname, wa, cmdOutput, baseline, requests, isRevert, isExpand,
+                            isNoMetadata, isNoTouch, permissions, eol);
                     Logger.Debug("SCM checkout returned " + bRet);
 
-                    if (!bRet && isForce)
+                    if (!bRet && isForce) {
                         bRet = true;
-
-                    if (cmdLog==null)
+                    }
+                    if (cmdLog == null) {
                         cmdLog = "\n";
-
+                    }
                     cmdLog += cmdOutput;
                     cmdOutput.setLength(0);
                     cmdLog += "\n";
-                    if (requests != null)
+                    if (requests != null) {
                         break;
+                    }
                 }
             }
 
             if (cmdLog.length() > 0 && listener.getLogger() != null) {
                 Logger.Debug("Found command output to log to the build logger");
                 listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
-                cmdLog = cmdLog.replaceAll("\n\n","\n");
-                listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
+                cmdLog = cmdLog.replaceAll("\n\n", "\n");
+                listener.getLogger().println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
                 listener.getLogger().flush();
             }
 
@@ -315,9 +284,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                 listener.getLogger().println("[DIMENSIONS] ==========================================================");
                 listener.getLogger().flush();
             }
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             String errMsg = e.getMessage();
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";
@@ -330,5 +297,3 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
         return bRet;
     }
 }
-
-

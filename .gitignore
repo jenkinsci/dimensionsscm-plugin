@@ -1,2 +1,12 @@
+.DS_Store
+._*
+/*.iml
+/*.iws
+/.classpath
+/.idea/
+/.project
+/.settings/
+/bin/
+/nb-configuration.xml
 /target/
 /work/

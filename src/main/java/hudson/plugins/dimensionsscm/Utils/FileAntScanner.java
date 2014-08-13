@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,41 +81,39 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.types.FileSet;
 
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories.
+ *
+ * @author Tim Payne
+ */
 public class FileAntScanner implements Serializable {
-
-    private File[] arr = null;
-    private Collection<File> xfiles = null;
-    private File baseDir = null;
-    private ScannerFilter filter = null;
+    private File[] arr;
+    private Collection<File> xfiles;
+    private File baseDir;
+    private ScannerFilter filter;
 
     /**
      * File pattern matcher class.
      */
     public class ScannerFilter {
-        private FileSet taskFile = null;
-        private Project antProject = null;
-        
-        public ScannerFilter(String[] inclusionsx,String[] exclusionsx,File dirName) {
+        private FileSet taskFile;
+        private Project antProject;
+
+        public ScannerFilter(String[] inclusionsx, String[] exclusionsx, File dirName) {
             taskFile = new FileSet();
             antProject = new Project();
             antProject.setBaseDir(dirName);
@@ -144,27 +141,20 @@ public class FileAntScanner implements Serializable {
             taskFile.setExcludes("**/.dm");
             taskFile.setExcludes("**/.metadata");
         }
-        
+
         public FileSet getIncludesSet() {
             return taskFile;
         }
-        
+
         public Project getProject() {
             return antProject;
         }
-
     }
 
-
-    /**
-     * Constructor.
-     */
-    public FileAntScanner(File dirName, String[] patterns,
-                          String[] patternsExc,
-                          int depth) {
+    public FileAntScanner(File dirName, String[] patterns, String[] patternsExc, int depth) {
          baseDir = dirName;
-         filter = new ScannerFilter(patterns,patternsExc,dirName);
-         xfiles = scanFiles(dirName,filter,depth);
+         filter = new ScannerFilter(patterns, patternsExc, dirName);
+         xfiles = scanFiles(dirName, filter, depth);
     }
 
     public Collection<File> getFiles() {
@@ -176,18 +166,12 @@ public class FileAntScanner implements Serializable {
         return xfiles.toArray(arr);
     }
 
-    private Collection<File> scanFiles(
-            File dirName,
-            ScannerFilter filter,
-            int depth) {
-
-        Vector<File> files = new Vector<File>();
+    private Collection<File> scanFiles(File dirName, ScannerFilter filter, int depth) {
         String[] dfiles = filter.getIncludesSet().getDirectoryScanner(filter.getProject()).getIncludedFiles();
-        for (int i = 0; i < dfiles.length; i++) {
-            files.add(new File(baseDir.getAbsolutePath() + "/" + dfiles[i]));
+        List<File> files = new ArrayList<File>(dfiles.length);
+        for (String dfile : dfiles) {
+            files.add(new File(baseDir.getAbsolutePath() + "/" + dfile));
         }
-
         return files;
     }
 }
-

@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.User;
@@ -106,11 +97,13 @@ import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
 /**
- * Represents a change set.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Represents a change set.
+ *
+ * @author Tim Payne
  */
-@ExportedBean(defaultVisibility=999)
-public class DimensionsChangeSet extends ChangeLogSet.Entry
-{
+@ExportedBean(defaultVisibility = 999)
+public class DimensionsChangeSet extends ChangeLogSet.Entry {
     private String developer;
     private String message;
     private String identifier;
@@ -119,33 +112,22 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
     private Collection<DmFiles> items = new HashSet<DmFiles>();
     private Collection<DmRequests> requests = new HashSet<DmRequests>();
 
-    // Digester class seems to need a default or null constructor else it crashes
+    // Digester class seems to need a no-parameter constructor else it crashes
     public DimensionsChangeSet() {
-        this("","","","","","",null);
+        this("", "", "", "", "", "", null);
     }
 
-    /*
-     * Default constructor for a changeset
-     * @param String file
-     * @param String developer
-     * @param String op
-     * @param String revision
-     * @param String comment
-     * @param String url
-     * @param Calendar date
-     */
-    public DimensionsChangeSet(String file, String developer, String op,
-                               String revision, String comment, String url, Calendar date) {
+    public DimensionsChangeSet(String file, String developer, String op, String revision, String comment, String url,
+            Calendar date) {
         this.identifier = file;
         this.developer = developer;
         this.message = comment;
         this.date = date;
         this.version = revision;
         this.items = new HashSet<DmFiles>();
-        this.items.add(new DmFiles(file,op,url));
+        this.items.add(new DmFiles(file, op, url));
         this.requests = new HashSet<DmRequests>();
     }
-
 
     public void setParent(ChangeLogSet parent) {
         super.setParent(parent);
@@ -166,9 +148,8 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
     public void setDateString(String DateString) throws ParseException {
         date = Calendar.getInstance();
         TimeZone tz = TimeZone.getTimeZone("UTC");
-        date.setTime(DateUtils.parse(DateString,tz));
+        date.setTime(DateUtils.parse(DateString, tz));
     }
-
 
     public Collection<DmFiles> getFiles() {
         return this.items;
@@ -211,7 +192,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
         return this.version;
     }
 
-
     public void setUser(String x) {
         this.developer = x;
     }
@@ -234,14 +214,16 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
     }
 
     public void add(String file, String operation, String url) {
-        DimensionsChangeSet.DmFiles x = new DmFiles(file,operation,url);
+        DimensionsChangeSet.DmFiles x = new DmFiles(file, operation, url);
         items.add(x);
         x.setParent(this);
     }
 
     public void addRequest(DimensionsChangeSet.DmRequests newreq) {
         for (DmRequests req : requests) {
-                if (req.getIdentifier().equals(newreq.getIdentifier())) return;
+            if (req.getIdentifier().equals(newreq.getIdentifier())) {
+                return;
+            }
         }
 
         requests.add(newreq);
@@ -250,37 +232,40 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
     public void addRequest(String objectId, String url) {
         for (DmRequests req : requests) {
-                if (req.getIdentifier().equals(objectId)) return;
+            if (req.getIdentifier().equals(objectId)) {
+                return;
+            }
         }
 
-        DimensionsChangeSet.DmRequests x = new DmRequests(objectId,url);
+        DimensionsChangeSet.DmRequests x = new DmRequests(objectId, url);
         requests.add(x);
         x.setParent(this);
     }
 
     public void addRequest(String objectId, String url, String title) {
         for (DmRequests req : requests) {
-                if (req.getIdentifier().equals(objectId)) return;
+            if (req.getIdentifier().equals(objectId)) {
+                return;
+            }
         }
 
-        DimensionsChangeSet.DmRequests x = new DmRequests(objectId,url,title);
+        DimensionsChangeSet.DmRequests x = new DmRequests(objectId, url, title);
         requests.add(x);
         x.setParent(this);
     }
 
-    /*
-     * List of changes made in the repository for this changeset
+    /**
+     * List of changes made in the repository for this changeset.
      */
-    @ExportedBean(defaultVisibility=999)
-    public static class DmFiles
-    {
+    @ExportedBean(defaultVisibility = 999)
+    public static class DmFiles {
         private String fileName;
         private String operation;
         private String url;
         private DimensionsChangeSet parent;
 
         public DmFiles() {
-            this("","","");
+            this("", "", "");
         }
 
         public DmFiles(String fileName, String operation, String url) {
@@ -291,10 +276,11 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
         @Exported
         public String getUrl() {
-            if (this.url.length() == 0)
+            if (this.url.length() == 0) {
                 return null;
-            else
+            } else {
                 return this.url;
+            }
         }
 
         @Exported
@@ -304,10 +290,11 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
         @Exported
         public String getFile() {
-            if (this.fileName.length() == 0)
+            if (this.fileName.length() == 0) {
                 return null;
-            else
+            } else {
                 return this.fileName;
+            }
         }
 
         public DimensionsChangeSet getParent() {
@@ -318,11 +305,11 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
         public EditType getEditType() {
             if (operation.equalsIgnoreCase("delete")) {
                 return EditType.DELETE;
-            } else
-            if (operation.equalsIgnoreCase("add")) {
+            } else if (operation.equalsIgnoreCase("add")) {
                 return EditType.ADD;
-            } else
-            return EditType.EDIT;
+            } else {
+                return EditType.EDIT;
+            }
         }
 
         public void setUrl(String url) {
@@ -350,7 +337,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
         private DimensionsChangeSet parent;
 
         public DmRequests() {
-            this("","","");
+            this("", "", "");
         }
 
         public DmRequests(String objectID, String url) {
@@ -367,10 +354,11 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
         @Exported
         public String getUrl() {
-            if (this.url == null || this.url.length() == 0)
+            if (this.url == null || this.url.length() == 0) {
                 return null;
-            else
+            } else {
                 return this.url;
+            }
         }
 
         public void setUrl(String url) {
@@ -379,10 +367,11 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
         @Exported
         public String getIdentifier() {
-            if (this.identifier == null || this.identifier.length() == 0)
+            if (this.identifier == null || this.identifier.length() == 0) {
                 return null;
-            else
+            } else {
                 return this.identifier;
+            }
         }
 
         public void setIdentifier(String id) {
@@ -391,10 +380,11 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry
 
         @Exported
         public String getTitle() {
-            if (this.title == null || this.title.length() == 0)
+            if (this.title == null || this.title.length() == 0) {
                 return null;
-            else
+            } else {
                 return this.title;
+            }
         }
 
         public void setTitle(String id) {

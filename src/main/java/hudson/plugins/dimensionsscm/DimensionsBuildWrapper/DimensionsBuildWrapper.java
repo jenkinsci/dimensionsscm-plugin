@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import com.serena.dmclient.api.DimensionsResult;
@@ -110,9 +101,14 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories.
+ *
+ * @author Tim Payne
+ */
 public class DimensionsBuildWrapper extends BuildWrapper {
-
-    private DimensionsSCM scm = null;
+    private DimensionsSCM scm;
 
     /**
      * Descriptor should be singleton.
@@ -124,48 +120,43 @@ public class DimensionsBuildWrapper extends BuildWrapper {
     @Extension
     public static final DescriptorImpl DMWBLD_DESCRIPTOR = new DescriptorImpl();
 
-
-    /**
-     * Default constructor.
-     */
     @DataBoundConstructor
     public DimensionsBuildWrapper() {
     }
 
     /**
      * Default environment setup.
+     * <p>
+     * {@inheritDoc}
      */
     @Override
-    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
-        long key=-1;
+    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener)
+            throws IOException, InterruptedException {
+        long key = -1L;
         if (build.getProject().getScm() instanceof DimensionsSCM) {
             Logger.Debug("Invoking build setup callout " + this.getClass().getName());
-            if (scm == null)
-                scm = (DimensionsSCM)build.getProject().getScm();
-            Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+            if (scm == null) {
+                scm = (DimensionsSCM) build.getProject().getScm();
+            }
+            Logger.Debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
+                    scm.getJobServer());
             try {
-                key = scm.getAPI().login(scm.getJobUserName(),
-                                       scm.getJobPasswd(),
-                                       scm.getJobDatabase(),
-                                       scm.getJobServer(), build);
-                if (key>0)
-                {
-                    DimensionsResult res = scm.getAPI().lockProject(key,scm.getProjectName(build));
-                    if (res==null) {
+                key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
+                        scm.getJobServer(), build);
+                if (key > 0L) {
+                    DimensionsResult res = scm.getAPI().lockProject(key, scm.getProjectName(build));
+                    if (res == null) {
                         listener.getLogger().println("[DIMENSIONS] Locking the project in Dimensions failed");
                         build.setResult(Result.FAILURE);
                         listener.getLogger().flush();
-                    }
-                    else {
+                    } else {
                         listener.getLogger().println("[DIMENSIONS] Dimensions project was successfully locked");
                         listener.getLogger().flush();
                     }
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 listener.fatalError("Unable to lock Dimensions project - " + e.getMessage());
-            }
-            finally
-            {
+            } finally {
                 scm.getAPI().logout(key, build);
             }
         } else {
@@ -173,18 +164,15 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             build.setResult(Result.FAILURE);
             throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
         }
-
         return new EnvironmentImpl(build);
     }
 
-
-    /*
-     * Implementation class for Dimensions plugin
+    /**
+     * Implementation class for Dimensions plugin.
      */
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
-
-        /*
-         * Loads the descriptor
+        /**
+         * Loads the descriptor.
          */
         public DescriptorImpl() {
             super(DimensionsBuildWrapper.class);
@@ -192,31 +180,37 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             Logger.Debug("Loading " + this.getClass().getName());
         }
 
+        @Override
         public String getDisplayName() {
             return "Lock Dimensions project while the build is in progress";
         }
 
-
-        /*
-         *  This builder can be used with all project types
+        /**
+         * This builder can be used with all project types.
+         * <p>
+         * {@inheritDoc}
          */
         @Override
-        public boolean isApplicable(AbstractProject<?,?> item) {
+        public boolean isApplicable(AbstractProject<?, ?> item) {
             return true;
         }
 
-        /*
-         * Save the descriptor configuration
+        /**
+         * Save the descriptor configuration.
+         * <p>
+         * {@inheritDoc}
          */
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindParameters(this,"DimensionsBuildWrapper");
+            req.bindParameters(this, "DimensionsBuildWrapper");
             save();
             return true;
         }
 
-        /*
-         * Get help file
+        /**
+         * Get help file.
+         * <p>
+         * {@inheritDoc}
          */
         @Override
         public String getHelpFile() {
@@ -224,67 +218,61 @@ public class DimensionsBuildWrapper extends BuildWrapper {
         }
     }
 
-    /*
-     * Implementation class for Dimensions environment plugin
+    /**
+     * Implementation class for Dimensions environment plugin.
      */
     class EnvironmentImpl extends Environment {
+        AbstractBuild<?, ?> elbuild;
 
-        AbstractBuild<?,?> elbuild;
-
-        /**
-         * Default constructor.
-         */
-        EnvironmentImpl(AbstractBuild<?,?> build) {
+        EnvironmentImpl(AbstractBuild<?, ?> build) {
             this.elbuild = build;
         }
 
         /**
-         * Build environment
+         * Build environment.
+         * <p>
+         * {@inheritDoc}
          */
         @Override
         public void buildEnvVars(Map<String, String> env) {
         }
 
         /**
-         * Post build step - always called
+         * Post build step - always called.
+         * <p>
+         * {@inheritDoc}
          */
         @Override
         public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException {
-            long key=-1;
+            long key = -1L;
             if (scm != null) {
                 Logger.Debug("Invoking build tearDown callout " + this.getClass().getName());
-                Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+                Logger.Debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
+                        scm.getJobServer());
                 try {
-                    key = scm.getAPI().login(scm.getJobUserName(),
-                                           scm.getJobPasswd(),
-                                           scm.getJobDatabase(),
-                                           scm.getJobServer(), build);
-                    if (key>0)
-                    {
+                    key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
+                            scm.getJobServer(), build);
+                    if (key > 0L) {
                         Logger.Debug("Unlocking the project");
-                        DimensionsResult res = scm.getAPI().unlockProject(key,scm.getProjectName(build));
-                        if (res==null) {
+                        DimensionsResult res = scm.getAPI().unlockProject(key, scm.getProjectName(build));
+                        if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");
                             build.setResult(Result.FAILURE);
                             listener.getLogger().flush();
-                        }
-                        else {
+                        } else {
                             listener.getLogger().println("[DIMENSIONS] Dimensions project was successfully unlocked");
                             listener.getLogger().flush();
                         }
-                    }
-                    else {
+                    } else {
                         listener.fatalError("[DIMENSIONS] Login to Dimensions failed.");
                         build.setResult(Result.FAILURE);
                         return false;
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                     listener.fatalError("Unable to unlock Dimensions project - " + e.getMessage());
                     build.setResult(Result.FAILURE);
                     return false;
-                }
-                finally
-                {
+                } finally {
                     scm.getAPI().logout(key, build);
                 }
             }

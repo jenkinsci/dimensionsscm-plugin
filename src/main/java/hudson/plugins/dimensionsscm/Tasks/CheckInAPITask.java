@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import com.serena.dmclient.api.DimensionsResult;
@@ -105,17 +96,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Calendar;
 
-/*
- * Main Checkin
- */
-
 /**
- * Class implementation of the checkin process.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Class implementation of the checkin process.
+ *
+ * @author Tim Payne
  */
 public class CheckInAPITask extends GenericAPITask implements FileCallable<Boolean> {
-
-    private boolean isForceTip = false;
-    private boolean isForceCheckIn = false;
+    private boolean isForceTip;
+    private boolean isForceCheckIn;
     private VariableResolver<String> myResolver;
 
     int version = 2009;
@@ -125,26 +114,20 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
 
     private String projectId = "";
     private String owningPart = "";
-    
+
     private String[] patterns;
     private String[] patternsExc;
-    
+
     private String patternType = "";
 
-    /*
-     * Default constructor
-     */
-    public CheckInAPITask(AbstractBuild<?,?> build, DimensionsSCM parent,
-                        int buildNo, String jobId, int version,
-                        ArtifactUploader artifact, FilePath workspace,
-                        TaskListener listener) {
-
+    public CheckInAPITask(AbstractBuild<?, ?> build, DimensionsSCM parent, int buildNo, String jobId, int version,
+            ArtifactUploader artifact, FilePath workspace, TaskListener listener) {
         Logger.Debug("Creating task - " + this.getClass().getName());
 
         this.workspace = workspace;
         this.listener = listener;
 
-        // Server details
+        // Server details.
         this.userName = parent.getJobUserName();
         this.passwd = parent.getJobPasswd();
         this.database = parent.getJobDatabase();
@@ -158,65 +141,56 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
         this.owningPart = artifact.getOwningPart();
         this.patterns = artifact.getPatterns();
         this.patternsExc = artifact.getPatternsExc();
-        
+
         this.patternType = artifact.getPatternType();
 
-        // Build details
+        // Build details.
         this.myResolver = build.getBuildVariableResolver();
         this.buildNo = buildNo;
         this.jobId = jobId;
     }
 
-    /*
-     * Execute method
-     *
-     * @param File
-     * @param VirtualChannel
-     * @return boolean
-     * @throws IOException
-     */
+    @Override
     public Boolean execute(File area, VirtualChannel channel) throws IOException {
-
         boolean bRet = true;
 
-        try
-        {
+        try {
             listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
             listener.getLogger().flush();
             FilePath wd = new FilePath(area);
             Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
-            File dir = new File (wd.getRemote());
-        
+            File dir = new File(wd.getRemote());
+
             File[] validFiles = new File[0];
-        
+
             if (patternType.equals("regEx")) {
                 listener.getLogger().println("[DIMENSIONS] Running RegEx pattern scanner...");
-                FileScanner fs = new FileScanner(dir,patterns,patternsExc,-1);
+                FileScanner fs = new FileScanner(dir, patterns, patternsExc, -1);
                 validFiles = fs.toArray();
-                listener.getLogger().println("[DIMENSIONS] Found "+validFiles.length+" file(s) to check in...");
+                listener.getLogger().println("[DIMENSIONS] Found " + validFiles.length + " file(s) to check in...");
             } else if (patternType.equals("Ant")) {
                 listener.getLogger().println("[DIMENSIONS] Running Ant pattern scanner...");
-                FileAntScanner fs = new FileAntScanner(dir,patterns,patternsExc,-1);
+                FileAntScanner fs = new FileAntScanner(dir, patterns, patternsExc, -1);
                 validFiles = fs.toArray();
-                listener.getLogger().println("[DIMENSIONS] Found "+validFiles.length+" file(s) to check in...");
+                listener.getLogger().println("[DIMENSIONS] Found " + validFiles.length + " file(s) to check in...");
             }
-        
+
             listener.getLogger().flush();
-        
+
             if (validFiles.length > 0) {
-                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+projectId+"\"...");
+                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \"" + projectId +
+                        "\"...");
                 listener.getLogger().flush();
 
                 Calendar nowDateCal = Calendar.getInstance();
-                File logFile = new File("a");
                 FileWriter logFileWriter = null;
                 PrintWriter fmtWriter = null;
                 File tmpFile = null;
 
                 try {
-                    tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+                    tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
                     logFileWriter = new FileWriter(tmpFile);
-                    fmtWriter = new PrintWriter(logFileWriter,true);
+                    fmtWriter = new PrintWriter(logFileWriter, true);
 
                     for (File f : validFiles) {
                         if (f.isDirectory()) {
@@ -234,34 +208,31 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
                 }
 
                 // Debug for printing out files
-                //String filesToLoad = new String(fu.loadFile(tmpFile));
-                //if (filesToLoad!=null)
-                //    filesToLoad += "\n";
+                //String filesToLoad = new String(FileUtils.loadFile(tmpFile));
                 //if (filesToLoad != null) {
-                //    filesToLoad = filesToLoad.replaceAll("\n\n","\n");
-                //    listener.getLogger().println(filesToLoad.replaceAll("\n","\n[DIMENSIONS] - "));
+                //    filesToLoad += "\n";
+                //    filesToLoad = filesToLoad.replaceAll("\n\n", "\n");
+                //    listener.getLogger().println(filesToLoad.replaceAll("\n", "\n[DIMENSIONS] - "));
                 //}
 
                 {
                     String requests = myResolver.resolve("DM_TARGET_REQUEST");
 
                     if (requests != null) {
-                        requests = requests.replaceAll(" ","");
+                        requests = requests.replaceAll(" ", "");
                         requests = requests.toUpperCase();
                     }
 
-                    DimensionsResult res = dmSCM.UploadFiles(key,wd,projectId,tmpFile,jobId,
-                                                             buildNo,requests,
-                                                             isForceCheckIn,isForceTip,
-                                                             owningPart);
-                    if (res==null) {
+                    DimensionsResult res = dmSCM.UploadFiles(key, wd, projectId, tmpFile, jobId, buildNo, requests,
+                            isForceCheckIn, isForceTip, owningPart);
+                    if (res == null) {
                         listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
                         listener.getLogger().flush();
                         bRet = false;
-                    }
-                    else {
+                    } else {
                         listener.getLogger().println("[DIMENSIONS] Build artifacts were successfully loaded into Dimensions");
-                        listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
+                        listener.getLogger().println("[DIMENSIONS] (" + res.getMessage().replaceAll("\n",
+                                "\n[DIMENSIONS] ") + ")");
                         listener.getLogger().flush();
                     }
                 }
@@ -275,11 +246,8 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
             } else {
                 listener.getLogger().println("[DIMENSIONS] No build artifacts found for checking in");
             }
-
             listener.getLogger().flush();
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             String errMsg = e.getMessage();
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";
@@ -292,5 +260,3 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
         return bRet;
     }
 }
-
-

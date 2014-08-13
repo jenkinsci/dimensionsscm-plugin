@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.AbstractBuild;
@@ -99,15 +90,16 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Represents a list of changes.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Represents a list of changes.
+ *
+ * @author Tim Payne
  */
-public final class DimensionsChangeSetList extends ChangeLogSet<DimensionsChangeSet>
-{
+public final class DimensionsChangeSetList extends ChangeLogSet<DimensionsChangeSet> {
     private final List<DimensionsChangeSet> changeSets;
-	private final AbstractBuild build;
+    private final AbstractBuild build;
 
-    DimensionsChangeSetList(AbstractBuild build, List<DimensionsChangeSet> logs)
-    {
+    DimensionsChangeSetList(AbstractBuild build, List<DimensionsChangeSet> logs) {
         super(build);
         this.build = build;
         Collections.reverse(logs);

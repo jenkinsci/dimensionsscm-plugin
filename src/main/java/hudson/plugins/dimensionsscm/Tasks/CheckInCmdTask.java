@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
@@ -102,59 +93,55 @@ import java.io.PrintWriter;
 import java.util.Calendar;
 
 /**
- * Class implementation of the checkin process.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Class implementation of the checkin process.
+ *
+ * @author Tim Payne
  */
 public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
+    private boolean forceCheckIn;
+    private boolean forceTip;
+    private boolean isStream;
 
-    private boolean forceCheckIn = false;
-    private boolean forceTip = false;
-    private boolean isStream = false;
-
-    int buildNo = 0;
+    int buildNo;
     private String jobId = "";
 
     private String projectId = "";
-    private String requests = null;
-    private String owningPart = null;
-    private String patternType = null;
-    
+    private String requests;
+    private String owningPart;
+    private String patternType;
+
     private String[] patterns;
     private String[] patternsExc;
 
     /**
-     * Utility routine to create command file for dmcli
-     *
-     * @param File
-     * @param File
-     * @return File
-     * @throws IOException
+     * Utility routine to create command file for dmcli.
      */
-    private File createCmdFile(final File area, final File tempFile)
-            throws IOException {
+    private File createCmdFile(final File area, final File tempFile) throws IOException {
         Calendar nowDateCal = Calendar.getInstance();
-        File logFile = new File("a");
         FileWriter logFileWriter = null;
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 
         try {
-            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+            tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
             logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter,true);
+            fmtWriter = new PrintWriter(logFileWriter, true);
 
             String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
-            if (version == 10 || !isStream)
+            if (version == 10 || !isStream) {
                 ciCmd = "UPLOAD ";
-
-            ciCmd += " /USER_FILELIST=\""+tempFile.getAbsolutePath()+"\"";
-            ciCmd += " /WORKSET=\""+projectId+"\"";
-            ciCmd += " /COMMENT=\"Build artifacts saved by Hudson/Jenkins for job '"+jobId+"' - build "+buildNo+"\"";
-            ciCmd += " /USER_DIRECTORY=\""+area.getAbsolutePath()+"\"";
+            }
+            ciCmd += " /USER_FILELIST=\"" + tempFile.getAbsolutePath() + "\"";
+            ciCmd += " /WORKSET=\"" + projectId + "\"";
+            ciCmd += " /COMMENT=\"Build artifacts saved by Hudson/Jenkins for job '" + jobId + "' - build " +
+                    buildNo + "\"";
+            ciCmd += " /USER_DIRECTORY=\"" + area.getAbsolutePath() + "\"";
             if (requests != null && requests.length() > 0) {
-                if (requests.indexOf(",")==0) {
+                if (requests.indexOf(",") == 0) {
                     ciCmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                 } else {
-                    ciCmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                    ciCmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
                 }
             }
             if (owningPart != null && owningPart.length() > 0) {
@@ -176,38 +163,25 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         } finally {
             fmtWriter.close();
         }
-
         return tmpFile;
     }
 
-    /*
-     * Default constructor
-     */
-    public CheckInCmdTask(String userName, String passwd,
-                             String database, String server,
-                             String projectId, String requestId,
-                             boolean forceCheckIn, boolean forceTip,
-                             String[] patterns, String patternType,
-                             int version,
-                             boolean isStream,
-                             int buildNo, String jobId,
-                             String owningPart,
-                             FilePath workspace,
-                             TaskListener listener,
-                             String[] patternsExc) {
-
+    public CheckInCmdTask(String userName, String passwd, String database, String server, String projectId,
+            String requestId, boolean forceCheckIn, boolean forceTip, String[] patterns, String patternType,
+            int version, boolean isStream, int buildNo, String jobId, String owningPart, FilePath workspace,
+            TaskListener listener, String[] patternsExc) {
         this.workspace = workspace;
         this.listener = listener;
         this.isStream = isStream;
 
-        // Server details
+        // Server details.
         this.userName = userName;
         this.passwd = passwd;
         this.database = database;
         this.server = server;
         this.version = version;
 
-        // Config details
+        // Config details.
         this.projectId = projectId;
         this.forceCheckIn = forceCheckIn;
         this.forceTip = forceTip;
@@ -220,50 +194,40 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         this.owningPart = owningPart;
     }
 
-
-    /*
-     * Process the checkin
-     *
-     * @param File
-     * @param File
-     * @param File
-     * @return boolean
+    /**
+     * Process the checkin.
      */
-    public Boolean execute(final File exe, final File param, final File area)
-                throws IOException {
-
+    @Override
+    public Boolean execute(final File exe, final File param, final File area) throws IOException {
         FilePath wa = new FilePath(area);
         boolean bRet = true;
-
-        try
-        {
+        try {
             listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
             listener.getLogger().flush();
-        
+
             FilePath wd = new FilePath(area);
             File dir = new File (wd.getRemote());
             File[] validFiles = new File[0];
 
             if (patternType.equals("regEx")) {
                 listener.getLogger().println("[DIMENSIONS] Running RegEx pattern scanner...");
-                FileScanner fs = new FileScanner(dir,patterns,patternsExc,-1);
+                FileScanner fs = new FileScanner(dir, patterns, patternsExc, -1);
                 validFiles = fs.toArray();
-                listener.getLogger().println("[DIMENSIONS] Found "+validFiles.length+" file(s) to check in...");
+                listener.getLogger().println("[DIMENSIONS] Found " + validFiles.length + " file(s) to check in...");
             } else if (patternType.equals("Ant")) {
                 listener.getLogger().println("[DIMENSIONS] Running Ant pattern scanner...");
-                FileAntScanner fs = new FileAntScanner(dir,patterns,patternsExc,-1);
+                FileAntScanner fs = new FileAntScanner(dir, patterns, patternsExc, -1);
                 validFiles = fs.toArray();
-                listener.getLogger().println("[DIMENSIONS] Found "+validFiles.length+" file(s) to check in...");
+                listener.getLogger().println("[DIMENSIONS] Found " + validFiles.length + " file(s) to check in...");
             }
-        
+
             listener.getLogger().flush();
-        
+
             String cmdLog = null;
 
             if (validFiles.length > 0) {
-
                 if (requests != null) {
-                    requests = requests.replaceAll(" ","");
+                    requests = requests.replaceAll(" ", "");
                     requests = requests.toUpperCase();
                 }
 
@@ -271,12 +235,11 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                 PrintWriter fmtWriter = null;
 
                 try {
-                    File logFile = new File("a");
                     FileWriter logFileWriter = null;
                     Calendar nowDateCal = Calendar.getInstance();
-                    tempFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+                    tempFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
                     logFileWriter = new FileWriter(tempFile);
-                    fmtWriter = new PrintWriter(logFileWriter,true);
+                    fmtWriter = new PrintWriter(logFileWriter, true);
 
                     for (File f : validFiles) {
                         if (f.isDirectory()) {
@@ -292,7 +255,7 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                     fmtWriter.close();
                 }
 
-                File cmdFile = createCmdFile(area,tempFile);
+                File cmdFile = createCmdFile(area, tempFile);
                 if (cmdFile == null) {
                     listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
                     param.delete();
@@ -300,7 +263,8 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                     return false;
                 }
 
-                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""+projectId+"\"...");
+                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \"" +
+                        projectId + "\"...");
                 listener.getLogger().flush();
 
                 /* Execute a Dimensions command */
@@ -311,14 +275,14 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                 cmd[3] = "-file";
                 cmd[4] = cmdFile.getAbsolutePath();
 
-                SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
+                SCMLauncher proc = new SCMLauncher(cmd, listener, wa);
                 bRet = proc.execute();
                 String outputStr = proc.getResults();
                 cmdFile.delete();
 
-                if (cmdLog==null)
+                if (cmdLog == null) {
                     cmdLog = "\n";
-
+                }
                 cmdLog += outputStr;
                 cmdLog += "\n";
             } else {
@@ -331,8 +295,8 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
 
             if (cmdLog != null && cmdLog.length() > 0 && listener.getLogger() != null) {
                 listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
-                cmdLog = cmdLog.replaceAll("\n\n","\n");
-                listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
+                cmdLog = cmdLog.replaceAll("\n\n", "\n");
+                listener.getLogger().println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
                 listener.getLogger().flush();
             }
 
@@ -344,11 +308,8 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                 listener.getLogger().println("[DIMENSIONS] ==========================================================");
                 listener.getLogger().flush();
             }
-
             return bRet;
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             param.delete();
             String errMsg = e.getMessage();
             if (errMsg == null) {
@@ -362,5 +323,3 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         return bRet;
     }
 }
-
-

@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,47 +81,42 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import java.io.File;
 import java.io.Serializable;
 
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories.
+ *
+ * @author Tim Payne
+ */
 public class PathUtils implements Serializable {
-
-
     protected static final long serialVersionUID = 1L;
 
     /**
-     * Utility routine to look for an executable in the path
-     *
-     * @param exeName
-     * @return File
+     * Utility routine to look for an executable in the path.
      */
      public static File getExecutable(String exeName) {
-        // Get the path environment
+        // Get the path environment.
         String exec = exeName;
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
             exec += ".exe";
         }
 
         String path = System.getenv("PATH");
-        if (path == null)
+        if (path == null) {
             path = System.getenv("path");
-        if (path == null)
+        }
+        if (path == null) {
             return null;
+        }
 
-        // Split it into directories
+        // Split it into directories.
         String[] pathDirs = path.split(File.pathSeparator);
 
-        // Hunt through the directories to find the file I want
+        // Hunt through the directories to find the file I want.
         File exe = null;
         for (String pathDir : pathDirs) {
             File file = new File(pathDir, exec);
@@ -134,5 +128,3 @@ public class PathUtils implements Serializable {
         return exe;
      }
 }
-
-

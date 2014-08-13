@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import java.io.Serializable;
@@ -101,9 +92,12 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * A set of methods for converting Date objects to and from strings in a valid
- * date format, and also validating that strings are in an Oracle date format.
- * Note: this class uses only Locale.US at the moment - this may need changing.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. A set of methods for converting Date objects to and from
+ * strings in a valid date format, and also validating that strings are in an
+ * Oracle date format. Note: this class uses only Locale.US at the moment -
+ * this may need changing.
+ *
  * @author Tim Payne
  */
 public class DateUtils implements Serializable {
@@ -117,12 +111,7 @@ public class DateUtils implements Serializable {
      * Attempt to parse as date-and-time patterns first (since a timestamp
      * string with a date-and-time would also be parsed by a date pattern).
      */
-    private static final String PATTERNS[] = {
-        DATETIME_PATTERN,
-        DATE_PATTERN,
-        RFCDATETIME_PATTERN
-    };
-
+    private static final String[] PATTERNS = { DATETIME_PATTERN, DATE_PATTERN, RFCDATETIME_PATTERN };
 
     /**
      * Parses a date from a string in known format, using UTC time zone.
@@ -147,7 +136,7 @@ public class DateUtils implements Serializable {
         dateStr = dateStr.trim();
         for (int i = 0; i < PATTERNS.length; ++i) {
             try {
-                SimpleDateFormat df= new SimpleDateFormat(PATTERNS[i], Locale.US);
+                SimpleDateFormat df = new SimpleDateFormat(PATTERNS[i], Locale.US);
                 df.setTimeZone(tz);
                 date = df.parse(dateStr);
                 if (date != null) {
@@ -238,7 +227,7 @@ public class DateUtils implements Serializable {
     }
 
     /**
-     * Gets "now" in RFC format
+     * Gets "now" in RFC format.
      * @return  a String containing a date in known RFC
      */
     public static String getNowStrDate() {
@@ -249,7 +238,7 @@ public class DateUtils implements Serializable {
     }
 
     /**
-     * Gets "now" in RFC format
+     * Gets "now" in RFC format.
      * @param timezone tz
      * @return  a String containing a date in known RFC
      */
@@ -261,7 +250,7 @@ public class DateUtils implements Serializable {
     }
 
     /**
-     * Gets "now" in verbose format
+     * Gets "now" in verbose format.
      * @return  a String containing a date in verbose format
      */
     public static String getNowStrDateVerbose() {
@@ -272,7 +261,7 @@ public class DateUtils implements Serializable {
     }
 
     /**
-     * Gets a date in RFC format
+     * Gets a date in RFC format.
      * @param calendar date
      * @return  a String containing a date in known RFC
      */
@@ -283,7 +272,7 @@ public class DateUtils implements Serializable {
     }
 
     /**
-     * Gets a date in RFC format
+     * Gets a date in RFC format.
      * @param calendar date
      * @param timezone tz
      * @return  a String containing a date in known RFC
@@ -293,5 +282,4 @@ public class DateUtils implements Serializable {
         df.setTimeZone(tz);
         return df.format(opDate.getTime());
     }
-
 }

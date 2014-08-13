@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
@@ -103,13 +94,14 @@ import java.io.PrintWriter;
 import java.util.Calendar;
 
 /**
- * Class implementation of the command process.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Class implementation of the command process.
+ *
+ * @author Tim Payne
  */
 public class GenericCmdTask implements FileCallable<Boolean> {
-
-    protected FilePath workspace = null;
-    protected TaskListener listener = null;
-    protected PathUtils pu;
+    protected FilePath workspace;
+    protected TaskListener listener;
     protected String userName = "";
     protected String passwd = "";
     protected String database = "";
@@ -121,68 +113,48 @@ public class GenericCmdTask implements FileCallable<Boolean> {
     protected static final long serialVersionUID = 1L;
 
     /**
-     * Utility routine to look for an executable in the path
-     *
-     * @param exeName
-     * @return File
+     * Utility routine to look for an executable in the path.
      */
      protected File getExecutable(String exeName) {
-        // Get the path environment
-        return pu.getExecutable(exeName);
+        // Get the path environment.
+        return PathUtils.getExecutable(exeName);
      }
 
-
     /**
-     * Utility routine to create parameter file for dmcli
-     *
-     * @return File
-     * @throws IOException
+     * Utility routine to create parameter file for dmcli.
      */
-     protected File createParamFile()
-            throws IOException {
+     protected File createParamFile() throws IOException {
         Calendar nowDateCal = Calendar.getInstance();
-        File logFile = new File("a");
         FileWriter logFileWriter = null;
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 
         try {
-            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+            tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
             logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter,true);
-            fmtWriter.println("-host "+ server);
-            fmtWriter.println("-user "+ userName);
-            fmtWriter.println("-pass "+ passwd);
-            fmtWriter.println("-dbname "+ database);
+            fmtWriter = new PrintWriter(logFileWriter, true);
+            fmtWriter.println("-host " + server);
+            fmtWriter.println("-user " + userName);
+            fmtWriter.println("-pass " + passwd);
+            fmtWriter.println("-dbname " + database);
             fmtWriter.flush();
         } catch (Exception e) {
             throw new IOException("Unable to write command log - " + e.getMessage());
         } finally {
             fmtWriter.close();
         }
-
         return tmpFile;
     }
 
-    /*
-     * Default constructor
-     */
     public GenericCmdTask() {
     }
 
-    /*
-     * Constructor
-     */
-    public GenericCmdTask(String userName, String passwd,
-                          String database, String server,
-                          int version,
-                          FilePath workspace,
-                          TaskListener listener) {
-
+    public GenericCmdTask(String userName, String passwd, String database, String server, int version,
+            FilePath workspace, TaskListener listener) {
         this.workspace = workspace;
         this.listener = listener;
 
-        // Server details
+        // Server details.
         this.userName = userName;
         this.passwd = passwd;
         this.database = database;
@@ -190,18 +162,9 @@ public class GenericCmdTask implements FileCallable<Boolean> {
         this.version = version;
     }
 
-
-    /*
-     * Invoke method
-     *
-     * @param File
-     * @param VirtualChannel
-     * @return boolean
-     * @throws IOException
-     */
+    @Override
     public Boolean invoke(File area, VirtualChannel channel)
               throws IOException {
-
         boolean retStatus = false;
 
         // This here code is executed on the slave.
@@ -220,7 +183,7 @@ public class GenericCmdTask implements FileCallable<Boolean> {
                     return false;
                 }
 
-                retStatus = execute(exe,param,area);
+                retStatus = execute(exe, param, area);
                 param.delete();
             }
             return retStatus;
@@ -236,18 +199,10 @@ public class GenericCmdTask implements FileCallable<Boolean> {
         }
     }
 
-    /*
-     * Process the task
-     *
-     * @param File
-     * @param File
-     * @param File
-     * @return boolean
+    /**
+     * Process the task. Template method to override in subclasses.
      */
-    public Boolean execute(final File exe, final File param, final File area)
-                throws IOException {
+    public Boolean execute(final File exe, final File param, final File area) throws IOException {
         return true;
     }
 }
-
-

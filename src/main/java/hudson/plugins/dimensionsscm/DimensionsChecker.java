@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.AbstractBuild;
@@ -98,27 +89,30 @@ import hudson.model.Project;
 import java.io.Serializable;
 
 /**
- * A set of methods for checking the consistency of data passed into the plugin
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. A set of methods for checking the consistency of data passed
+ * into the plugin.
+ *
  * @author Tim Payne
  */
 public class DimensionsChecker implements Serializable {
-
     /**
-     * Checks if all the plugins that need to be loaded are loaded
-     * @param AbstractBuild
-     * @return boolean
+     * Checks if all the plugins that need to be loaded are loaded.
      */
     public static boolean isValidPluginCombination(AbstractBuild build, BuildListener listener) {
         if (build.getProject() instanceof Project) {
-            Project buildProject = (Project)build.getProject();
+            Project buildProject = (Project) build.getProject();
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
                 Logger.Debug("Not using a DimensionsSCM engine - bye");
                 return false;
             }
 
-            DimensionsBuildWrapper bwplugin = (DimensionsBuildWrapper)buildProject.getBuildWrappers().get(hudson.plugins.dimensionsscm.DimensionsBuildWrapper.DMWBLD_DESCRIPTOR);
-            DimensionsBuildNotifier bnplugin = (DimensionsBuildNotifier)build.getProject().getPublishersList().get(DimensionsBuildNotifier.class);
-            ArtifactUploader anplugin = (ArtifactUploader)build.getProject().getPublishersList().get(ArtifactUploader.class);
+            DimensionsBuildWrapper bwplugin = (DimensionsBuildWrapper) buildProject.getBuildWrappers().get(
+                    DimensionsBuildWrapper.DMWBLD_DESCRIPTOR);
+            DimensionsBuildNotifier bnplugin = (DimensionsBuildNotifier) build.getProject().getPublishersList().get(
+                    DimensionsBuildNotifier.class);
+            ArtifactUploader anplugin = (ArtifactUploader) build.getProject().getPublishersList().get(
+                    ArtifactUploader.class);
 
             if (bwplugin != null) {
                 Logger.Debug("DimensionsBuildWrapper is activated");
@@ -126,24 +120,23 @@ public class DimensionsChecker implements Serializable {
             if (bnplugin != null) {
                 Logger.Debug("DimensionsBuildNotifier is activated");
             }
-
             if (anplugin != null) {
                 Logger.Debug("ArtifactUploader is activated");
             }
 
-            // Tagging plugin needs lock plugin
+            // Tagging plugin needs lock plugin.
             if (bnplugin != null && bwplugin == null) {
                 listener.fatalError("\n[DIMENSIONS] Tags can only be created when the 'Lock Dimensions project while the build is in progress' option is enabled.");
                 return false;
             }
 
-            // Uploader plugin can work with the others at the moment but in the future
-            // it may not be able to, so let it be for now, but have code to kill it if needed
-            // - The lock is released before the notifier plugins kick in
-            // - Baseline plugin kicks in after the uploader plugin
-            // if (anplugin != null && (bwplugin != null || bnplugin != null) {
-            //     return false;
-            // }
+            // Uploader plugin can work with the others at the moment but in the future it may not be able to, so let
+            // it be for now, but have code to kill it if needed.
+            // - The lock is released before the notifier plugins kick in.
+            // - Baseline plugin kicks in after the uploader plugin.
+            //if (anplugin != null && (bwplugin != null || bnplugin != null) {
+            //    return false;
+            //}
         }
         return true;
     }

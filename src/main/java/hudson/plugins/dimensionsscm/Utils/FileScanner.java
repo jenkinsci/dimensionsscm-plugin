@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,49 +81,47 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
-import java.util.Vector;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories.
+ *
+ * @author Tim Payne
+ */
 public class FileScanner implements Serializable {
-
-    private File[] arr = null;
-    private Collection<File> xfiles = null;
-    private File baseDir = null;
-    private ScannerFilter filter = null;
+    private File[] arr;
+    private Collection<File> xfiles;
+    private File baseDir;
+    private ScannerFilter filter;
 
     /**
      * File pattern matcher class.
      */
     public class ScannerFilter implements FilenameFilter {
-        private TreeSet<String> artifactIncFilter = new TreeSet<String>() ;
-        private TreeSet<String> artifactExcFilter = new TreeSet<String>() ;
+        private Set<String> artifactIncFilter = new TreeSet<String>();
+        private Set<String> artifactExcFilter = new TreeSet<String>();
 
         public ScannerFilter(String[] inclusionsx, String[] exclusionsx) {
- 
             Iterator<String> artifactList = Arrays.asList(inclusionsx).iterator();
             while (artifactList.hasNext()) {
                 artifactIncFilter.add(artifactList.next().trim());
             }
             artifactIncFilter.remove("");
-            
+
             if (exclusionsx != null && exclusionsx.length > 0) {
                 artifactList = Arrays.asList(exclusionsx).iterator();
                 while (artifactList.hasNext()) {
@@ -141,23 +138,21 @@ public class FileScanner implements Serializable {
             final Iterator<String> artifactList = artifactIncFilter.iterator();
             final Iterator<String> artifactListEx = artifactExcFilter.iterator();
 
-            // Skip metadata no matter what
-            if (name.equals(".metadata") ||
-				name.equals(".dm")) {
+            // Skip metadata no matter what.
+            if (name.equals(".metadata") || name.equals(".dm")) {
                 return false;
             }
 
-            
             while (artifactListEx.hasNext()) {
                 String filter = artifactListEx.next();
-                if (Pattern.matches(filter,name)) {
+                if (Pattern.matches(filter, name)) {
                     return false;
                 }
             }
 
             while (artifactList.hasNext()) {
                 String filter = artifactList.next();
-                if (Pattern.matches(filter,name)) {
+                if (Pattern.matches(filter, name)) {
                     return true;
                 }
             }
@@ -166,14 +161,10 @@ public class FileScanner implements Serializable {
         }
     }
 
-
-    /**
-     * Constructor.
-     */
     public FileScanner(File dirName, String[] patterns, String[] patternsExc, int depth) {
-         baseDir = dirName;
-         filter = new ScannerFilter(patterns,patternsExc);
-         xfiles = scanFiles(dirName,filter,depth);
+        baseDir = dirName;
+        filter = new ScannerFilter(patterns, patternsExc);
+        xfiles = scanFiles(dirName, filter, depth);
     }
 
     public Collection<File> getFiles() {
@@ -185,36 +176,27 @@ public class FileScanner implements Serializable {
         return xfiles.toArray(arr);
     }
 
-    private Collection<File> scanFiles(
-            File dirName,
-            FilenameFilter filter,
-            int depth) {
-        if (dirName.isDirectory()) {
-        }
-
-        Vector<File> files = new Vector<File>();
+    private Collection<File> scanFiles(File dirName, FilenameFilter filter, int depth) {
+        List<File> files = new ArrayList<File>();
         File[] entFiles = dirName.listFiles();
 
-        if (dirName.isDirectory() && 
-			(dirName.getName().equals(".metadata") ||
-			 dirName.getName().equals(".dm"))) {
+        if (dirName.isDirectory() && (dirName.getName().equals(".metadata") || dirName.getName().equals(".dm"))) {
+            /* ignore it. */
         } else {
             if (entFiles != null) {
                 for (File afile : entFiles) {
                     String dname = afile.getAbsolutePath();
-
-                    if (afile.getName().equals(".metadata") ||
-						afile.getName().equals(".dm")) {
+                    if (afile.getName().equals(".metadata") || afile.getName().equals(".dm")) {
                         continue;
                     }
 
-                    dname = dname.substring(baseDir.getAbsolutePath().length()+1,afile.getAbsolutePath().length());
+                    dname = dname.substring(baseDir.getAbsolutePath().length() + 1, afile.getAbsolutePath().length());
 
                     if (filter == null || filter.accept(dirName, dname)) {
                         files.add(afile);
                     }
 
-                    if ((depth<=-1) || (depth>0 && afile.isDirectory())) {
+                    if (depth <= -1 || (depth > 0 && afile.isDirectory())) {
                         depth--;
                         files.addAll(scanFiles(afile, filter, depth));
                         depth++;
@@ -225,4 +207,3 @@ public class FileScanner implements Serializable {
         return files;
     }
 }
-

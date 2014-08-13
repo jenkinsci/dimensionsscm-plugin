@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.Extension;
@@ -109,14 +100,20 @@ import hudson.util.VariableResolver;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories.
+ *
+ * @author Tim Payne
+ */
 public class ArtifactUploader extends Notifier implements Serializable {
-
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
@@ -127,123 +124,112 @@ public class ArtifactUploader extends Notifier implements Serializable {
     private String[] patternsRegExExc = new String[0];
     private String[] patternsAntExc = new String[0];
 
-    private boolean forceCheckIn = false;
-    private boolean forceTip = false;
-    private String  owningPart = null;
-	private boolean forceAsSlave = false;
-    private String  patternType = "regEx";
-	
-	public ArtifactUploader(String[] patternsRegEx, boolean fTip, boolean fMerge, String part) {
-		this(patternsRegEx, fTip, fMerge, part, false, "regEx", null);
-	}
+    private boolean forceCheckIn;
+    private boolean forceTip;
+    private String owningPart;
+    private boolean forceAsSlave;
+    private String patternType = "regEx";
+
+    public ArtifactUploader(String[] patternsRegEx, boolean fTip, boolean fMerge, String part) {
+        this(patternsRegEx, fTip, fMerge, part, false, "regEx", null);
+    }
 
     public ArtifactUploader(String[] patternsRegEx, boolean fTip, boolean fMerge, String part, boolean fAsSlave) {
-		this(patternsRegEx, fTip, fMerge, part, fAsSlave, "regEx", null);
-	}
+        this(patternsRegEx, fTip, fMerge, part, fAsSlave, "regEx", null);
+    }
 
-    public ArtifactUploader(String[] patternsRegEx, boolean fTip, boolean fMerge,
-                            String part, boolean fAsSlave, String patternType, String[] pAnt) {
-		this(patternsRegEx, fTip, fMerge, part, fAsSlave, patternType, pAnt, null, null);
-	}
-    
-    /**
-     * Default constructor.
-     */
+    public ArtifactUploader(String[] patternsRegEx, boolean fTip, boolean fMerge, String part, boolean fAsSlave,
+            String patternType, String[] pAnt) {
+        this(patternsRegEx, fTip, fMerge, part, fAsSlave, patternType, pAnt, null, null);
+    }
+
     @DataBoundConstructor
     public ArtifactUploader(String[] pregEx, boolean fTip, boolean fMerge, String part, boolean fAsSlave,
-                            String patternType, String[] pAnt,
-                            String[] pregExExc, String[] pAntExc) {
-        // Check the folders specified have data specified
+            String patternType, String[] pAnt, String[] pregExExc, String[] pAntExc) {
+        // Check the folders specified have data specified.
         if (pregEx != null) {
             Logger.Debug("PatternsRegEx are populated");
-            Vector<String> x = new Vector<String>();
-            for(int t=0;t<pregEx.length;t++) {
-                if (StringUtils.isNotEmpty(pregEx[t]))
-                    x.add(pregEx[t]);
+            List<String> x = new ArrayList<String>(pregEx.length);
+            for (String pattern : pregEx) {
+                if (StringUtils.isNotEmpty(pattern)) {
+                    x.add(pattern);
+                }
             }
-            this.patternsRegEx = (String[])x.toArray(new String[1]);
-        }
-        else {
+            this.patternsRegEx = x.toArray(new String[0]);
+        } else {
             this.patternsRegEx[0] = ".*";
         }
         if (pAnt != null) {
             Logger.Debug("pAnt are populated");
-            Vector<String> x = new Vector<String>();
-            for(int t=0;t<pAnt.length;t++) {
-                if (StringUtils.isNotEmpty(pAnt[t]))
-                    x.add(pAnt[t]);
+            List<String> x = new ArrayList<String>(pAnt.length);
+            for (String pattern : pAnt) {
+                if (StringUtils.isNotEmpty(pattern)) {
+                    x.add(pattern);
+                }
             }
-            this.patternsAnt = (String[])x.toArray(new String[1]);
-        }
-        else {
+            this.patternsAnt = x.toArray(new String[0]);
+        } else {
             this.patternsAnt[0] = "**/*";
         }
 
         if (pregExExc != null) {
             Logger.Debug("PatternsRegEx are populated");
-            Vector<String> x = new Vector<String>();
-            for(int t=0;t<pregExExc.length;t++) {
-                if (StringUtils.isNotEmpty(pregExExc[t]))
-                    x.add(pregExExc[t]);
+            List<String> x = new ArrayList<String>(pregExExc.length);
+            for (String pattern : pregExExc) {
+                if (StringUtils.isNotEmpty(pattern)) {
+                    x.add(pattern);
+                }
             }
-            this.patternsRegExExc = (String[])x.toArray(new String[1]);
-        }
-        else {
+            this.patternsRegExExc = x.toArray(new String[0]);
         }
         if (pAntExc != null) {
             Logger.Debug("pAnt are populated");
-            Vector<String> x = new Vector<String>();
-            for(int t=0;t<pAntExc.length;t++) {
-                if (StringUtils.isNotEmpty(pAntExc[t]))
-                    x.add(pAntExc[t]);
+            List<String> x = new ArrayList<String>(pAntExc.length);
+            for (String pattern : pAntExc) {
+                if (StringUtils.isNotEmpty(pattern)) {
+                    x.add(pattern);
+                }
             }
-            this.patternsAntExc = (String[])x.toArray(new String[1]);
+            this.patternsAntExc = x.toArray(new String[0]);
         }
-        else {
-        }
-        
+
         this.forceCheckIn = fTip;
         this.forceTip = fMerge;
         this.owningPart = part;
-		this.forceAsSlave = fAsSlave;
+        this.forceAsSlave = fAsSlave;
         this.patternType = patternType;
     }
 
-    /*
-     * Gets the patterns to upload
-     * @return patterns
+    /**
+     * Gets the patterns to upload.
      */
     public String[] getPatternsRegEx() {
         return this.patternsRegEx;
     }
 
-    /*
-     * Gets the patterns to upload
-     * @return patterns
+    /**
+     * Gets the patterns to upload.
      */
     public String[] getPatternsAnt() {
         return this.patternsAnt;
     }
 
-    /*
-     * Gets the patterns to upload
-     * @return patterns
+    /**
+     * Gets the patterns to exclude from upload.
      */
     public String[] getPatternsRegExExc() {
         return this.patternsRegExExc;
     }
-    
-    /*
-     * Gets the patterns to upload
-     * @return patterns
+
+    /**
+     * Gets the patterns to exclude from upload.
      */
     public String[] getPatternsAntExc() {
         return this.patternsAntExc;
     }
-    
-    /*
-     * Gets the patterns to upload
-     * @return patterns
+
+    /**
+     * Gets the patterns to exclude from upload.
      */
     public String[] getPatternsExc() {
         if (getPatternType().equals("Ant")) {
@@ -253,9 +239,8 @@ public class ArtifactUploader extends Notifier implements Serializable {
         }
     }
 
-    /*
-     * Gets the patterns to upload
-     * @return patterns
+    /**
+     * Gets the patterns to upload.
      */
     public String[] getPatterns() {
         if (getPatternType().equals("Ant")) {
@@ -265,50 +250,46 @@ public class ArtifactUploader extends Notifier implements Serializable {
         }
     }
 
-    /*
-     * Gets the owning part
-     * @return owningPart
+    /**
+     * Gets the owning part name.
      */
     public String getOwningPart() {
         return this.owningPart;
     }
 
-    /*
-     * Gets the pattern type
-     * @return patternType
+    /**
+     * Gets the pattern type name.
      */
     public String getPatternType() {
         return this.patternType;
     }
-    
-    /*
-     * Gets force checkin
+
+    /**
+     * Gets force checkin flag.
      * @return forceCheckIn
      */
     public boolean isForceCheckIn() {
         return this.forceCheckIn;
     }
 
-    /*
-     * Gets force merge
-     * @return forceMerge
+    /**
+     * Gets force merge flag.
      */
     public boolean isForceTip() {
         return this.forceTip;
     }
-	
-    /*
-     * Gets force as slave
-     * @return forceAsSlave
+
+    /**
+     * Gets force as slave flag.
      */
     public boolean isForceAsSlave() {
         return this.forceAsSlave;
     }
-	
+
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
-                           BuildListener listener) throws IOException, InterruptedException {
-        long key=-1;
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws IOException, InterruptedException {
+        long key = -1L;
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
         FilePath workspace = build.getWorkspace();
         boolean bRet = false;
@@ -322,90 +303,74 @@ public class ArtifactUploader extends Notifier implements Serializable {
             }
 
             if (build.getResult() == Result.SUCCESS) {
-                DimensionsSCM scm = (DimensionsSCM)build.getProject().getScm();
+                DimensionsSCM scm = (DimensionsSCM) build.getProject().getScm();
                 DimensionsAPI dmSCM = new DimensionsAPI();
-				String nodeName = build.getBuiltOn().getNodeName();
+                String nodeName = build.getBuiltOn().getNodeName();
 
                 Logger.Debug("Calculating version of Dimensions...");
 
                 int version = 2009;
-                key = dmSCM.login(scm.getJobUserName(),
-                                  scm.getJobPasswd(),
-                                  scm.getJobDatabase(),
-                                  scm.getJobServer(), build);
+                key = dmSCM.login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(), scm.getJobServer(),
+                        build);
 
-                if (key>0) {
-                    // Get the server version
+                if (key > 0L) {
+                    // Get the server version.
                     Logger.Debug("Login worked.");
                     version = dmSCM.getDmVersion();
                     if (version == 0) {
                         version = 2009;
                     }
                     if (version != 10) {
-                        isStream = dmSCM.isStream(key,scm.getProjectName(build));
+                        isStream = dmSCM.isStream(key, scm.getProjectName(build));
                     }
                     dmSCM.logout(key, build);
                 }
 
-
-                // Get the details of the master
+                // Get the details of the master.
                 InetAddress netAddr = InetAddress.getLocalHost();
                 byte[] ipAddr = netAddr.getAddress();
                 String hostname = netAddr.getHostName();
 
                 String projectName = build.getProject().getName();
                 int buildNo = build.getNumber();
-				
+
                 boolean master = true;
                 if (isForceAsSlave()) {
                     master = false;
                     Logger.Debug("Forced processing as slave...");
                 } else {
                     Logger.Debug("Checking if master or slave...");
-                    if (nodeName != null && nodeName.length() > 0)
+                    if (nodeName != null && nodeName.length() > 0) {
                         master = false;
+                    }
                 }
-				
+
                 if (master) {
                     // Running on master...
                     listener.getLogger().println("[DIMENSIONS] Running checkin on master...");
                     listener.getLogger().flush();
 
-                    // Using Java API because this allows the plugin to work on platforms
-                    // where Dimensions has not been ported, e.g. MAC OS, which is what
-                    // I use
-                    CheckInAPITask task = new CheckInAPITask(build,scm,
-                                                             buildNo, projectName,version,
-                                                             this,workspace,listener);
+                    // Using Java API because this allows the plugin to work on platforms where Dimensions has not
+                    // been ported, e.g. MAC OS, which is what I use.
+                    CheckInAPITask task = new CheckInAPITask(build, scm, buildNo, projectName, version, this,
+                            workspace, listener);
                     bRet = workspace.act(task);
                 } else {
-                    // Running on slave... Have to use the command line as Java API will not
-                    // work on remote hosts. Cannot serialise it...
+                    // Running on slave... Have to use the command line as Java API will not work on remote hosts.
+                    // Cannot serialise it...
+                    // VariableResolver does not appear to be serialisable either, so...
+                    VariableResolver<String> myResolver = build.getBuildVariableResolver();
 
-                    {
-                        // VariableResolver does not appear to be serialisable either, so...
-                        VariableResolver<String> myResolver = build.getBuildVariableResolver();
+                    String requests = myResolver.resolve("DM_TARGET_REQUEST");
 
-                        String requests = myResolver.resolve("DM_TARGET_REQUEST");
+                    listener.getLogger().println("[DIMENSIONS] Running checkin on slave...");
+                    listener.getLogger().flush();
 
-                        listener.getLogger().println("[DIMENSIONS] Running checkin on slave...");
-                        listener.getLogger().flush();
-
-                        CheckInCmdTask task = new CheckInCmdTask(scm.getJobUserName(),
-                                                                 scm.getJobPasswd(),
-                                                                 scm.getJobDatabase(),
-                                                                 scm.getJobServer(),
-                                                                 scm.getProjectName(build),
-                                                                 requests,isForceCheckIn(),isForceTip(),
-                                                                 getPatterns(),
-                                                                 getPatternType(),
-                                                                 version,isStream,
-                                                                 buildNo, projectName,
-                                                                 getOwningPart(),
-                                                                 workspace,listener,
-                                                                 getPatternsExc());
-                        bRet = workspace.act(task);
-                    }
+                    CheckInCmdTask task = new CheckInCmdTask(scm.getJobUserName(), scm.getJobPasswd(),
+                            scm.getJobDatabase(), scm.getJobServer(), scm.getProjectName(build), requests,
+                            isForceCheckIn(), isForceTip(), getPatterns(), getPatternType(), version, isStream,
+                            buildNo, projectName, getOwningPart(), workspace, listener, getPatternsExc());
+                    bRet = workspace.act(task);
                 }
             } else {
                 bRet = true;
@@ -413,13 +378,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
             if (!bRet) {
                 build.setResult(Result.FAILURE);
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             listener.fatalError("Unable to load build artifacts into Dimensions - " + e.getMessage());
             build.setResult(Result.FAILURE);
             return false;
-        }
-        finally
-        {
         }
         return bRet;
     }
@@ -429,9 +391,8 @@ public class ArtifactUploader extends Notifier implements Serializable {
      */
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-
-        /*
-         * Loads the descriptor
+        /**
+         * Loads the descriptor.
          */
         public DescriptorImpl() {
             super(ArtifactUploader.class);
@@ -443,33 +404,31 @@ public class ArtifactUploader extends Notifier implements Serializable {
             return "Load any build artifacts into the Dimensions repository";
         }
 
-
-        /*
-         *  This builder can be used with all project types
+        /**
+         *  This builder can be used with all project types.
          */
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
             return true;
         }
 
-        /*
-         * Save the descriptor configuration
+        /**
+         * Save the descriptor configuration.
          */
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindParameters(this,"ArtifactUploader");
+            req.bindParameters(this, "ArtifactUploader");
             return super.configure(req, formData);
         }
 
-
         @Override
         public Notifier newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            // Get variables and then construct a new object
+            // Get variables and then construct a new object.
             String[] pregEx = req.getParameterValues("artifactuploader.patternsRegEx");
             String[] pAnt = req.getParameterValues("artifactuploader.patternsAnt");
             String[] pregExExc = req.getParameterValues("artifactuploader.patternsRegExExc");
             String[] pAntExc = req.getParameterValues("artifactuploader.patternsAntExc");
-            String  pType = req.getParameter("artifactuploader.patternType");
+            String pType = req.getParameter("artifactuploader.patternType");
             Boolean fTip = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceCheckIn")));
             Boolean fMerge = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("artifactuploader.forceTip")));
 
@@ -484,13 +443,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
             } else {
                 pType = "regEx";
             }
-            
-            ArtifactUploader artifactor = new ArtifactUploader(pregEx,fTip,fMerge,oPart,fAsSlave,pType,pAnt,
-                                                               pregExExc,pAntExc);
 
+            ArtifactUploader artifactor = new ArtifactUploader(pregEx, fTip, fMerge, oPart, fAsSlave, pType, pAnt,
+                    pregExExc, pAntExc);
             return artifactor;
         }
     }
 }
-
-

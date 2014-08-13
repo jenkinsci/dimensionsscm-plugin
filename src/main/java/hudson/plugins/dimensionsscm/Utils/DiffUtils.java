@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,88 +81,68 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 
-//
-// Utility class to get the differences between two files
-//
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Utility class to get the differences between two files.
+ *
+ * @author Tim Payne
+ */
 public class DiffUtils implements Serializable {
-
     protected static final long serialVersionUID = 1L;
-    private PathUtils pu;
     private String exec = "diff";
-    private String results = null;
+    private String results;
 
-    private File file1 = null;
-    private File file2 = null;
+    private File file1;
+    private File file2;
 
-    /*
-     * Get the command results
-     * @return String
+    /**
+     * Get the command results.
      */
     public String getResults() {
         return this.results;
     }
 
-    /*
-     * Get the file1
-     * @return File
+    /**
+     * Get the file1.
      */
     public File getBaseFile() {
         return this.file1;
     }
 
-    /*
-     * Get the file2
-     * @return File
+    /**
+     * Get the file2.
      */
     public File getUserFile() {
         return this.file2;
     }
 
     /**
-     * Utility routine to look for the diff executable
-     *
-     * @param exeName
-     * @return File
+     * Utility routine to look for the diff executable.
      */
     private File getExecutable(String exeName) {
-       // Get the path environment
-       return pu.getExecutable(exeName);
+       // Get the path environment.
+       return PathUtils.getExecutable(exeName);
     }
 
-    /*
-     * Default constructor
-     */
     public DiffUtils(String file1, String file2) {
         this.file1 = new File(file1);
         this.file2 = new File(file2);
     }
 
-
-    /*
-     * Run difference
-     * @return boolean
-     * @throws IOException
-     * @throws InterruptedException
+    /**
+     * Run difference.
      */
     public boolean diff() throws IOException, InterruptedException {
         boolean result = false;
         File exe = getExecutable(exec);
         if (exe == null) {
-            throw new IOException("The '"+exec+"' executable could not be located in the path");
+            throw new IOException("The '" + exec + "' executable could not be located in the path");
         }
 
         String[] cmd = new String[3];
@@ -171,12 +150,10 @@ public class DiffUtils implements Serializable {
         cmd[1] = file1.getAbsolutePath();
         cmd[2] = file2.getAbsolutePath();
 
-        SCMLauncher proc = new SCMLauncher(cmd,null,null);
+        SCMLauncher proc = new SCMLauncher(cmd, null, null);
         result = proc.execute();
         results = proc.getResults();
 
         return result;
     }
 }
-
-

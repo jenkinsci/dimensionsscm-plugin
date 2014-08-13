@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
@@ -102,47 +93,41 @@ import java.io.PrintWriter;
 import java.util.Calendar;
 
 /**
- * Class implementation of the checkout process.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Class implementation of the checkout process.
+ *
+ * @author Tim Payne
  */
 public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
-
-    private boolean bFreshBuild = false;
-    private boolean isDelete = false;
-    private boolean isRevert = false;
-    private boolean isForce = false;
-    private boolean isExpand = false;
-    private boolean isNoMetadata = false;
-    private boolean isNoTouch = false;
+    private boolean bFreshBuild;
+    private boolean isDelete;
+    private boolean isRevert;
+    private boolean isForce;
+    private boolean isExpand;
+    private boolean isNoMetadata;
+    private boolean isNoTouch;
 
     private String projectId = "";
-    private String baseline = null;
-    private String requests = null;
-    private String permissions = null;
-    private String eol = null;
+    private String baseline;
+    private String requests;
+    private String permissions;
+    private String eol;
 
     private String[] folders;
 
     /**
-     * Utility routine to create command file for dmcli
-     *
-     * @param String
-     * @param String
-     * @param File
-     * @return File
-     * @throws IOException
+     * Utility routine to create command file for dmcli.
      */
-    private File createCmdFile(final String reqId, final String projDir, final File area)
-            throws IOException {
+    private File createCmdFile(final String reqId, final String projDir, final File area) throws IOException {
         Calendar nowDateCal = Calendar.getInstance();
-        File logFile = new File("a");
         FileWriter logFileWriter = null;
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 
         try {
-            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+            tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
             logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter,true);
+            fmtWriter = new PrintWriter(logFileWriter, true);
 
             String coCmd = "UPDATE /BRIEF ";
             if (version == 10) {
@@ -170,7 +155,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 if (requests.indexOf(",")==0) {
                     cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                 } else {
-                    cmd += "/CHANGE_DOC_IDS=("+ requests +") ";
+                    cmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
                 }
                 cmd += "/WORKSET=\"" + projectId + "\" ";
             }
@@ -182,24 +167,28 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
 
             cmd += "/USER_DIR=\"" + area.getAbsolutePath() + "\" ";
 
-            if (isRevert)
+            if (isRevert) {
                 cmd += " /OVERWRITE";
-            if (isExpand)
+            }
+            if (isExpand) {
                 cmd += " /EXPAND";
-            if (isNoMetadata)
+            }
+            if (isNoMetadata) {
                 cmd += " /NOMETADATA";
-            if (isNoTouch)
+            }
+            if (isNoTouch) {
                 cmd += " /NOTOUCH";
+            }
 
             if (permissions != null && permissions.length() > 0) {
                 if (!permissions.equals("DEFAULT") && reqId == null) {
-                    cmd += "/PERMS="+permissions;
+                    cmd += "/PERMS=" + permissions;
                 }
             }
 
             if (eol != null && eol.length() > 0) {
                 if (!eol.equals("DEFAULT")) {
-                    cmd += "/EOL="+eol;
+                    cmd += "/EOL=" + eol;
                 }
             }
 
@@ -210,37 +199,24 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         } finally {
             fmtWriter.close();
         }
-
         return tmpFile;
     }
 
-    /*
-     * Default constructor
-     */
-    public CheckOutCmdTask(String userName, String passwd,
-                             String database, String server,
-                             String projectId, String baselineId,
-                             String requestId, boolean isDelete,
-                             boolean isRevert, boolean isForce,
-                             boolean isExpand, boolean isNoMetadata,
-			     boolean isNoTouch,boolean freshBuild, 
-                             String[] folders,
-                             int version, String permissions,
-                             String eol,
-                             FilePath workspace,
-                             TaskListener listener) {
-
+    public CheckOutCmdTask(String userName, String passwd, String database, String server, String projectId,
+            String baselineId, String requestId, boolean isDelete, boolean isRevert, boolean isForce, boolean isExpand,
+            boolean isNoMetadata, boolean isNoTouch, boolean freshBuild, String[] folders, int version,
+            String permissions, String eol, FilePath workspace, TaskListener listener) {
         this.workspace = workspace;
         this.listener = listener;
 
-        // Server details
+        // Server details.
         this.userName = userName;
         this.passwd = passwd;
         this.database = database;
         this.server = server;
         this.version = version;
 
-        // Config details
+        // Config details.
         this.isDelete = isDelete;
         this.projectId = projectId;
         this.isRevert = isRevert;
@@ -254,29 +230,18 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         this.permissions = permissions;
         this.eol = eol;
 
-        // Build details
+        // Build details.
         this.bFreshBuild = freshBuild;
     }
 
-
-    /*
-     * Process the checkout
-     *
-     * @param File
-     * @param File
-     * @param File
-     * @return boolean
-     * @throws IOException
+    /**
+     * Process the checkout.
      */
-    public Boolean execute(final File exe, final File param, final File area)
-                throws IOException {
-
+    public Boolean execute(final File exe, final File param, final File area) throws IOException {
         FilePath wa = new FilePath(area);
         boolean bRet = true;
 
-        // Emulate SVN plugin
-        // - if workspace exists and it is not managed by this project, blow it away
-        //
+        // Emulate SVN plugin - if workspace exists and it is not managed by this project, blow it away.
         try {
             if (bFreshBuild) {
                 if (listener.getLogger() != null) {
@@ -297,24 +262,26 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 baseline = baseline.toUpperCase();
             }
             if (requests != null) {
-                requests = requests.replaceAll(" ","");
+                requests = requests.replaceAll(" ", "");
                 requests = requests.toUpperCase();
             }
 
             String cmdLog = null;
 
-            if (baseline != null && baseline.length() == 0)
+            if (baseline != null && baseline.length() == 0) {
                 baseline = null;
-            if (requests != null && requests.length() == 0)
+            }
+            if (requests != null && requests.length() == 0) {
                 requests = null;
-
+            }
             if (listener.getLogger() != null) {
-                if (requests != null)
+                if (requests != null) {
                     listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
-                else if (baseline != null)
+                } else if (baseline != null) {
                     listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
-                else
+                } else {
                     listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
+                }
                 listener.getLogger().flush();
             }
 
@@ -326,17 +293,17 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
 
                 listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
 
-                for (int xx=0;xx<requestsProcess.length; xx++) {
-                    if (!bRet)
+                for (int xx = 0; xx < requestsProcess.length; xx++) {
+                    if (!bRet) {
                         break;
-
+                    }
                     String folderN = "/";
                     String reqId = requestsProcess[xx];
                     File fileName = new File(folderN);
                     FilePath projectDir = new FilePath(fileName);
                     String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
 
-                    File cmdFile = createCmdFile(reqId,projDir,area);
+                    File cmdFile = createCmdFile(reqId, projDir, area);
                     if (cmdFile == null) {
                         listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
                         param.delete();
@@ -350,21 +317,22 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                     cmd[3] = "-file";
                     cmd[4] = cmdFile.getAbsolutePath();
 
-                    SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
+                    SCMLauncher proc = new SCMLauncher(cmd, listener, wa);
                     bRet = proc.execute();
                     String outputStr = proc.getResults();
                     cmdFile.delete();
 
                     if (bRet) {
-                        // Check if any conflicts were identified
+                        // Check if any conflicts were identified.
                         int confl = outputStr.indexOf("C\t");
-                        if (confl > 0)
+                        if (confl > 0) {
                             bRet = false;
+                        }
                     }
 
-                    if (cmdLog==null)
+                    if (cmdLog == null) {
                         cmdLog = "\n";
-
+                    }
                     cmdLog += outputStr;
                     cmdLog += "\n";
 
@@ -372,17 +340,17 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                         bRet = true;
                 }
             } else {
-                // Iterate through the project folders and process them in Dimensions
-                for (int ii=0;ii<folders.length; ii++) {
-                    if (!bRet)
+                // Iterate through the project folders and process them in Dimensions.
+                for (int ii = 0; ii < folders.length; ii++) {
+                    if (!bRet) {
                         break;
-
+                    }
                     String folderN = folders[ii];
                     File fileName = new File(folderN);
                     FilePath projectDir = new FilePath(fileName);
                     String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
 
-                    File cmdFile = createCmdFile(null,projDir,area);
+                    File cmdFile = createCmdFile(null, projDir, area);
                     if (cmdFile == null) {
                         listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
                         param.delete();
@@ -390,7 +358,8 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                     }
 
                     if (requests == null) {
-                        listener.getLogger().println("[DIMENSIONS] Checking out directory '"+((projDir!=null) ? projDir : "/")+"'...");
+                        listener.getLogger().println("[DIMENSIONS] Checking out directory '" +
+                                (projDir != null ? projDir : "/") + "'...");
                         listener.getLogger().flush();
                     }
 
@@ -401,37 +370,39 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                     cmd[3] = "-file";
                     cmd[4] = cmdFile.getAbsolutePath();
 
-                    SCMLauncher proc = new SCMLauncher(cmd,listener,wa);
+                    SCMLauncher proc = new SCMLauncher(cmd, listener, wa);
                     bRet = proc.execute();
                     String outputStr = proc.getResults();
                     cmdFile.delete();
 
                     if (bRet) {
-                        // Check if any conflicts were identified
+                        // Check if any conflicts were identified.
                         int confl = outputStr.indexOf("C\t");
-                        if (confl > 0)
+                        if (confl > 0) {
                             bRet = false;
+                        }
                     }
 
-                    if (cmdLog==null)
+                    if (cmdLog == null) {
                         cmdLog = "\n";
-
+                    }
                     cmdLog += outputStr;
                     cmdLog += "\n";
 
-                    if (!bRet && isForce)
+                    if (!bRet && isForce) {
                         bRet = true;
-
-                    if (requests != null)
+                    }
+                    if (requests != null) {
                         break;
+                    }
                 }
             }
             param.delete();
 
             if (cmdLog.length() > 0 && listener.getLogger() != null) {
                 listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
-                cmdLog = cmdLog.replaceAll("\n\n","\n");
-                listener.getLogger().println(cmdLog.replaceAll("\n","\n[DIMENSIONS] ") + ")");
+                cmdLog = cmdLog.replaceAll("\n\n", "\n");
+                listener.getLogger().println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
                 listener.getLogger().flush();
             }
 
@@ -443,7 +414,6 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 listener.getLogger().println("[DIMENSIONS] ==========================================================");
                 listener.getLogger().flush();
             }
-
             return bRet;
         } catch (Exception e) {
             String errMsg = e.getMessage();
@@ -458,5 +428,3 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         }
     }
 }
-
-

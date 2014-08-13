@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
@@ -104,19 +95,17 @@ import java.io.Serializable;
 import java.util.Calendar;
 
 /**
- * Class implementation of the launcher process.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Class implementation of the launcher process.
+ *
+ * @author Tim Payne
  */
 public class SCMLauncher implements Serializable {
-
     static class dmLauncher extends LocalLauncher {
-        /*
-         * Default constructor
-         */
-        private TaskListener listener = null;
+        private TaskListener listener;
 
-        /*
-         * Get listener
-         * @returns listener
+        /**
+         * Get listener.
          */
         public TaskListener getListener() {
             return this.listener;
@@ -128,88 +117,73 @@ public class SCMLauncher implements Serializable {
         }
     }
 
-    private FileUtils fu;
-    private String[] args = null;
-    private dmLauncher proc = null;
-    private FilePath workArea = null;
-    private String results = null;
+    private String[] args;
+    private dmLauncher proc;
+    private FilePath workArea;
+    private String results;
 
-
-    /*
-     * Default constructor
-     */
     public SCMLauncher(final String[] args, final TaskListener listener, final FilePath area) {
         this.args = args;
         this.proc = new dmLauncher(listener);
         this.workArea = area;
     }
 
-    /*
-     * Get the command results
-     * @return String
+    /**
+     * Get the command results.
      */
     public String getResults() {
         return this.results;
     }
 
-    /*
-     * Execute the process
-     * @return boolean
-     * @throws IOException
-     * @throws InterruptedException
+    /**
+     * Execute the process.
      */
-    public Boolean execute()
-                throws IOException, InterruptedException {
-
+    public Boolean execute() throws IOException, InterruptedException {
         File tmpFile = null;
         boolean bRet = false;
         TaskListener listener = proc.getListener();
 
-        // Need to capture output into a file so I can parse it
-        try {
-            File logFile = new File("a");
-            Calendar nowDateCal = Calendar.getInstance();
-            tmpFile = logFile.createTempFile("dmCm"+nowDateCal.getTimeInMillis(),null,null);
+        // Need to capture output into a file so I can parse it.
+        Calendar nowDateCal = Calendar.getInstance();
+        tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
 
-            FileOutputStream fos = new FileOutputStream(tmpFile);
-            StreamBuildListener os = new StreamBuildListener(fos);
-            boolean[] masks = new boolean[args.length];
+        FileOutputStream fos = new FileOutputStream(tmpFile);
+        StreamBuildListener os = new StreamBuildListener(fos);
+        boolean[] masks = new boolean[args.length];
 
-            int i = 0;
-            for (String astr : args) {
-                if (astr.equalsIgnoreCase("-param")) {
-                    masks[i] = true;
-                    masks[i+1] = true;
-                }
-                i++;
+        int i = 0;
+        for (String astr : args) {
+            if (astr.equalsIgnoreCase("-param")) {
+                masks[i] = true;
+                masks[i + 1] = true;
             }
+            i++;
+        }
 
-            try {
-                Launcher.ProcStarter ps = proc.launch();
-                ps.cmds(args);
-                ps.stdout(os.getLogger());
-                ps.stdin(null);
-                ps.pwd(workArea);
-                ps.masks(masks);
-                int cmdResult = ps.join();
-                if (cmdResult != 0) {
-                    listener.fatalError("Execution of Dimensions command failed with exit code " + cmdResult);
-                    bRet = false;
-                } else {
-                    bRet = true;
-                }
-            } finally {
-                os.getLogger().flush();
-                fos.close();
-                os = null;
-                fos = null;
+        try {
+            Launcher.ProcStarter ps = proc.launch();
+            ps.cmds(args);
+            ps.stdout(os.getLogger());
+            ps.stdin(null);
+            ps.pwd(workArea);
+            ps.masks(masks);
+            int cmdResult = ps.join();
+            if (cmdResult != 0) {
+                listener.fatalError("Execution of Dimensions command failed with exit code " + cmdResult);
+                bRet = false;
+            } else {
+                bRet = true;
             }
         } finally {
+            os.getLogger().flush();
+            fos.close();
+            os = null;
+            fos = null;
         }
 
         if (tmpFile != null) {
             // Get the log file into a string for processing...
-            results = new String(fu.loadFile(tmpFile));
+            results = new String(FileUtils.loadFile(tmpFile));
             tmpFile.delete();
             tmpFile = null;
         }
@@ -217,5 +191,3 @@ public class SCMLauncher implements Serializable {
         return bRet;
     }
 }
-
-

@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import java.io.BufferedInputStream;
@@ -98,21 +89,21 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories.
+ *
+ * @author Tim Payne
+ */
 public class FileUtils implements Serializable {
-
     /**
-     * Utility routine to read file into memory
-     *
-     * @param fileName
-     * @return File
+     * Utility routine to read file into memory.
      */
     public static final byte[] loadFile(final File fileName) throws IOException {
         BufferedInputStream bis = new BufferedInputStream(new FileInputStream(fileName));
-        byte [] bytes = new byte[(int) fileName.length()];
+        byte[] bytes = new byte[(int) fileName.length()];
         bis.read(bytes);
         bis.close();
         return bytes;
     }
 }
-
-

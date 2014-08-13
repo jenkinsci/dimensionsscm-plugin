@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import com.serena.dmclient.api.DimensionsResult;
@@ -107,130 +98,117 @@ import java.io.IOException;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories.
+ *
+ * @author Tim Payne
+ */
 public class DimensionsBuilder extends Builder {
+    private DimensionsSCM scm;
 
-    private DimensionsSCM scm = null;
+    private String projectArea;
+    private String projectConfig;
+    private String projectOptions;
+    private String projectTargets;
+    private String projectType;
+    private String projectStage;
 
-    private String projectArea = null;
-    private String projectConfig = null;
-    private String projectOptions = null;
-    private String projectTargets = null;
-    private String projectType = null;
-    private String projectStage = null;
+    private boolean batch;
+    private boolean buildClean;
+    private boolean capture;
 
-    private boolean batch = false;
-    private boolean buildClean = false;
-    private boolean capture = false;
+    private boolean audit;
+    private boolean populate;
+    private boolean touch;
 
-    private boolean audit = false;
-    private boolean populate = false;
-    private boolean touch = false;
-
-    /*
-     * Gets the audit .
-     * @return boolean
+    /**
+     * Gets the audit flag.
      */
     public boolean isProjectAudit() {
         return this.audit;
     }
 
-    /*
-     * Gets the populate .
-     * @return boolean
+    /**
+     * Gets the populate flag.
      */
     public boolean isProjectPopulate() {
         return this.populate;
     }
 
-    /*
-     * Gets the touch .
-     * @return boolean
+    /**
+     * Gets the touch flag.
      */
     public boolean isProjectTouch() {
         return this.touch;
     }
 
-    /*
-     * Gets the batch .
-     * @return boolean
+    /**
+     * Gets the batch flag.
      */
     public boolean isProjectBatch() {
         return this.batch;
     }
 
-    /*
-     * Gets the buildClean .
-     * @return boolean
+    /**
+     * Gets the buildClean flag.
      */
     public boolean isProjectClean() {
         return this.buildClean;
     }
 
-    /*
-     * Gets the capture .
-     * @return boolean
+    /**
+     * Gets the capture flag.
      */
     public boolean isProjectCapture() {
         return this.capture;
     }
 
-    /*
-     * Gets the project type .
-     * @return String
+    /**
+     * Gets the project type name.
      */
     public String getProjectType() {
         return this.projectType;
     }
 
-    /*
-     * Gets the project stage .
-     * @return String
+    /**
+     * Gets the project stage name.
      */
     public String getProjectStage() {
         return this.projectStage;
     }
 
-    /*
-     * Gets the area .
-     * @return String
+    /**
+     * Gets the area name.
      */
     public String getProjectArea() {
         return this.projectArea;
     }
 
-    /*
-     * Gets the build config .
-     * @return String
+    /**
+     * Gets the build config name.
      */
     public String getProjectConfig() {
         return this.projectConfig;
     }
 
-    /*
-     * Gets the build options .
-     * @return String
+    /**
+     * Gets the build options string.
      */
     public String getProjectOptions() {
         return this.projectOptions;
     }
 
-
-    /*
-     * Gets the build targets .
-     * @return String
+    /**
+     * Gets the build target names.
      */
     public String getProjectTargets() {
         return this.projectTargets;
     }
 
-    /**
-     * Default constructor.
-     */
-    public DimensionsBuilder(String area, String buildConfig,
-                             String buildOptions, String buildTargets,
-                             String buildType, String buildStage,
-                             boolean batch, boolean buildClean, boolean capture,
-                             boolean audit, boolean populate, boolean touch) {
+    public DimensionsBuilder(String area, String buildConfig, String buildOptions, String buildTargets,
+            String buildType, String buildStage, boolean batch, boolean buildClean, boolean capture, boolean audit,
+            boolean populate, boolean touch) {
         this.projectArea = area;
         this.projectConfig = buildConfig;
         this.projectOptions = buildOptions;
@@ -245,12 +223,11 @@ public class DimensionsBuilder extends Builder {
         this.touch = touch;
     }
 
-
-    public boolean perform(AbstractBuild<?,?> build, Launcher launcher, BuildListener listener) {
+    @Override
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         Logger.Debug("Invoking perform callout " + this.getClass().getName());
-        long key = -1;
+        long key = -1L;
         try {
-
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
                 listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
                 build.setResult(Result.FAILURE);
@@ -258,59 +235,51 @@ public class DimensionsBuilder extends Builder {
             }
 
             if (build.isBuilding()) {
-                if (scm == null)
+                if (scm == null) {
                     scm = (DimensionsSCM)build.getProject().getScm();
-                Logger.Debug("Dimensions user is "+scm.getJobUserName()+" , Dimensions installation is "+scm.getJobServer());
+                }
+                Logger.Debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
+                        scm.getJobServer());
                 Logger.Debug("Running a project build step...");
-                key = scm.getAPI().login(scm.getJobUserName(),
-                                       scm.getJobPasswd(),
-                                       scm.getJobDatabase(),
-                                       scm.getJobServer(), build);
-                if (key>0)
-                {
+                key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
+                        scm.getJobServer(), build);
+                if (key > 0L) {
                     VariableResolver<String> myResolver = build.getBuildVariableResolver();
                     String requests = myResolver.resolve("DM_TARGET_REQUEST");
-
                     if (requests != null) {
-                        requests = requests.replaceAll(" ","");
+                        requests = requests.replaceAll(" ", "");
                         requests = requests.toUpperCase();
                     }
 
                     {
                         String projectXType = projectType;
-                        if (projectXType.equals("NONE"))
+                        if (projectXType.equals("NONE")) {
                             projectXType = null;
-
+                        }
                         // This will active the build baseline functionality
                         listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().buildProject(key,projectArea,scm.getProjectName(build),
-                                                                         batch,buildClean,projectConfig,
-                                                                         projectOptions,
-                                                                         capture,requests,
-                                                                         projectTargets,
-                                                                         projectStage, projectXType,
-                                                                         audit, populate,
-                                                                         touch, build);
-                        if (res==null) {
+                        DimensionsResult res = scm.getAPI().buildProject(key, projectArea, scm.getProjectName(build),
+                                batch, buildClean, projectConfig, projectOptions, capture, requests, projectTargets,
+                                projectStage, projectXType, audit, populate, touch, build);
+                        if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] The project failed to be built in Dimensions");
                             listener.getLogger().flush();
                             build.setResult(Result.FAILURE);
-                        }
-                        else {
+                        } else {
                             listener.getLogger().println("[DIMENSIONS] Build step was successfully run in Dimensions");
-                            listener.getLogger().println("[DIMENSIONS] ("+res.getMessage().replaceAll("\n","\n[DIMENSIONS] ")+")");
+                            listener.getLogger().println("[DIMENSIONS] (" + res.getMessage().replaceAll("\n",
+                                    "\n[DIMENSIONS] ") + ")");
                             listener.getLogger().flush();
                         }
                     }
-                }
-                else {
+                } else {
                     listener.fatalError("[DIMENSIONS] Login to Dimensions failed.");
                     build.setResult(Result.FAILURE);
                     return false;
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             String errMsg;
             if (e.getMessage() != null || e.getMessage().length() > 0) {
                 errMsg = e.getMessage();
@@ -320,17 +289,17 @@ public class DimensionsBuilder extends Builder {
             listener.fatalError("Unable to tag build in Dimensions - " + errMsg);
             build.setResult(Result.FAILURE);
             return false;
-        }
-        finally
-        {
-            if (scm != null)
+        } finally {
+            if (scm != null) {
                 scm.getAPI().logout(key, build);
+            }
         }
         return true;
     }
 
+    @Override
     public Descriptor<Builder> getDescriptor() {
-        // see Descriptor javadoc for more about what a descriptor is.
+        // See Descriptor javadoc for more about what a descriptor is.
         return DMBLD_DESCRIPTOR;
     }
 
@@ -343,17 +312,13 @@ public class DimensionsBuilder extends Builder {
     /**
      * Descriptor for {@link DimensionsBuilder}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
-     *
      */
     public static final class DescriptorImpl extends Descriptor<Builder> {
         /**
-         * To persist global configuration information,
-         * simply store it in a field and call save().
-         *
+         * To persist global configuration information, simply store it in a field and call save().
          * <p>
          * If you don't want fields to be persisted, use <tt>transient</tt>.
          */
-
         public DescriptorImpl() {
             super(DimensionsBuilder.class);
             Logger.Debug("Loading " + this.getClass().getName());
@@ -361,7 +326,7 @@ public class DimensionsBuilder extends Builder {
 
         @Override
         public Builder newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            // Get variables and then construct a new object
+            // Get variables and then construct a new object.
             Boolean batch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectBatch")));
             Boolean buildClean = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectClean")));
             Boolean capture = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectCapture")));
@@ -377,43 +342,46 @@ public class DimensionsBuilder extends Builder {
             String buildType = req.getParameter("dimensionsbuilder.projectType");
             String buildStage = req.getParameter("dimensionsbuilder.projectStage");
 
-            if (area != null)
+            if (area != null) {
                 area = Util.fixNull(req.getParameter("dimensionsbuilder.projectArea").trim());
-            if (buildConfig != null)
+            }
+            if (buildConfig != null) {
                 buildConfig = Util.fixNull(req.getParameter("dimensionsbuilder.projectConfig").trim());
-            if (buildOptions != null)
+            }
+            if (buildOptions != null) {
                 buildOptions = Util.fixNull(req.getParameter("dimensionsbuilder.projectOptions").trim());
-            if (buildTargets != null)
+            }
+            if (buildTargets != null) {
                 buildTargets = Util.fixNull(req.getParameter("dimensionsbuilder.projectTargets").trim());
-            if (buildType != null)
+            }
+            if (buildType != null) {
                 buildType = Util.fixNull(req.getParameter("dimensionsbuilder.projectType").trim());
-            if (buildStage != null)
+            }
+            if (buildStage != null) {
                 buildStage = Util.fixNull(req.getParameter("dimensionsbuilder.projectStage").trim());
+            }
 
-
-            DimensionsBuilder notif = new DimensionsBuilder(
-                                                        area,buildConfig,
-                                                        buildOptions,buildTargets,buildType,
-                                                        buildStage,
-                                                        batch,buildClean,capture,
-                                                        audit,populate,touch);
+            DimensionsBuilder notif = new DimensionsBuilder(area, buildConfig, buildOptions, buildTargets, buildType,
+                    buildStage, batch, buildClean, capture, audit, populate, touch);
 
             return notif;
         }
 
-
         /**
          * This human readable name is used in the configuration screen.
+         * <p>
+         * {@inheritDoc}
          */
+        @Override
         public String getDisplayName() {
             return "Execute Dimensions Build";
         }
 
+        @Override
         public boolean configure(StaplerRequest req, JSONObject o) throws FormException {
-            // to persist global configuration information,
-            // set that to properties and call save().
+            // To persist global configuration information, set that to properties and call save().
             save();
-            return super.configure(req,o);
+            return super.configure(req, o);
         }
     }
 }

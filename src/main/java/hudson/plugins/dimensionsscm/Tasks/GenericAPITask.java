@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
@@ -99,18 +90,15 @@ import hudson.remoting.VirtualChannel;
 import java.io.File;
 import java.io.IOException;
 
-/*
- * Main Checkout
- */
-
-
 /**
- * Class implementation of the checkout process.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Class implementation of the checkout process.
+ *
+ * @author Tim Payne
  */
 public class GenericAPITask implements FileCallable<Boolean> {
-
-    protected FilePath workspace = null;
-    protected TaskListener listener = null;
+    protected FilePath workspace;
+    protected TaskListener listener;
 
     protected String userName = "";
     protected String passwd = "";
@@ -118,44 +106,28 @@ public class GenericAPITask implements FileCallable<Boolean> {
     protected String server = "";
     protected String permissions = "";
 
-    protected long key = -1;
-    protected DimensionsAPI dmSCM = null;
-    protected FileUtils fu;
+    protected long key = -1L;
+    protected DimensionsAPI dmSCM;
 
     protected static final long serialVersionUID = 1L;
 
-    /*
-     * Default constructor
-     */
     public GenericAPITask() {
     }
 
-    /*
-     * Default constructor
-     */
-    public GenericAPITask(DimensionsSCM parent,
-                          FilePath workspace, TaskListener listener) {
-
+    public GenericAPITask(DimensionsSCM parent, FilePath workspace, TaskListener listener) {
         Logger.Debug("Creating task - " + this.getClass().getName());
 
         this.workspace = workspace;
         this.listener = listener;
 
-        // Server details
+        // Server details.
         userName = parent.getJobUserName();
         passwd = parent.getJobPasswd();
         database = parent.getJobDatabase();
         server = parent.getJobServer();
     }
 
-    /*
-     * Invoke method
-     *
-     * @param File
-     * @param VirtualChannel
-     * @return boolean
-     * @throws IOException
-     */
+    @Override
     public Boolean invoke(File area, VirtualChannel channel) throws IOException {
         boolean bRet = true;
 
@@ -169,37 +141,25 @@ public class GenericAPITask implements FileCallable<Boolean> {
             dmSCM.setLogger(listener.getLogger());
 
             // Connect to Dimensions...
-            key = dmSCM.login(userName,passwd,
-                            database,server);
-            if (key>0)
-            {
+            key = dmSCM.login(userName, passwd, database, server);
+            if (key > 0L) {
                 Logger.Debug("Login worked.");
-                bRet = execute(area,channel);
+                bRet = execute(area, channel);
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             bRet = false;
             throw new IOException(e.getMessage());
-        }
-        finally
-        {
+        } finally {
             dmSCM.logout(key);
         }
         dmSCM = null;
         return bRet;
     }
 
-
-    /*
-     * Execute method
-     *
-     * @param File
-     * @param VirtualChannel
-     * @return boolean
-     * @throws IOException
+    /**
+     * Template method for subclasses to override.
      */
     public Boolean execute(File area, VirtualChannel channel) throws IOException {
         return true;
     }
 }
-
-

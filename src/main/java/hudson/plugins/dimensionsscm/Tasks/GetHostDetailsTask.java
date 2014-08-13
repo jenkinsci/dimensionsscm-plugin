@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/*
- * This experimental plugin extends Hudson support for Dimensions SCM repositories
- *
- * @author Tim Payne
- *
- */
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath.FileCallable;
@@ -99,54 +90,38 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-/*
- * Find out the remote host name
- */
-
 /**
- * Class implementation of the checkout process.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Find out if the current host is remote.
+ *
+ * @author Tim Payne
  */
 public class GetHostDetailsTask implements FileCallable<Boolean> {
-
     private static final long serialVersionUID = 1L;
-	private String masteripaddr;
-	
-    /*
-     * Default constructor
-     */
+    private String masteripaddr;
+
     public GetHostDetailsTask(String master) {
-		this.masteripaddr = master;
+        this.masteripaddr = master;
     }
 
-    /*
-     * Invoke method
-     *
-     * @param File
-     * @param VirtualChannel
-     * @return boolean
-     * @throws IOException
-     */
-    public Boolean invoke(File area, VirtualChannel channel) 
-	          throws IOException {
-
+    @Override
+    public Boolean invoke(File area, VirtualChannel channel) throws IOException {
         // This here code is executed on the slave.
-		try {
-			InetAddress netAddr = InetAddress.getLocalHost();
-			// Get IP Address
-			byte[] ipAddr = netAddr.getAddress();
-			
-			// Get hostname
-			String hostname = netAddr.getHostName();
-			
-			if (hostname.equals(masteripaddr)) {
-				return true;
-			} else {
-				return false;
-			}
-		} catch (UnknownHostException e) {
-			throw new IOException(e.getMessage());
-		}
+        try {
+            InetAddress netAddr = InetAddress.getLocalHost();
+            // Get IP address.
+            byte[] ipAddr = netAddr.getAddress();
+
+            // Get hostname.
+            String hostname = netAddr.getHostName();
+
+            if (hostname.equals(masteripaddr)) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (UnknownHostException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 }
-
-

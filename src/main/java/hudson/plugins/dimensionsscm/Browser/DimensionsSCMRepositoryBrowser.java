@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.Extension;
@@ -100,22 +91,23 @@ import java.net.URL;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.export.ExportedBean;
 
-@ExportedBean(defaultVisibility=999)
+/**
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories.
+ *
+ * @author Tim Payne
+ */
+@ExportedBean(defaultVisibility = 999)
 public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet> {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Default constructor.
-     */
     @DataBoundConstructor
     public DimensionsSCMRepositoryBrowser() {
     }
 
-    public URL getDiffLink(DimensionsChangeSet.DmFiles item)
-        throws IOException {
-
+    public URL getDiffLink(DimensionsChangeSet.DmFiles item) throws IOException {
         String link = "http://alink.com/link.html";
-        return new URL(link.toString());
+        return new URL(link);
     }
 
     @Override
@@ -131,17 +123,15 @@ public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<D
         return DESCRIPTOR;
     }
 
-    /*
-     * Implementation class for Dimensions plugin
+    /**
+     * Implementation class for Dimensions plugin.
      */
     public static class DescriptorImpl extends Descriptor<RepositoryBrowser<?>> {
-
         public DescriptorImpl() {
             super(DimensionsSCMRepositoryBrowser.class);
         }
 
-        public String getDisplayName()
-        {
+        public String getDisplayName() {
             return "Dimensions";
         }
     }

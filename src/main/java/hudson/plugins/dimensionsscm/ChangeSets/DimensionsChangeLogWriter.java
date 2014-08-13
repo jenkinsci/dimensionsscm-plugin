@@ -1,6 +1,5 @@
-
 /* ===========================================================================
- *  Copyright (c) 2007 Serena Software. All rights reserved.
+ *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -82,14 +81,6 @@
  *  remainder of the agreement shall remain in full force and effect.
  * ===========================================================================
  */
-
-/**
- ** @brief This experimental plugin extends Hudson support for Dimensions SCM repositories
- **
- ** @author Tim Payne
- **
- **/
-
 package hudson.plugins.dimensionsscm;
 
 import hudson.Util;
@@ -103,50 +94,42 @@ import java.text.StringCharacterIterator;
 import java.util.List;
 
 /**
- * Write a change set.
+ * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
+ * repositories. Write a change set.
+ *
+ * @author Tim Payne
  */
-public class DimensionsChangeLogWriter
-{
-    /*
-     * Save the change list to the changelogFile
-     * @param List<DimensionsChangeSet> changeSets
-     * @param File changelogFile
+public class DimensionsChangeLogWriter {
+    /**
+     * Save the change list to the changelogFile.
      */
-    public boolean writeLog(List<DimensionsChangeSet> changeSets,File changelogFile)
-                                            throws IOException
-    {
+    public boolean writeLog(List<DimensionsChangeSet> changeSets, File changelogFile) throws IOException {
         boolean bRet = false;
         boolean appendFile = false;
         FileWriter logFile = null;
         if (changelogFile.exists()) {
-            if (changelogFile.length()>0) {
-                appendFile=true;
+            if (changelogFile.length() > 0) {
+                appendFile = true;
             }
         }
         try {
-            logFile = new FileWriter(changelogFile,appendFile);
-            write(changeSets,logFile,appendFile);
+            logFile = new FileWriter(changelogFile, appendFile);
+            write(changeSets, logFile, appendFile);
             logFile.flush();
-            bRet=true;
+            bRet = true;
         } catch (Exception e) {
             e.printStackTrace();
             throw new IOException("Unable to write change log - " + e.getMessage());
         } finally {
             logFile.close();
         }
-
         return bRet;
     }
 
-
-    /*
-     * Save the change list to the changelogFile
-     * @param List<DimensionsChangeSet> changeSets
-     * @param File changelogFile
-     * @param boolean appendFile
+    /**
+     * Save the change list to the changelogFile.
      */
-    private void write(List<DimensionsChangeSet> changeSets,Writer logFile, boolean appendFile)
-    {
+    private void write(List<DimensionsChangeSet> changeSets, Writer logFile, boolean appendFile) {
         Logger.Debug("Writing logfile in append mode = " + appendFile);
         String logStr = "";
         PrintWriter writer = new PrintWriter(logFile);
@@ -163,16 +146,13 @@ public class DimensionsChangeLogWriter
                 logStr += "\t\t<items>\n";
                 for (DimensionsChangeSet.DmFiles item : changeSet.getFiles()) {
                     logStr += String.format("\t\t\t<item operation=\"%s\" url=\"%s\">%s</item>\n", item.getOperation(),
-                                    escapeHTML(item.getUrl()),
-                                    escapeXML(item.getFile()));
+                            escapeHTML(item.getUrl()), escapeXML(item.getFile()));
                 }
                 logStr += "\t\t</items>\n";
                 logStr += "\t\t<requests>\n";
                 for (DimensionsChangeSet.DmRequests req : changeSet.getRequests()) {
                     logStr += String.format("\t\t\t<request url=\"%s\" title=\"%s\">%s</request>\n",
-                                    escapeHTML(req.getUrl()),
-                                    escapeXML(req.getTitle()),
-                                    escapeXML(req.getIdentifier()));
+                            escapeHTML(req.getUrl()), escapeXML(req.getTitle()), escapeXML(req.getIdentifier()));
                 }
                 logStr += "\t\t</requests>\n";
                 logStr += "\t</changeset>\n";
@@ -187,36 +167,30 @@ public class DimensionsChangeLogWriter
         return;
     }
 
-    /*
-     * Escape an XML string
-     * @param String
+    /**
+     * Escape an XML string.
      */
     private static String escapeXML(String inTxt) {
-        if (inTxt == null || inTxt.length() == 0)
+        if (inTxt == null || inTxt.length() == 0) {
             return inTxt;
-
+        }
         final StringBuilder outTxt = new StringBuilder();
         final StringCharacterIterator iterator = new StringCharacterIterator(inTxt);
-        char character =  iterator.current();
+        char character = iterator.current();
 
         // Scan through strings and escape as necessary...
-        while (character != CharacterIterator.DONE ) {
+        while (character != CharacterIterator.DONE) {
             if (character == '<') {
                 outTxt.append("&lt;");
-            }
-            else if (character == '>') {
+            } else if (character == '>') {
                 outTxt.append("&gt;");
-            }
-            else if (character == '\"') {
+            } else if (character == '\"') {
                 outTxt.append("&quot;");
-            }
-            else if (character == '\'') {
+            } else if (character == '\'') {
                 outTxt.append("&#039;");
-            }
-            else if (character == '&') {
+            } else if (character == '&') {
                 outTxt.append("&amp;");
-            }
-            else {
+            } else {
                 outTxt.append(character);
             }
             character = iterator.next();
@@ -224,42 +198,36 @@ public class DimensionsChangeLogWriter
         return outTxt.toString();
     }
 
-    /*
-     * Escape an HTML string
-     * @param String
+    /**
+     * Escape an HTML string.
      */
     private static String escapeHTML(String inTxt) {
-        if (inTxt == null || inTxt.length() == 0)
+        if (inTxt == null || inTxt.length() == 0) {
             return inTxt;
-
+        }
         final StringBuilder outTxt = new StringBuilder();
         final StringCharacterIterator iterator = new StringCharacterIterator(inTxt);
         char character =  iterator.current();
 
         // Scan through strings and escape as necessary...
-        while (character != CharacterIterator.DONE ) {
+        while (character != CharacterIterator.DONE) {
             if (character == '<') {
                 outTxt.append("&lt;");
-            }
-            else if (character == '>') {
+            } else if (character == '>') {
                 outTxt.append("&gt;");
-            }
-            else if (character == '\"') {
+            } else if (character == '\"') {
                 outTxt.append("&quot;");
-            }
-            else if (character == '\'') {
+            } else if (character == '\'') {
                 outTxt.append("&#039;");
-            }
-            else if (character == '&') {
+            } else if (character == '&') {
                 outTxt.append("&amp;");
-            }
-            else if (character == ' ') {
+            } else if (character == ' ') {
                 outTxt.append("&nbsp;");
-            }
-            else {
+            } else {
                 outTxt.append(character);
             }
             character = iterator.next();
         }
-        return outTxt.toString();   }
+        return outTxt.toString();
+    }
 }
