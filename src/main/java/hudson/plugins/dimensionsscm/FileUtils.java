@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -84,6 +85,7 @@
 package hudson.plugins.dimensionsscm;
 
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -99,11 +101,25 @@ public class FileUtils implements Serializable {
     /**
      * Utility routine to read file into memory.
      */
-    public static final byte[] loadFile(final File fileName) throws IOException {
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(fileName));
-        byte[] bytes = new byte[(int) fileName.length()];
-        bis.read(bytes);
-        bis.close();
+    public static final byte[] readAllBytes(final File file) throws IOException {
+        long len = file.length();
+        if (len > (long) Integer.MAX_VALUE) {
+            throw new IOException("File is too long to read entirely");
+        }
+        byte[] bytes = new byte[(int) len];
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+        int readSoFar = 0;
+        try {
+            while (readSoFar < (int) len) {
+                int readThisTime = bis.read(bytes, readSoFar, (int) len - readSoFar);
+                if (readThisTime < 0) {
+                    throw new EOFException("File ended before reading expected length");
+                }
+                readSoFar += readThisTime;
+            }
+        } finally {
+            bis.close();
+        }
         return bytes;
     }
 }

@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -100,17 +101,15 @@ import java.util.Calendar;
  * @author Tim Payne
  */
 public class GenericCmdTask implements FileCallable<Boolean> {
-    protected FilePath workspace;
-    protected TaskListener listener;
-    protected String userName = "";
-    protected String passwd = "";
-    protected String database = "";
-    protected String server = "";
-    protected int version = 2009;
+    private final FilePath workspace;
+    protected final TaskListener listener;
+    private final String userName;
+    private final String passwd ;
+    private final String database;
+    private final String server;
+    protected final int version;
 
     private String exec = "dmcli";
-
-    protected static final long serialVersionUID = 1L;
 
     /**
      * Utility routine to look for an executable in the path.
@@ -144,9 +143,6 @@ public class GenericCmdTask implements FileCallable<Boolean> {
             fmtWriter.close();
         }
         return tmpFile;
-    }
-
-    public GenericCmdTask() {
     }
 
     public GenericCmdTask(String userName, String passwd, String database, String server, int version,

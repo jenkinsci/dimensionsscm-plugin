@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -107,20 +108,20 @@ import org.kohsuke.stapler.StaplerRequest;
 public class DimensionsBuilder extends Builder {
     private DimensionsSCM scm;
 
-    private String projectArea;
-    private String projectConfig;
-    private String projectOptions;
-    private String projectTargets;
-    private String projectType;
-    private String projectStage;
+    private final String projectArea;
+    private final String projectConfig;
+    private final String projectOptions;
+    private final String projectTargets;
+    private final String projectType;
+    private final String projectStage;
 
-    private boolean batch;
-    private boolean buildClean;
-    private boolean capture;
+    private final boolean batch;
+    private final boolean buildClean;
+    private final boolean capture;
 
-    private boolean audit;
-    private boolean populate;
-    private boolean touch;
+    private final boolean audit;
+    private final boolean populate;
+    private final boolean touch;
 
     /**
      * Gets the audit flag.
@@ -225,7 +226,7 @@ public class DimensionsBuilder extends Builder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        Logger.Debug("Invoking perform callout " + this.getClass().getName());
+        Logger.debug("Invoking perform callout " + this.getClass().getName());
         long key = -1L;
         try {
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
@@ -238,9 +239,9 @@ public class DimensionsBuilder extends Builder {
                 if (scm == null) {
                     scm = (DimensionsSCM)build.getProject().getScm();
                 }
-                Logger.Debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
+                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
                         scm.getJobServer());
-                Logger.Debug("Running a project build step...");
+                Logger.debug("Running a project build step...");
                 key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
                         scm.getJobServer(), build);
                 if (key > 0L) {
@@ -321,7 +322,7 @@ public class DimensionsBuilder extends Builder {
          */
         public DescriptorImpl() {
             super(DimensionsBuilder.class);
-            Logger.Debug("Loading " + this.getClass().getName());
+            Logger.debug("Loading " + this.getClass().getName());
         }
 
         @Override

@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -99,21 +100,21 @@ import java.util.Calendar;
  * @author Tim Payne
  */
 public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
-    private boolean bFreshBuild;
-    private boolean isDelete;
-    private boolean isRevert;
-    private boolean isForce;
-    private boolean isExpand;
-    private boolean isNoMetadata;
-    private boolean isNoTouch;
+    private final boolean bFreshBuild;
+    private final boolean isDelete;
+    private final boolean isRevert;
+    private final boolean isForce;
+    private final boolean isExpand;
+    private final boolean isNoMetadata;
+    private final boolean isNoTouch;
 
-    private String projectId = "";
+    private final String projectId;
     private String baseline;
     private String requests;
-    private String permissions;
-    private String eol;
+    private final String permissions;
+    private final String eol;
 
-    private String[] folders;
+    private final String[] folders;
 
     /**
      * Utility routine to create command file for dmcli.
@@ -206,15 +207,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
             String baselineId, String requestId, boolean isDelete, boolean isRevert, boolean isForce, boolean isExpand,
             boolean isNoMetadata, boolean isNoTouch, boolean freshBuild, String[] folders, int version,
             String permissions, String eol, FilePath workspace, TaskListener listener) {
-        this.workspace = workspace;
-        this.listener = listener;
-
-        // Server details.
-        this.userName = userName;
-        this.passwd = passwd;
-        this.database = database;
-        this.server = server;
-        this.version = version;
+        super(userName, passwd, database, server, version, workspace, listener);
 
         // Config details.
         this.isDelete = isDelete;
@@ -251,7 +244,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
             }
 
             if (wa.exists() && (isDelete || bFreshBuild)) {
-                Logger.Debug("Deleting '" + wa.toURI() + "'...");
+                Logger.debug("Deleting '" + wa.toURI() + "'...");
                 listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
                 listener.getLogger().flush();
                 wa.deleteContents();

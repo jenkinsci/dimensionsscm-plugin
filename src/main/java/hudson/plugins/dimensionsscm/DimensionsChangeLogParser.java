@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -89,6 +90,7 @@ import hudson.util.Digester2;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.digester.Digester;
@@ -104,12 +106,12 @@ import org.xml.sax.SAXException;
 public class DimensionsChangeLogParser extends ChangeLogParser {
     @Override
     public DimensionsChangeSetList parse(AbstractBuild build, File changelogFile) throws IOException, SAXException {
-        Logger.Debug("Looking for '" + changelogFile.getPath() + "'");
+        Logger.debug("Looking for '" + changelogFile.getPath() + "'");
         if (!changelogFile.exists()) {
-            Logger.Debug("Change log file does not exist");
+            Logger.debug("Change log file does not exist");
             throw new IOException("Specified change log file does not exist - " + changelogFile.getPath());
         } else {
-            FileReader reader = new FileReader(changelogFile);
+            Reader reader = new FileReader(changelogFile);
             try {
                 return parse(build, reader);
             } finally {
@@ -118,7 +120,7 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
         }
     }
 
-    public DimensionsChangeSetList parse(AbstractBuild build, FileReader reader) throws IOException, SAXException {
+    public DimensionsChangeSetList parse(AbstractBuild build, Reader reader) throws IOException, SAXException {
         List<DimensionsChangeSet> changesetList = new ArrayList<DimensionsChangeSet>();
         Digester digester = new Digester2();
         digester.push(changesetList);

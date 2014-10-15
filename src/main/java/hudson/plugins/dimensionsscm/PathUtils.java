@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -93,7 +94,7 @@ import java.io.Serializable;
  * @author Tim Payne
  */
 public class PathUtils implements Serializable {
-    protected static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
     /**
      * Utility routine to look for an executable in the path.
@@ -108,6 +109,9 @@ public class PathUtils implements Serializable {
         String path = System.getenv("PATH");
         if (path == null) {
             path = System.getenv("path");
+        }
+        if (path == null) {
+            path = System.getenv("Path");
         }
         if (path == null) {
             return null;

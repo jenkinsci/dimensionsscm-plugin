@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -103,7 +104,7 @@ public class DimensionsChecker implements Serializable {
         if (build.getProject() instanceof Project) {
             Project buildProject = (Project) build.getProject();
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
-                Logger.Debug("Not using a DimensionsSCM engine - bye");
+                Logger.debug("Not using a DimensionsSCM engine - bye");
                 return false;
             }
 
@@ -115,13 +116,13 @@ public class DimensionsChecker implements Serializable {
                     ArtifactUploader.class);
 
             if (bwplugin != null) {
-                Logger.Debug("DimensionsBuildWrapper is activated");
+                Logger.debug("DimensionsBuildWrapper is activated");
             }
             if (bnplugin != null) {
-                Logger.Debug("DimensionsBuildNotifier is activated");
+                Logger.debug("DimensionsBuildNotifier is activated");
             }
             if (anplugin != null) {
-                Logger.Debug("ArtifactUploader is activated");
+                Logger.debug("ArtifactUploader is activated");
             }
 
             // Tagging plugin needs lock plugin.

@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -103,35 +104,28 @@ import java.util.Calendar;
  * @author Tim Payne
  */
 public class CheckInAPITask extends GenericAPITask implements FileCallable<Boolean> {
-    private boolean isForceTip;
-    private boolean isForceCheckIn;
-    private VariableResolver<String> myResolver;
+    private final boolean isForceTip;
+    private final boolean isForceCheckIn;
+    private final VariableResolver<String> myResolver;
 
-    int version = 2009;
-    int buildNo = 0;
+    private final int version;
+    private final int buildNo;
 
-    private String jobId = "";
+    private final String jobId;
 
-    private String projectId = "";
-    private String owningPart = "";
+    private final String projectId;
+    private final String owningPart;
 
-    private String[] patterns;
-    private String[] patternsExc;
-
-    private String patternType = "";
+    private final String[] patterns;
+    private final String[] patternsExc;
+    private final String patternType;
 
     public CheckInAPITask(AbstractBuild<?, ?> build, DimensionsSCM parent, int buildNo, String jobId, int version,
             ArtifactUploader artifact, FilePath workspace, TaskListener listener) {
-        Logger.Debug("Creating task - " + this.getClass().getName());
+        super(parent, workspace, listener);
+        Logger.debug("Creating task - " + this.getClass().getName());
 
-        this.workspace = workspace;
-        this.listener = listener;
-
-        // Server details.
-        this.userName = parent.getJobUserName();
-        this.passwd = parent.getJobPasswd();
-        this.database = parent.getJobDatabase();
-        this.server = parent.getJobServer();
+        // Server details (see superclass).
         this.version = version;
 
         // Config details
@@ -158,7 +152,7 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
             listener.getLogger().println("[DIMENSIONS] Scanning workspace for files to be saved into Dimensions...");
             listener.getLogger().flush();
             FilePath wd = new FilePath(area);
-            Logger.Debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
+            Logger.debug("Scanning directory for files that match patterns '" + wd.getRemote() + "'");
             File dir = new File(wd.getRemote());
 
             File[] validFiles = new File[0];
@@ -195,7 +189,7 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
                     for (File f : validFiles) {
                         if (f.isDirectory()) {
                         } else {
-                            Logger.Debug("Found file '"+ f.getAbsolutePath() + "'");
+                            Logger.debug("Found file '"+ f.getAbsolutePath() + "'");
                             fmtWriter.println(f.getAbsolutePath());
                         }
                     }

@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -136,7 +137,7 @@ public class DimensionsAPI implements Serializable {
     private static final String SRCITEM_SRCPATH_CONFLICT = "The <getcopy> nested element needs exactly one of the 'srcpath' or 'srcitem' attributes"; //$NON-NLS-1$
 
     // Thread safe key (sequence) generator.
-    private static AtomicLong sequence = new AtomicLong(1);
+    private static final AtomicLong sequence = new AtomicLong(1);
 
     // Dimensions server details.
     private String dmServer;
@@ -266,7 +267,7 @@ public class DimensionsAPI implements Serializable {
      * @return the SCM repository connection
      */
     public final DimensionsConnection getCon(long key) {
-        Logger.Debug("Looking for key " + key);
+        Logger.debug("Looking for key " + key);
         if (conns == null) {
             return null;
         }
@@ -278,32 +279,11 @@ public class DimensionsAPI implements Serializable {
             } catch (Exception e) {
             }
             DimensionsConnectionManager.registerThreadConnection(con);
-            Logger.Debug("Found database");
+            Logger.debug("Found database");
             return con;
         }
-        Logger.Debug("Could not find database");
+        Logger.debug("Could not find database");
         return null;
-    }
-
-    /**
-     * Ping the server to see if it is alive.
-     * @return a boolean
-     * @throws DimensionsNetworkException
-     */
-    public final boolean ping(long key) throws DimensionsRuntimeException {
-        DimensionsConnection connection = getCon(key);
-        if (connection != null) {
-            try {
-                if (connection.getConnectionState(false) == DimensionsConnection.STATE_CONNECTED) {
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (Exception e) {
-                return false;
-            }
-        }
-        return false;
     }
 
     /**
@@ -329,7 +309,7 @@ public class DimensionsAPI implements Serializable {
         dmUser = userID;
         dmPasswd = password;
 
-        Logger.Debug("Checking Dimensions login parameters...");
+        Logger.debug("Checking Dimensions login parameters...");
 
         if (dmServer == null || dmServer.length() == 0 || dmDb == null || dmDb.length() == 0 ||
                 dmUser == null || dmUser.length() == 0 || dmPasswd  == null || dmPasswd.length() == 0) {
@@ -340,7 +320,7 @@ public class DimensionsAPI implements Serializable {
             String[] dbCompts = parseDatabaseString(dmDb);
             dbName = dbCompts[0];
             dbConn = dbCompts[1];
-            Logger.Debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dmDb);
+            Logger.debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dmDb);
 
             DimensionsConnectionDetails details = new DimensionsConnectionDetails();
             details.setUsername(dmUser);
@@ -348,26 +328,26 @@ public class DimensionsAPI implements Serializable {
             details.setDbName(dbName);
             details.setDbConn(dbConn);
             details.setServer(dmServer);
-            Logger.Debug("Getting Dimensions connection...");
+            Logger.debug("Getting Dimensions connection...");
             connection = DimensionsConnectionManager.getConnection(details);
             if (connection != null) {
-                Logger.Debug("Storing details for atomic key " + key + "...");
+                Logger.debug("Storing details for atomic key " + key + "...");
                 if (conns.putIfAbsent(key, new ConnectionCache(connection)) != null) {
-                    Logger.Debug("Key is not unique, as already exists within the cache: " + key);
+                    Logger.debug("Key is not unique, as already exists within the cache: " + key);
                 }
-                Logger.Debug("Just added connection number " + conns.size());
+                Logger.debug("Just added connection number " + conns.size());
                 if (version < 0) {
                     version = 2009;
                     // Get the server version.
                     List inf = connection.getObjectFactory().getServerVersion(2);
                     if (inf == null) {
-                        Logger.Debug("Detection of server information failed");
+                        Logger.debug("Detection of server information failed");
                     }
                     if (inf != null) {
-                        Logger.Debug("Server information detected -" + inf.size());
+                        Logger.debug("Server information detected -" + inf.size());
                         for (int i = 0; i < inf.size(); ++i) {
                             String prop = (String) inf.get(i);
-                            Logger.Debug(i + " - " + prop);
+                            Logger.debug(i + " - " + prop);
                         }
 
                         // Try and locate the server version.
@@ -377,7 +357,7 @@ public class DimensionsAPI implements Serializable {
                             serverx = (String) inf.get(0);
                         }
                         if (serverx != null) {
-                            Logger.Debug("Detected server version: " + serverx);
+                            Logger.debug("Detected server version: " + serverx);
                             String[] tokens = serverx.split(" ");
                             serverx = tokens[0];
                             if (serverx.startsWith("10.")) {
@@ -393,9 +373,9 @@ public class DimensionsAPI implements Serializable {
                             } else {
                                 version = 2009;
                             }
-                            Logger.Debug("Version to process set to " + version);
+                            Logger.debug("Version to process set to " + version);
                         } else {
-                            Logger.Debug("No server information found");
+                            Logger.debug("No server information found");
                         }
                     }
                 }
@@ -423,15 +403,15 @@ public class DimensionsAPI implements Serializable {
      */
     public final long login(String userID, String password, String database, String server, AbstractBuild build)
             throws IllegalArgumentException, DimensionsRuntimeException {
-        Logger.Debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \"" +
+        Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \"" +
                 build.getProject().getName() + "\"");
         if (build.getBuiltOn().getNodeName() == null) {
-            Logger.Debug("  build.getBuiltOn().getNodeName() is null!");
+            Logger.debug("  build.getBuiltOn().getNodeName() is null!");
         } else {
-            Logger.Debug("  build.getBuiltOn().getNodeName(): \"" + build.getBuiltOn().getNodeName() + "\"");
+            Logger.debug("  build.getBuiltOn().getNodeName(): \"" + build.getBuiltOn().getNodeName() + "\"");
         }
         final long key = login(userID, password, database, server);
-        Logger.Debug("  key: \"" + key + "\"");
+        Logger.debug("  key: \"" + key + "\"");
         return key;
     }
 
@@ -440,23 +420,23 @@ public class DimensionsAPI implements Serializable {
      */
     public final void logout(long key) {
         if (conns == null) {
-            Logger.Debug("Failed to close connection for key \"" + key + "\" - no connections exist!");
+            Logger.debug("Failed to close connection for key \"" + key + "\" - no connections exist!");
             return;
         }
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
-            Logger.Debug("Failed to close connection for key \"" + key + "\" - connection not found!");
+            Logger.debug("Failed to close connection for key \"" + key + "\" - connection not found!");
         } else {
             try {
-                Logger.Debug("Closing connection to Dimensions for key \"" + key + "\"...");
+                Logger.debug("Closing connection to Dimensions for key \"" + key + "\"...");
                 connection.close();
             } catch (DimensionsNetworkException dne) {
-                Logger.Debug("Exception thrown: DimensionsNetworkException");
+                Logger.debug("Exception thrown: DimensionsNetworkException");
             } catch (DimensionsRuntimeException dne) {
-                Logger.Debug("Exception thrown: DimensionsRuntimeException");
+                Logger.debug("Exception thrown: DimensionsRuntimeException");
             }
             this.conns.remove(key);
-            Logger.Debug("Now have " + conns.size() + " connections in use...");
+            Logger.debug("Now have " + conns.size() + " connections in use...");
         }
     }
 
@@ -464,7 +444,7 @@ public class DimensionsAPI implements Serializable {
      * Disconnects from the Dimensions repository, with additional tracing from supplied build details.
      */
     public final void logout(long key, AbstractBuild build) {
-        Logger.Debug("DimensionsAPI.logout - build number: \"" + build.getNumber() + "\", project: \"" +
+        Logger.debug("DimensionsAPI.logout - build number: \"" + build.getNumber() + "\", project: \"" +
                 build.getProject().getName() + "\"");
         logout(key);
     }
@@ -623,7 +603,7 @@ public class DimensionsAPI implements Serializable {
                 if (res != null) {
                     cmdOutput = cmdOutput.append(res.getMessage());
                     String outputStr = cmdOutput.toString();
-                    Logger.Debug(outputStr);
+                    Logger.debug(outputStr);
                     bRet = true;
 
                     // Check if any conflicts were identified.
@@ -653,7 +633,7 @@ public class DimensionsAPI implements Serializable {
         try {
             List items = calcRepositoryDiffs(key, projectName, baseline, requests, projectDir, fromDate, toDate, tz);
 
-            Logger.Debug("CM Url : " + (url != null ? url : "(null)"));
+            Logger.debug("CM Url : " + (url != null ? url : "(null)"));
             if (requests != null) {
                 getLogger().println("[DIMENSIONS] Calculating change set for request(s) '" + requests + "'...");
             } else {
@@ -665,7 +645,7 @@ public class DimensionsAPI implements Serializable {
             if (items != null) {
                 // Process the changesets...
                 List changes = createChangeList(items, tz, url);
-                Logger.Debug("Writing changeset to " + changelogFile.getPath());
+                Logger.debug("Writing changeset to " + changelogFile.getPath());
                 DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
                 write.writeLog(changes, changelogFile);
             } else {
@@ -710,7 +690,7 @@ public class DimensionsAPI implements Serializable {
             filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
             filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
 
-            Logger.Debug("Looking between " + dateAfter + " -> " + dateBefore);
+            Logger.debug("Looking between " + dateAfter + " -> " + dateBefore);
             String projName;
 
             if (baselineName != null && requests == null) {
@@ -737,9 +717,9 @@ public class DimensionsAPI implements Serializable {
                         baselineName.toUpperCase(), Filter.Criterion.EQUALS));
 
                 List<Baseline> baselineObjects = connection.getObjectFactory().getBaselines(baselineFilter);
-                Logger.Debug("Baseline query for \"" + baselineName + "\" returned " + baselineObjects.size() + " baselines");
+                Logger.debug("Baseline query for \"" + baselineName + "\" returned " + baselineObjects.size() + " baselines");
                 for (int i = 0; i < baselineObjects.size(); i++) {
-                    Logger.Debug("Baseline " + i + " is \"" + baselineObjects.get(i).getName() + "\"");
+                    Logger.debug("Baseline " + i + " is \"" + baselineObjects.get(i).getName() + "\"");
                 }
 
                 if (baselineObjects.size() == 0) {
@@ -775,7 +755,7 @@ public class DimensionsAPI implements Serializable {
                 cmd += "\"" + projectId + "\"";
                 DimensionsResult res = run(connection, cmd);
                 if (res != null ) {
-                    Logger.Debug("Locking project - " + res.getMessage());
+                    Logger.debug("Locking project - " + res.getMessage());
                     return res;
                 }
             }
@@ -799,7 +779,7 @@ public class DimensionsAPI implements Serializable {
                 cmd += "\"" + projectId + "\"";
                 DimensionsResult res = run(connection, cmd);
                 if (res != null ) {
-                    Logger.Debug("Unlocking project - " + res.getMessage());
+                    Logger.debug("Unlocking project - " + res.getMessage());
                     return res;
                 }
             }
@@ -870,7 +850,7 @@ public class DimensionsAPI implements Serializable {
                 }
                 DimensionsResult res = run(connection, cmd);
                 if (res != null ) {
-                    Logger.Debug("Building baseline - " + res.getMessage());
+                    Logger.debug("Building baseline - " + res.getMessage());
                     return res;
                 }
             }
@@ -958,7 +938,7 @@ public class DimensionsAPI implements Serializable {
                 }
                 DimensionsResult res = run(connection, cmd);
                 if (res != null) {
-                    Logger.Debug("Building project - " + res.getMessage());
+                    Logger.debug("Building project - " + res.getMessage());
                     return res;
                 }
             }
@@ -1014,7 +994,7 @@ public class DimensionsAPI implements Serializable {
                 }
                 DimensionsResult res = run(connection, ciCmd);
                 if (res != null) {
-                    Logger.Debug("Saving artifacts - " + res.getMessage());
+                    Logger.debug("Saving artifacts - " + res.getMessage());
                     return res;
                 }
             }
@@ -1115,7 +1095,7 @@ public class DimensionsAPI implements Serializable {
 
                 DimensionsResult res = run(connection, cmd);
                 if (res != null ) {
-                    Logger.Debug("Tagging project - " + res.getMessage());
+                    Logger.debug("Tagging project - " + res.getMessage());
                     return res;
                 }
             }
@@ -1151,7 +1131,7 @@ public class DimensionsAPI implements Serializable {
                         build.getProject().getName() + "' - build " + build.getNumber() + "\"";
                 DimensionsResult res = run(connection, cmd);
                 if (res != null) {
-                    Logger.Debug("Deploying baseline - " + res.getMessage());
+                    Logger.debug("Deploying baseline - " + res.getMessage());
                     return res;
                 }
             }
@@ -1187,7 +1167,7 @@ public class DimensionsAPI implements Serializable {
                         build.getProject().getName() + "' - build " + build.getNumber() + "\"";
                 DimensionsResult res = run(connection, cmd);
                 if (res != null) {
-                    Logger.Debug("Actioning baseline - " + res.getMessage());
+                    Logger.debug("Actioning baseline - " + res.getMessage());
                     return res;
                 }
             }
@@ -1211,7 +1191,7 @@ public class DimensionsAPI implements Serializable {
         //int SBM_LINK = 17;
 
         for (int i = 0; i < items.size(); ++i) {
-            Logger.Debug("Processing change set " + i + "/" + items.size());
+            Logger.debug("Processing change set " + i + "/" + items.size());
             ItemRevision item = (ItemRevision) items.get(i);
             int x = 0;
 
@@ -1225,7 +1205,7 @@ public class DimensionsAPI implements Serializable {
             if (fileVersion != null) {
                 x = fileVersion.intValue();
             }
-            Logger.Debug("Creating a change set (" + x + ") " + i);
+            Logger.debug("Creating a change set (" + x + ") " + i);
             if (x < 2) {
                 operation = "add";
             } else {
@@ -1248,7 +1228,7 @@ public class DimensionsAPI implements Serializable {
             if (comment == null) {
                 comment = "(None)";
             }
-            Logger.Debug("Change set details -" + comment + " " + revision + " " + fileName + " " + author +
+            Logger.debug("Change set details -" + comment + " " + revision + " " + fileName + " " + author +
                          " " + spec  + " " + date + " " + operation + " " + urlString);
 
             Calendar opDate = Calendar.getInstance();
@@ -1291,9 +1271,9 @@ public class DimensionsAPI implements Serializable {
                     String titlex = (String) req.getAttribute(SystemAttributes.TITLE);
 
                     cs.addRequest(objectId, requestUrl, titlex);
-                    Logger.Debug("Child Request Details IRT -" + objectId + " " + requestUrl + " " + titlex);
+                    Logger.debug("Child Request Details IRT -" + objectId + " " + requestUrl + " " + titlex);
                 } else {
-                    Logger.Debug("Child Request Details Ignored");
+                    Logger.debug("Child Request Details Ignored");
                 }
             }
         }
@@ -1394,9 +1374,9 @@ public class DimensionsAPI implements Serializable {
             urlQuery += "&DB_NAME=";
             urlQuery += db;
             try {
-                Logger.Debug("Host URL - " + host + " " + page + " " + urlQuery);
+                Logger.debug("Host URL - " + host + " " + page + " " + urlQuery);
                 String urlStr = encodeUrl(host, page, urlQuery);
-                Logger.Debug("Change URL - " + urlStr);
+                Logger.debug("Change URL - " + urlStr);
                 urlString = urlStr;
             } catch (Exception e) {
                 //e.printStackTrace();
@@ -1427,9 +1407,9 @@ public class DimensionsAPI implements Serializable {
             urlQuery += "&DB_NAME=";
             urlQuery += db;
             try {
-                Logger.Debug("Request Host URL - " + host + " " + page + " " + urlQuery);
+                Logger.debug("Request Host URL - " + host + " " + page + " " + urlQuery);
                 String urlStr = encodeUrl(host, page, urlQuery);
-                Logger.Debug("Request Change URL - " + urlStr);
+                Logger.debug("Request Change URL - " + urlStr);
                 urlString = urlStr;
             } catch (Exception e) {
                 //e.printStackTrace();
@@ -1480,9 +1460,9 @@ public class DimensionsAPI implements Serializable {
         // Catch any exceptions that may be thrown by the Java API and for now return no changes.
         // Going forward it would be good to trap all the possible exception types and do something about them.
         try {
-            Logger.Debug("Looking for changed files in '" + path + "' in project: " + srcProject.getName());
+            Logger.debug("Looking for changed files in '" + path + "' in project: " + srcProject.getName());
             List rels = srcProject.getChildItems(filter);
-            Logger.Debug("Found " + rels.size());
+            Logger.debug("Found " + rels.size());
             if (rels.size() == 0) {
                 return null;
             }
@@ -1496,7 +1476,7 @@ public class DimensionsAPI implements Serializable {
             return items;
         } catch (Exception e) {
             // e.printStackTrace();
-            Logger.Debug("Exception detected from the Java API: " + e.getMessage());
+            Logger.debug("Exception detected from the Java API: " + e.getMessage());
             return null;
         }
     }
@@ -1528,9 +1508,9 @@ public class DimensionsAPI implements Serializable {
         // Catch any exceptions that may be thrown by the Java API and for now return no changes.
         // Going forward it would be good to trap all the possible exception types and do something about them.
         try {
-            Logger.Debug("Looking for changed files in '" + path + "' in project: " + srcBaseline.getName());
+            Logger.debug("Looking for changed files in '" + path + "' in project: " + srcBaseline.getName());
             List rels = srcBaseline.getChildItems(filter);
-            Logger.Debug("Found " + rels.size());
+            Logger.debug("Found " + rels.size());
             if (rels.size() == 0) {
                 return null;
             }
@@ -1544,7 +1524,7 @@ public class DimensionsAPI implements Serializable {
             return items;
         } catch (Exception e) {
             // e.printStackTrace();
-            Logger.Debug("Exception detected from the Java API: " + e.getMessage());
+            Logger.debug("Exception detected from the Java API: " + e.getMessage());
             return null;
         }
     }
@@ -1562,7 +1542,7 @@ public class DimensionsAPI implements Serializable {
             throw new IllegalArgumentException(MISSING_REQUEST);
         }
 
-        Logger.Debug("Looking for items against request " + request.getName());
+        Logger.debug("Looking for items against request " + request.getName());
 
         String path = preProcessSrcPath((srcPath.equals("") ? "/" : srcPath));
         if (!(isRecursive && path.equals(""))) { //$NON-NLS-1$
@@ -1578,18 +1558,18 @@ public class DimensionsAPI implements Serializable {
         // Catch any exceptions that may be thrown by the Java API and for now return no changes.
         // Going forward it would be good to trap all the possible exception types and do something about them.
         try {
-            Logger.Debug("Looking for changed files in '" + path + "' in request: " + request.getName());
+            Logger.debug("Looking for changed files in '" + path + "' in request: " + request.getName());
             request.queryChildItems(filter, srcProject);
             List rels = request.getChildItems(filter);
-            Logger.Debug("Found " + rels.size());
+            Logger.debug("Found " + rels.size());
             if (rels.size() == 0) {
                 return true;
             }
             for (int i = 0; i < rels.size(); ++i) {
-                Logger.Debug("Processing " + i + "/" + rels.size());
+                Logger.debug("Processing " + i + "/" + rels.size());
                 DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
                 if (child != null && child.getObject() instanceof ItemRevision) {
-                    Logger.Debug("Found an item");
+                    Logger.debug("Found an item");
                     DimensionsObject relType = child.getRelationship();
                     if (SystemRelationship.IN_RESPONSE.equals(relType)) {
                         items.add(child.getObject());
@@ -1599,7 +1579,7 @@ public class DimensionsAPI implements Serializable {
             return true;
         } catch (Exception e) {
             // e.printStackTrace();
-            Logger.Debug("Exception detected from the Java API: " + e.getMessage());
+            Logger.debug("Exception detected from the Java API: " + e.getMessage());
             return false;
         }
     }
@@ -1612,31 +1592,31 @@ public class DimensionsAPI implements Serializable {
             request.flushRelatedObjects(Request.class, true);
             request.queryChildRequests(null);
             List rels = request.getChildRequests(null);
-            Logger.Debug("Found " + rels.size());
+            Logger.debug("Found " + rels.size());
             if (rels.size() == 0) {
                 return true;
             }
             for (int i = 0; i < rels.size(); i++) {
-                Logger.Debug("Processing " + i + "/" + rels.size());
+                Logger.debug("Processing " + i + "/" + rels.size());
                 DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
                 if (child != null && child.getObject() instanceof Request) {
-                    Logger.Debug("Found a request");
+                    Logger.debug("Found a request");
                     DimensionsObject relType = child.getRelationship();
                     if (SystemRelationship.DEPENDENT.equals(relType)) {
-                        Logger.Debug("Found a dependent request");
+                        Logger.debug("Found a dependent request");
                         requestList.add(child.getObject());
                         if (!getDmChildRequests((Request) child.getObject(), requestList)) {
                             return false;
                         }
                     }
                 } else {
-                    Logger.Debug("Related object was null or not a request " + (child != null));
+                    Logger.debug("Related object was null or not a request " + (child != null));
                 }
             }
             return true;
         } catch (Exception e) {
             // e.printStackTrace();
-            Logger.Debug("Exception detected from the Java API: " + e.getMessage());
+            Logger.debug("Exception detected from the Java API: " + e.getMessage());
             throw new DimensionsRuntimeException("getDmChildRequests - encountered a Java API exception");
         }
     }
@@ -1654,13 +1634,13 @@ public class DimensionsAPI implements Serializable {
         if (cmd == null || cmd.equals("")) { //$NON-NLS-1$
             throw new IllegalArgumentException(NO_COMMAND_LINE);
         }
-        Logger.Debug("Running the command '" + cmd + "'...");
+        Logger.debug("Running the command '" + cmd + "'...");
         try {
             DimensionsObjectFactory dof = connection.getObjectFactory();
             DimensionsResult res = dof.runCommand(cmd);
             return res;
         } catch (Exception e) {
-            Logger.Debug("Command failed to run");
+            Logger.debug("Command failed to run");
             throw new DimensionsRuntimeException("Dimension command failed -\n\t(" + cmd + ")\n\t(" + e.getMessage() + ")");
         }
     }
@@ -1753,7 +1733,7 @@ public class DimensionsAPI implements Serializable {
             String[] reqStr = null;
             if (requests.indexOf(",") > 0) {
                 reqStr = requests.split(",");
-                Logger.Debug("User specified " + reqStr.length + " requests");
+                Logger.debug("User specified " + reqStr.length + " requests");
             } else {
                 reqStr = new String[1];
                 reqStr[0] = requests;
@@ -1783,22 +1763,22 @@ public class DimensionsAPI implements Serializable {
             for (int ii = 0;ii < reqStr.length; ii++) {
                 String xStr = reqStr[ii];
                 xStr.trim();
-                Logger.Debug("Request to process is \"" + xStr + "\"");
+                Logger.debug("Request to process is \"" + xStr + "\"");
                 Request requestObj = connection.getObjectFactory().findRequest(xStr.toUpperCase());
 
                 if (requestObj != null) {
-                    Logger.Debug("Request to process is \"" + requestObj.getName() + "\"");
+                    Logger.debug("Request to process is \"" + requestObj.getName() + "\"");
                     requestList.add(requestObj);
                     // Get all the children for this request
                     if (!getDmChildRequests(requestObj, requestList)) {
                         throw new DimensionsRuntimeException("Could not process request \"" + requestObj.getName() +
                                 "\" children in repository");
                     }
-                    Logger.Debug("Request has " + requestList.size() + " elements to process");
+                    Logger.debug("Request has " + requestList.size() + " elements to process");
                     Project projectObj = connection.getObjectFactory().getProject(projName);
                     for (int i = 0; i < requestList.size(); i++) {
                         Request req = (Request) requestList.get(i);
-                        Logger.Debug("Request " + i + " is \"" + req.getName() + "\"");
+                        Logger.debug("Request " + i + " is \"" + req.getName() + "\"");
                         if (!queryItems(connection, req, "/", items, filter, projectObj, true, allRevisions)) {
                             throw new DimensionsRuntimeException("Could not process items for request \"" +
                                     req.getName() + "\"");
@@ -1806,7 +1786,7 @@ public class DimensionsAPI implements Serializable {
                     }
 
                     if (items != null) {
-                        Logger.Debug("Request has " + items.size() + " items to process");
+                        Logger.debug("Request has " + items.size() + " items to process");
                         BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
                         bo.queryAttribute(attrs);
                     }

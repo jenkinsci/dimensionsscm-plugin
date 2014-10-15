@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -99,20 +100,20 @@ import java.util.Calendar;
  * @author Tim Payne
  */
 public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
-    private boolean forceCheckIn;
-    private boolean forceTip;
-    private boolean isStream;
+    private final boolean forceCheckIn;
+    private final boolean forceTip;
+    private final boolean isStream;
 
-    int buildNo;
-    private String jobId = "";
+    private final int buildNo;
+    private final String jobId;
 
-    private String projectId = "";
+    private final String projectId;
     private String requests;
-    private String owningPart;
-    private String patternType;
+    private final String owningPart;
 
-    private String[] patterns;
-    private String[] patternsExc;
+    private final String patternType;
+    private final String[] patterns;
+    private final String[] patternsExc;
 
     /**
      * Utility routine to create command file for dmcli.
@@ -170,16 +171,8 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
             String requestId, boolean forceCheckIn, boolean forceTip, String[] patterns, String patternType,
             int version, boolean isStream, int buildNo, String jobId, String owningPart, FilePath workspace,
             TaskListener listener, String[] patternsExc) {
-        this.workspace = workspace;
-        this.listener = listener;
+        super(userName, passwd, database, server, version, workspace, listener);
         this.isStream = isStream;
-
-        // Server details.
-        this.userName = userName;
-        this.passwd = passwd;
-        this.database = database;
-        this.server = server;
-        this.version = version;
 
         // Config details.
         this.projectId = projectId;

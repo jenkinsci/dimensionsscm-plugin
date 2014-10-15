@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -106,11 +107,11 @@ import org.kohsuke.stapler.export.ExportedBean;
 public class DimensionsChangeSet extends ChangeLogSet.Entry {
     private String developer;
     private String message;
-    private String identifier;
+    private final String identifier;
     private Calendar date;
     private String version;
-    private Collection<DmFiles> items = new HashSet<DmFiles>();
-    private Collection<DmRequests> requests = new HashSet<DmRequests>();
+    private final Collection<DmFiles> items;
+    private final Collection<DmRequests> requests;
 
     // Digester class seems to need a no-parameter constructor else it crashes
     public DimensionsChangeSet() {

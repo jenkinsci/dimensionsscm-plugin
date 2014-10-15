@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -111,15 +112,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.Writer;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -145,32 +144,32 @@ import org.kohsuke.stapler.StaplerResponse;
  * @author Tim Payne
  */
 public class DimensionsSCM extends SCM implements Serializable {
-    private String project;
-    private String directory;
-    private String permissions;
-    private String eol;
+    private final String project;
+    private final String directory;
+    private final String permissions;
+    private final String eol;
 
-    private String jobUserName;
-    private String jobPasswd;
-    private String jobServer;
-    private String jobDatabase;
+    private final String jobUserName;
+    private final String jobPasswd;
+    private final String jobServer;
+    private final String jobDatabase;
 
-    private String[] folders = new String[0];
+    private final String[] folders;
 
-    private String jobTimeZone;
-    private String jobWebUrl;
+    private final String jobTimeZone;
+    private final String jobWebUrl;
 
-    private boolean canJobUpdate;
-    private boolean canJobDelete;
-    private boolean canJobForce;
-    private boolean canJobRevert;
-    private boolean canJobExpand;
-    private boolean canJobNoMetadata;
-    private boolean canJobNoTouch;
-    private boolean forceAsSlave;
+    private final boolean canJobUpdate;
+    private final boolean canJobDelete;
+    private final boolean canJobForce;
+    private final boolean canJobRevert;
+    private final boolean canJobExpand;
+    private final boolean canJobNoMetadata;
+    private final boolean canJobNoTouch;
+    private final boolean forceAsSlave;
 
     private transient DimensionsAPI cachedAPI;
-    DimensionsSCMRepositoryBrowser browser;
+    private transient DimensionsSCMRepositoryBrowser browser;
 
     public DimensionsSCM getSCM() {
         return this;
@@ -393,31 +392,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         return;
     }
 
-    public DimensionsSCM(String project, String directory, String workarea, boolean canJobDelete, boolean canJobForce,
-            boolean canJobRevert, String jobUserName, String jobPasswd, String jobServer, String jobDatabase,
-            boolean canJobUpdate, String jobTimeZone, String jobWebUrl) {
-        this(project, null, workarea, canJobDelete, canJobForce, canJobRevert, jobUserName, jobPasswd, jobServer,
-                jobDatabase, canJobUpdate, jobTimeZone, jobWebUrl, directory, "DEFAULT", "DEFAULT", false, false,
-                false, false);
-    }
-
-    public DimensionsSCM(String project, String[] folders, String workarea, boolean canJobDelete, boolean canJobForce,
-            boolean canJobRevert, String jobUserName, String jobPasswd, String jobServer, String jobDatabase,
-            boolean canJobUpdate, String jobTimeZone, String jobWebUrl, String directory, String permissions,
-            String eol) {
-        this(project, folders, workarea, canJobDelete, canJobForce, canJobRevert, jobUserName, jobPasswd, jobServer,
-                jobDatabase, canJobUpdate, jobTimeZone, jobWebUrl, directory, permissions, eol, false, false,
-                false, false);
-    }
-
-    public DimensionsSCM(String project, String[] folders, String workarea, boolean canJobDelete, boolean canJobForce,
-            boolean canJobRevert, String jobUserName, String jobPasswd, String jobServer, String jobDatabase,
-            boolean canJobUpdate, String jobTimeZone, String jobWebUrl, String directory, String permissions,
-            String eol, boolean canJobExpand, boolean canJobNoMetadata) {
-        this(project, folders, workarea, canJobDelete, canJobForce, canJobRevert, jobUserName, jobPasswd, jobServer,
-                jobDatabase, canJobUpdate, jobTimeZone, jobWebUrl, directory, permissions, eol, canJobExpand,
-                canJobNoMetadata, false, false);
-    }
+    private static String[] DEFAULT_FOLDERS = new String[] { "/" };
 
     @DataBoundConstructor
     public DimensionsSCM(String project, String[] folders, String workarea, boolean canJobDelete, boolean canJobForce,
@@ -425,45 +400,22 @@ public class DimensionsSCM extends SCM implements Serializable {
             boolean canJobUpdate, String jobTimeZone, String jobWebUrl, String directory, String permissions,
             String eol, boolean canJobExpand, boolean canJobNoMetadata, boolean canJobNoTouch, boolean forceAsSlave) {
         // Check the folders specified have data specified.
-        if (folders != null) {
-            Logger.Debug("Folders are populated");
-            List<String> x = new ArrayList<String>(folders.length);
-            for (String folder : folders) {
-                if (StringUtils.isNotEmpty(folder)) {
-                    x.add(folder);
-                }
-            }
-            this.folders = x.toArray(new String[0]);
-        } else {
-            if (directory != null) {
-                this.folders[0] = directory;
-            }
-        }
-
-        // If nothing specified, then default to '/'.
-        if (this.folders.length < 2) {
-            if (this.folders[0] == null || this.folders[0].length() < 1) {
-                this.folders[0] = "/";
-            }
-        }
+        this.folders = folders != null ? Values.notEmptyOrElse(Values.trimCopy(folders), DEFAULT_FOLDERS) :
+                (Values.hasText(directory) ? new String[] { directory } : DEFAULT_FOLDERS);
 
         // Copying arguments to fields.
-        this.project = (Util.fixEmptyAndTrim(project) == null ? "${JOB_NAME}" : project);
-        this.directory = (Util.fixEmptyAndTrim(directory) == null ? null : directory);
-        this.permissions = (Util.fixEmptyAndTrim(permissions) == null ? "DEFAULT" : permissions);
-        this.eol = (Util.fixEmptyAndTrim(eol) == null ? "DEFAULT" : eol);
+        this.project = Values.textOrElse(project, "${JOB_NAME}");
+        this.directory = Values.textOrElse(directory, null);
+        this.permissions = Values.textOrElse(permissions, "DEFAULT");
+        this.eol = Values.textOrElse(eol, "DEFAULT");
 
-        this.jobServer = (Util.fixEmptyAndTrim(jobServer) == null ? getDescriptor().getServer() : jobServer);
-        this.jobUserName = (Util.fixEmptyAndTrim(jobUserName) == null ? getDescriptor().getUserName() : jobUserName);
-        this.jobDatabase = (Util.fixEmptyAndTrim(jobDatabase) == null ? getDescriptor().getDatabase() : jobDatabase);
-        String passwd = (Util.fixEmptyAndTrim(jobPasswd) == null ? getDescriptor().getPasswd() : jobPasswd);
+        this.jobServer = Values.textOrElse(jobServer, getDescriptor().getServer());
+        this.jobUserName = Values.textOrElse(jobUserName, getDescriptor().getUserName());
+        this.jobDatabase = Values.textOrElse(jobDatabase, getDescriptor().getDatabase());
+        String passwd = Values.textOrElse(jobPasswd, getDescriptor().getPasswd());
         this.jobPasswd = Scrambler.scramble(passwd);
 
-        if ((Util.fixEmptyAndTrim(jobServer)) == null) {
-            this.canJobUpdate = getDescriptor().isCanUpdate();
-        } else {
-            this.canJobUpdate = canJobUpdate;
-        }
+        this.canJobUpdate = Values.hasText(jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();
 
         this.canJobDelete = canJobDelete;
         this.canJobForce = canJobForce;
@@ -473,12 +425,11 @@ public class DimensionsSCM extends SCM implements Serializable {
         this.canJobNoTouch = canJobNoTouch;
         this.forceAsSlave = forceAsSlave;
 
-        this.jobTimeZone = (Util.fixEmptyAndTrim(jobTimeZone) == null ? getDescriptor().getTimeZone() : jobTimeZone);
-        this.jobWebUrl = (Util.fixEmptyAndTrim(jobWebUrl) == null ? getDescriptor().getWebUrl() : jobWebUrl);
+        this.jobTimeZone = Values.textOrElse(jobTimeZone, getDescriptor().getTimeZone());
+        this.jobWebUrl = Values.textOrElse(jobWebUrl, getDescriptor().getWebUrl());
 
-        String dmS = this.jobServer + "-" + this.jobUserName + ":" + this.jobDatabase;
-        Logger.Debug("Starting job for project '" + this.project + "' ('" + this.folders.length + "')" +
-                ", connecting to " + dmS);
+        Logger.debug("Starting job for project '" + this.project + "' ('" + this.folders.length + "')" +
+                ", connecting to " + this.jobServer + "-" + this.jobUserName + ":" + this.jobDatabase);
     }
 
     /**
@@ -492,10 +443,10 @@ public class DimensionsSCM extends SCM implements Serializable {
         boolean bRet = false;
 
         if (!isCanJobUpdate()) {
-            Logger.Debug("Skipping checkout - " + this.getClass().getName());
+            Logger.debug("Skipping checkout - " + this.getClass().getName());
         }
 
-        Logger.Debug("Invoking checkout - " + this.getClass().getName());
+        Logger.debug("Invoking checkout - " + this.getClass().getName());
 
         try {
             // Load other Dimensions plugins if set.
@@ -507,7 +458,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             String nodeName = build.getBuiltOn().getNodeName();
 
             if (DimensionsChecker.isValidPluginCombination(build, listener)) {
-                Logger.Debug("Plugins are ok");
+                Logger.debug("Plugins are ok");
             } else {
                 listener.fatalError("\n[DIMENSIONS] The plugin combinations you have selected are not valid.");
                 listener.fatalError("\n[DIMENSIONS] Please review online help to determine valid plugin uses.");
@@ -521,7 +472,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
                 if (key > 0L) {
                     // Get the server version.
-                    Logger.Debug("Login worked.");
+                    Logger.debug("Login worked.");
                     version = dmSCM.getDmVersion();
                     if (version == 0) {
                         version = 2009;
@@ -537,9 +488,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                 boolean master = true;
                 if (isForceAsSlave()) {
                     master = false;
-                    Logger.Debug("Forced processing as slave...");
+                    Logger.debug("Forced processing as slave...");
                 } else {
-                    Logger.Debug("Checking if master or slave...");
+                    Logger.debug("Checking if master or slave...");
                     if (nodeName != null && nodeName.length() > 0) {
                         master = false;
                     }
@@ -612,9 +563,9 @@ public class DimensionsSCM extends SCM implements Serializable {
             TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0) ?
                     TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
             if (getJobTimeZone() != null && getJobTimeZone().length() > 0) {
-                Logger.Debug("Job timezone setting is " + getJobTimeZone());
+                Logger.debug("Job timezone setting is " + getJobTimeZone());
             }
-            Logger.Debug("Log updates between " + (lastBuildCal != null ?
+            Logger.debug("Log updates between " + (lastBuildCal != null ?
                     DateUtils.getStrDate(lastBuildCal, tz) : "0") + " -> " + DateUtils.getStrDate(nowDateCal, tz) +
                     " (" + tz.getID() + ")");
 
@@ -624,7 +575,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             key = dmSCM.login(getJobUserName(), getJobPasswd(), getJobDatabase(), getJobServer(), build);
 
             if (key > 0L) {
-                Logger.Debug("Login worked.");
+                Logger.debug("Login worked.");
                 VariableResolver<String> myResolver = build.getBuildVariableResolver();
 
                 String baseline = myResolver.resolve("DM_BASELINE");
@@ -639,7 +590,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                     requests = requests.toUpperCase();
                 }
 
-                Logger.Debug("Extra parameters - " + baseline + " " + requests);
+                Logger.debug("Extra parameters - " + baseline + " " + requests);
                 String[] folders = getFolders();
 
                 if (baseline != null && baseline.length() == 0) {
@@ -659,7 +610,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
-                    Logger.Debug("Looking for changes in '" + folderN + "'...");
+                    Logger.debug("Looking for changes in '" + folderN + "'...");
 
                     // Check out the folder.
                     bRet = dmSCM.createChangeSetLogs(key, getProjectName(build), dname, lastBuildCal, nowDateCal,
@@ -671,17 +622,19 @@ public class DimensionsSCM extends SCM implements Serializable {
 
                 // Close the changes log file.
                 {
-                    FileWriter logFile = null;
+                    Writer writer = null;
                     try {
-                        logFile = new FileWriter(changelogFile, true);
-                        PrintWriter fmtWriter = new PrintWriter(logFile);
-                        fmtWriter.println("</changelog>");
-                        logFile.flush();
+                        writer = new FileWriter(changelogFile, true);
+                        PrintWriter pw = new PrintWriter(writer);
+                        pw.println("</changelog>");
+                        pw.flush();
                         bRet = true;
                     } catch (Exception e) {
                         throw new IOException("Unable to write change log - " + e.getMessage());
                     } finally {
-                        logFile.close();
+                        if (writer != null) {
+                            writer.close();
+                        }
                     }
                 }
             }
@@ -755,8 +708,8 @@ public class DimensionsSCM extends SCM implements Serializable {
             final TaskListener listener) throws IOException, InterruptedException {
         boolean bChanged = false;
 
-        Logger.Debug("Invoking pollChanges - " + this.getClass().getName());
-        Logger.Debug("Checking job - " + project.getName());
+        Logger.debug("Invoking pollChanges - " + this.getClass().getName());
+        Logger.debug("Checking job - " + project.getName());
         long key = -1L;
 
         if (getProject() == null || getProject().length() == 0) {
@@ -773,9 +726,9 @@ public class DimensionsSCM extends SCM implements Serializable {
             TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0) ?
                     TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
             if (getJobTimeZone() != null && getJobTimeZone().length() > 0) {
-                Logger.Debug("Job timezone setting is " + getJobTimeZone());
+                Logger.debug("Job timezone setting is " + getJobTimeZone());
             }
-            Logger.Debug("Checking for any updates between " + (lastBuildCal != null ?
+            Logger.debug("Checking for any updates between " + (lastBuildCal != null ?
                     DateUtils.getStrDate(lastBuildCal, tz) : "0") + " -> " + DateUtils.getStrDate(nowDateCal, tz) +
                     " (" + tz.getID() + ")");
 
@@ -794,8 +747,8 @@ public class DimensionsSCM extends SCM implements Serializable {
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
-                    Logger.Debug("Polling using key " + key);
-                    Logger.Debug("Polling '" + folderN + "'...");
+                    Logger.debug("Polling using key " + key);
+                    Logger.debug("Polling '" + folderN + "'...");
 
                     bChanged = dmSCM.hasRepositoryBeenUpdated(key, getProjectName(project.getLastBuild()), dname,
                             lastBuildCal, nowDateCal, tz);
@@ -815,7 +768,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
 
         if (bChanged) {
-            Logger.Debug("Polling returned true");
+            Logger.debug("Polling returned true");
         }
         return bChanged;
     }
@@ -827,7 +780,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      */
     @Override
     public ChangeLogParser createChangeLogParser() {
-        Logger.Debug("Invoking createChangeLogParser - " + this.getClass().getName());
+        Logger.debug("Invoking createChangeLogParser - " + this.getClass().getName());
         return new DimensionsChangeLogParser();
     }
 
@@ -863,7 +816,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         public DescriptorImpl() {
             super(DimensionsSCM.class, DimensionsSCMRepositoryBrowser.class);
             load();
-            Logger.Debug("Loading " + this.getClass().getName());
+            Logger.debug("Loading " + this.getClass().getName());
         }
 
         @Override
@@ -1096,7 +1049,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 throws IOException, ServletException {
             try {
                 String xtz = (jobtimezone != null) ? jobtimezone : timezone;
-                Logger.Debug("Invoking docheckTz - " + xtz);
+                Logger.debug("Invoking docheckTz - " + xtz);
                 TimeZone ctz = TimeZone.getTimeZone(xtz);
                 String  lmt = ctz.getID();
                 if (lmt.equalsIgnoreCase("GMT") && !(xtz.equalsIgnoreCase("GMT") ||
@@ -1134,7 +1087,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 String xdatabase = (jobDatabase != null) ? jobDatabase : database;
                 long key = -1L;
                 String dmS = xserver + "-" + xuser + ":" + xdatabase;
-                Logger.Debug("Invoking serverCheck - " + dmS);
+                Logger.debug("Invoking serverCheck - " + dmS);
                 key = connectionCheck.login(xuser, xpasswd, xdatabase, xserver);
                 if (key < 1L) {
                     return FormValidation.error("Connection test failed");

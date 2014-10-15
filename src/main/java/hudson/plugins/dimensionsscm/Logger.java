@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -83,10 +84,9 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -96,52 +96,49 @@ import java.util.Map;
  * @author Tim Payne
  */
 public class Logger implements Serializable {
-    /**
-     * Print a message to stdout.
-     */
-    public static void Debug(String outln) {
-        // Search through the system environment and see if we have logging enabled.
-        Map<String, String> variables = System.getenv();
-        String dmLogger = "DM_HUDSON_LOGGING";
-        boolean logEnabled = false;
+    private static final String DM_JENKINS_LOGGING = "DM_JENKINS_LOGGING";
+    private static final boolean DEBUG_ENABLED = queryDebugEnabled();
 
-        for (Map.Entry<String, String> entry : variables.entrySet()) {
-            if (logEnabled) {
+    private static PrintWriter pw = new PrintWriter(System.out, true);
+
+    private static boolean queryDebugEnabled() {
+        // Search through the system environment and see if we have logging enabled.
+        Map<String, String> env = System.getenv();
+        boolean debugEnabled = false;
+        for (String key : env.keySet()) {
+            String upperKey = key.toUpperCase(Locale.ROOT);
+            if (upperKey.equals(DM_JENKINS_LOGGING)) {
+                debugEnabled = true;
                 break;
             }
-            String name = entry.getKey();
-            String value = entry.getValue();
-            String varname = name.toUpperCase();
-            if (varname.equals(dmLogger)) {
-                logEnabled = true;
-            }
         }
-        if (logEnabled) {
-            System.out.println("DEBUG (" + DateUtils.getNowStrDate() + ") :" + outln);
-        }
-        return;
+        return debugEnabled;
     }
 
     /**
-     * Print a message to stdout.
+     * Is logging enabled?
+     * @return true if calling debug() will write output
      */
-    public static void DebugFile(String outln) {
-        FileWriter logFileWriter = null;
-        PrintWriter fmtWriter = null;
-        File tmpFile = null;
-        String tmpDir = System.getProperty("java.io.tmpdir");
+    public static boolean isDebugEnabled() {
+        return DEBUG_ENABLED;
+    }
 
-        try {
-            tmpFile = File.createTempFile(tmpDir + "dmCm.log", null, null);
-            logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter, true);
-            fmtWriter.println("DEBUG (" + DateUtils.getNowStrDate() + ") :" + outln);
-            fmtWriter.flush();
-        } catch (Exception e) {
-            /* Do nothing. */
-        } finally {
-            fmtWriter.close();
+    /**
+     * Print a message to the log.
+     *
+     * @param str the message
+     */
+    public static void debug(String str) {
+        if (isDebugEnabled()) {
+            pw.println("DEBUG (" + DateUtils.getNowStrDate() + ") :" + str);
         }
-        return;
+    }
+
+    /**
+     * Change the output writer for logging messages.
+     * @param pw new PrintWriter to send debug output messages to.
+     */
+    public void setOut(PrintWriter pw) {
+        this.pw = pw;
     }
 }

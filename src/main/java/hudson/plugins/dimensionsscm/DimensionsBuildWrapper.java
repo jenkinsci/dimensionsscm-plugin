@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -112,7 +113,10 @@ public class DimensionsBuildWrapper extends BuildWrapper {
 
     /**
      * Descriptor should be singleton.
+     * <p>
+     * {@inheritDoc}
      */
+    @Override
     public Descriptor<BuildWrapper> getDescriptor() {
         return DMWBLD_DESCRIPTOR;
     }
@@ -134,11 +138,11 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             throws IOException, InterruptedException {
         long key = -1L;
         if (build.getProject().getScm() instanceof DimensionsSCM) {
-            Logger.Debug("Invoking build setup callout " + this.getClass().getName());
+            Logger.debug("Invoking build setup callout " + this.getClass().getName());
             if (scm == null) {
                 scm = (DimensionsSCM) build.getProject().getScm();
             }
-            Logger.Debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
+            Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
                     scm.getJobServer());
             try {
                 key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
@@ -177,7 +181,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
         public DescriptorImpl() {
             super(DimensionsBuildWrapper.class);
             load();
-            Logger.Debug("Loading " + this.getClass().getName());
+            Logger.debug("Loading " + this.getClass().getName());
         }
 
         @Override
@@ -246,14 +250,14 @@ public class DimensionsBuildWrapper extends BuildWrapper {
         public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException {
             long key = -1L;
             if (scm != null) {
-                Logger.Debug("Invoking build tearDown callout " + this.getClass().getName());
-                Logger.Debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
+                Logger.debug("Invoking build tearDown callout " + this.getClass().getName());
+                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
                         scm.getJobServer());
                 try {
                     key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
                             scm.getJobServer(), build);
                     if (key > 0L) {
-                        Logger.Debug("Unlocking the project");
+                        Logger.debug("Unlocking the project");
                         DimensionsResult res = scm.getAPI().unlockProject(key, scm.getProjectName(build));
                         if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");

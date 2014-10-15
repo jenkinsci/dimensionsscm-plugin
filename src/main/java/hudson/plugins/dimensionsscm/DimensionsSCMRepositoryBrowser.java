@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -99,15 +100,12 @@ import org.kohsuke.stapler.export.ExportedBean;
  */
 @ExportedBean(defaultVisibility = 999)
 public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet> {
-    private static final long serialVersionUID = 1L;
-
     @DataBoundConstructor
     public DimensionsSCMRepositoryBrowser() {
     }
 
     public URL getDiffLink(DimensionsChangeSet.DmFiles item) throws IOException {
-        String link = "http://alink.com/link.html";
-        return new URL(link);
+        return new URL("http://alink.com/link.html");
     }
 
     @Override
@@ -131,6 +129,7 @@ public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<D
             super(DimensionsSCMRepositoryBrowser.class);
         }
 
+        @Override
         public String getDisplayName() {
             return "Dimensions";
         }

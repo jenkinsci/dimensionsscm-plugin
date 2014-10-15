@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -97,25 +98,19 @@ import java.io.IOException;
  * @author Tim Payne
  */
 public class GenericAPITask implements FileCallable<Boolean> {
-    protected FilePath workspace;
-    protected TaskListener listener;
+    private final FilePath workspace;
+    protected final TaskListener listener;
 
-    protected String userName = "";
-    protected String passwd = "";
-    protected String database = "";
-    protected String server = "";
-    protected String permissions = "";
+    private final String userName;
+    private final String passwd;
+    private final String database;
+    private final String server;
 
     protected long key = -1L;
     protected DimensionsAPI dmSCM;
 
-    protected static final long serialVersionUID = 1L;
-
-    public GenericAPITask() {
-    }
-
     public GenericAPITask(DimensionsSCM parent, FilePath workspace, TaskListener listener) {
-        Logger.Debug("Creating task - " + this.getClass().getName());
+        Logger.debug("Creating task - " + this.getClass().getName());
 
         this.workspace = workspace;
         this.listener = listener;
@@ -143,7 +138,7 @@ public class GenericAPITask implements FileCallable<Boolean> {
             // Connect to Dimensions...
             key = dmSCM.login(userName, passwd, database, server);
             if (key > 0L) {
-                Logger.Debug("Login worked.");
+                Logger.debug("Login worked.");
                 bRet = execute(area, channel);
             }
         } catch (Exception e) {

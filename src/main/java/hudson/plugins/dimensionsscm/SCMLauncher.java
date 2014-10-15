@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -117,9 +118,9 @@ public class SCMLauncher implements Serializable {
         }
     }
 
-    private String[] args;
-    private dmLauncher proc;
-    private FilePath workArea;
+    private final String[] args;
+    private final dmLauncher proc;
+    private final FilePath workArea;
     private String results;
 
     public SCMLauncher(final String[] args, final TaskListener listener, final FilePath area) {
@@ -183,7 +184,7 @@ public class SCMLauncher implements Serializable {
 
         if (tmpFile != null) {
             // Get the log file into a string for processing...
-            results = new String(FileUtils.loadFile(tmpFile));
+            results = new String(FileUtils.readAllBytes(tmpFile));
             tmpFile.delete();
             tmpFile = null;
         }

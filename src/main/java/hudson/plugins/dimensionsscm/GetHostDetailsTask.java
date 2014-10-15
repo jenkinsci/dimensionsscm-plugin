@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -97,8 +98,7 @@ import java.net.UnknownHostException;
  * @author Tim Payne
  */
 public class GetHostDetailsTask implements FileCallable<Boolean> {
-    private static final long serialVersionUID = 1L;
-    private String masteripaddr;
+    private final String masteripaddr;
 
     public GetHostDetailsTask(String master) {
         this.masteripaddr = master;
@@ -111,15 +111,8 @@ public class GetHostDetailsTask implements FileCallable<Boolean> {
             InetAddress netAddr = InetAddress.getLocalHost();
             // Get IP address.
             byte[] ipAddr = netAddr.getAddress();
-
-            // Get hostname.
-            String hostname = netAddr.getHostName();
-
-            if (hostname.equals(masteripaddr)) {
-                return true;
-            } else {
-                return false;
-            }
+            // Get hostname and compare.
+            return netAddr.getHostName().equals(masteripaddr);
         } catch (UnknownHostException e) {
             throw new IOException(e.getMessage());
         }

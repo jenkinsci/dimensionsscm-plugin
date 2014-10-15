@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -104,8 +105,8 @@ public class DateUtils implements Serializable {
     private static final String DATE_PATTERN = "dd-MMM-yyyy";
     private static final String DATETIME_PATTERN = "dd-MMM-yyyy HH:mm:ss";
     private static final String RFCDATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-    private static final TimeZone UTC = TimeZone.getTimeZone("UTC"); // should this be "GMT"?
-    private static TimeZone tzl = TimeZone.getDefault();
+    private static final TimeZone UTC_TIME_ZONE = TimeZone.getTimeZone("UTC");
+    private static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getDefault();
 
     /**
      * Attempt to parse as date-and-time patterns first (since a timestamp
@@ -114,7 +115,7 @@ public class DateUtils implements Serializable {
     private static final String[] PATTERNS = { DATETIME_PATTERN, DATE_PATTERN, RFCDATETIME_PATTERN };
 
     /**
-     * Parses a date from a string in known format, using UTC time zone.
+     * Parses a date from a string in known format, using default time zone.
      * NOTE: This should ONLY be used if the caller has no knowledge of the
      * time zone to be used. Most of the time the overloaded method below
      * should be used.
@@ -122,7 +123,7 @@ public class DateUtils implements Serializable {
      * @return  a Date object, or null
      */
     public static Date parse(String dateStr) {
-        return parse(dateStr, tzl);
+        return parse(dateStr, DEFAULT_TIME_ZONE);
     }
 
     /**
@@ -202,7 +203,7 @@ public class DateUtils implements Serializable {
 
     /**
      * Formats a string in known date-time form from a date object,
-     * using UTC time zone.
+     * using default time zone.
      * NOTE: This should ONLY be used if the caller has no knowledge of the
      * time zone to be used. Most of the time the overloaded method below
      * should be used.
@@ -210,12 +211,12 @@ public class DateUtils implements Serializable {
      * @return  a String containing a date in known date-time form, or null
      */
     public static String format(Date date) {
-        return format(date, tzl);
+        return format(date, DEFAULT_TIME_ZONE);
     }
 
     /**
      * Formats a string in known date-time form from a date object,
-     * using UTC time zone.
+     * using the specified time zone.
      * @param  date  the date to be formatted
      * @param  tz  the TimeZone to be used when parsing the date string
      * @return  a String containing a date in known date-time form, or null
@@ -233,13 +234,13 @@ public class DateUtils implements Serializable {
     public static String getNowStrDate() {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Calendar opDate = Calendar.getInstance();
-        df.setTimeZone(tzl);
+        df.setTimeZone(DEFAULT_TIME_ZONE);
         return df.format(opDate.getTime());
     }
 
     /**
      * Gets "now" in RFC format.
-     * @param timezone tz
+     * @param tz timezone
      * @return  a String containing a date in known RFC
      */
     public static String getNowStrDate(TimeZone tz) {
@@ -256,25 +257,25 @@ public class DateUtils implements Serializable {
     public static String getNowStrDateVerbose() {
         SimpleDateFormat df = new SimpleDateFormat("yyyy.MMMMM.dd hh:mm:ss aaa z");
         Calendar opDate = Calendar.getInstance();
-        df.setTimeZone(tzl);
+        df.setTimeZone(DEFAULT_TIME_ZONE);
         return df.format(opDate.getTime());
     }
 
     /**
      * Gets a date in RFC format.
-     * @param calendar date
+     * @param opDate calendar date
      * @return  a String containing a date in known RFC
      */
     public static String getStrDate(Calendar opDate) {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        df.setTimeZone(tzl);
+        df.setTimeZone(DEFAULT_TIME_ZONE);
         return df.format(opDate.getTime());
     }
 
     /**
      * Gets a date in RFC format.
-     * @param calendar date
-     * @param timezone tz
+     * @param opDate calendar date
+     * @param tz timezone
      * @return  a String containing a date in known RFC
      */
     public static String getStrDate(Calendar opDate, TimeZone tz) {

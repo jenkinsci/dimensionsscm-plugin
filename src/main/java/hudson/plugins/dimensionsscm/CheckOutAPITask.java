@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -99,35 +100,30 @@ import java.io.IOException;
  * @author Tim Payne
  */
 public class CheckOutAPITask extends GenericAPITask implements FileCallable<Boolean> {
-    boolean bFreshBuild;
-    boolean isDelete;
-    boolean isRevert;
-    boolean isForce;
-    boolean isExpand;
-    boolean isNoMetadata;
-    boolean isNoTouch;
+    private final boolean bFreshBuild;
+    private final boolean isDelete;
+    private final boolean isRevert;
+    private final boolean isForce;
+    private final boolean isExpand;
+    private final boolean isNoMetadata;
+    private final boolean isNoTouch;
 
-    VariableResolver<String> myResolver;
+    private final VariableResolver<String> myResolver;
 
-    String projectId = "";
-    String[] folders;
-    String eol = "";
+    private final String projectId;
+    private final String[] folders;
+    private final String permissions;
+    private final String eol;
 
-    int version = 0;
+    private final int version;
 
     public CheckOutAPITask(AbstractBuild<?, ?> build, DimensionsSCM parent, FilePath workspace, TaskListener listener,
             int version) {
-        Logger.Debug("Creating task - " + this.getClass().getName());
+        super(parent, workspace, listener);
+        Logger.debug("Creating task - " + this.getClass().getName());
 
-        this.workspace = workspace;
-        this.listener = listener;
+        // Server details (see superclass).
         this.version = version;
-
-        // Server details.
-        userName = parent.getJobUserName();
-        passwd = parent.getJobPasswd();
-        database = parent.getJobDatabase();
-        server = parent.getJobServer();
 
         // Config details.
         this.isDelete = parent.isCanJobDelete();
@@ -139,7 +135,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
         this.isNoTouch = parent.isCanJobNoTouch();
 
         this.folders = parent.getFolders();
-        permissions = parent.getPermissions();
+        this.permissions = parent.getPermissions();
         this.eol = parent.getEol();
 
         // Build details.
@@ -163,7 +159,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
             }
 
             if (wa.exists() && (isDelete || bFreshBuild)) {
-                Logger.Debug("Deleting '" + wa.toURI() + "'...");
+                Logger.debug("Deleting '" + wa.toURI() + "'...");
                 listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
                 listener.getLogger().flush();
                 wa.deleteContents();
@@ -181,7 +177,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                 requests = requests.toUpperCase();
             }
 
-            Logger.Debug("Extra parameters - " + baseline + " " + requests);
+            Logger.debug("Extra parameters - " + baseline + " " + requests);
 
             String cmdLog = null;
 
@@ -219,12 +215,12 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                     FilePath dname = new FilePath(fileName);
                     String reqId = requestsProcess[xx];
 
-                    Logger.Debug("Checking out '" + folderN + "'...");
+                    Logger.debug("Checking out '" + folderN + "'...");
 
                     // Checkout the folder.
                     bRet = dmSCM.checkout(key, projectId, dname, wa, cmdOutput, baseline, reqId, isRevert, isExpand,
                             isNoMetadata, isNoTouch, "DEFAULT", eol);
-                    Logger.Debug("SCM checkout returned " + bRet);
+                    Logger.debug("SCM checkout returned " + bRet);
 
                     if (!bRet && isForce) {
                         bRet = true;
@@ -246,12 +242,12 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
-                    Logger.Debug("Checking out '" + folderN + "'...");
+                    Logger.debug("Checking out '" + folderN + "'...");
 
                     // Checkout the folder.
                     bRet = dmSCM.checkout(key, projectId, dname, wa, cmdOutput, baseline, requests, isRevert, isExpand,
                             isNoMetadata, isNoTouch, permissions, eol);
-                    Logger.Debug("SCM checkout returned " + bRet);
+                    Logger.debug("SCM checkout returned " + bRet);
 
                     if (!bRet && isForce) {
                         bRet = true;
@@ -269,7 +265,7 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
             }
 
             if (cmdLog.length() > 0 && listener.getLogger() != null) {
-                Logger.Debug("Found command output to log to the build logger");
+                Logger.debug("Found command output to log to the build logger");
                 listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
                 cmdLog = cmdLog.replaceAll("\n\n", "\n");
                 listener.getLogger().println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");

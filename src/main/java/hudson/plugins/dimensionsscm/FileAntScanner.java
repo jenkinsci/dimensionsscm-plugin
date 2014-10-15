@@ -1,4 +1,5 @@
-/* ===========================================================================
+/*
+ * ===========================================================================
  *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
@@ -86,11 +87,8 @@ package hudson.plugins.dimensionsscm;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.types.FileSet;
 
@@ -101,60 +99,41 @@ import org.apache.tools.ant.types.FileSet;
  * @author Tim Payne
  */
 public class FileAntScanner implements Serializable {
-    private File[] arr;
-    private Collection<File> xfiles;
-    private File baseDir;
-    private ScannerFilter filter;
+    private static final String[] DEFAULT_EXCLUDES = new String[] {
+            "**/.dm", "**/.dm/*", "**/.metadata", "**/.metadata/*" };
+
+    private final Collection<File> xfiles;
 
     /**
      * File pattern matcher class.
      */
-    public class ScannerFilter {
-        private FileSet taskFile;
-        private Project antProject;
+    static class ScannerFilter {
+        private final FileSet fileSet;
+        private final Project project;
 
-        public ScannerFilter(String[] inclusionsx, String[] exclusionsx, File dirName) {
-            taskFile = new FileSet();
-            antProject = new Project();
-            antProject.setBaseDir(dirName);
-            taskFile.setProject(antProject);
-            taskFile.setDir(dirName);
-            Iterator<String> artifactList = Arrays.asList(inclusionsx).iterator();
-            while (artifactList.hasNext()) {
-                String xx = artifactList.next().trim();
-                if (xx != null && !xx.isEmpty()) {
-                    taskFile.setIncludes(xx);
-                }
-            }
-            if (exclusionsx != null && exclusionsx.length > 0) {
-                artifactList = Arrays.asList(exclusionsx).iterator();
-                while (artifactList.hasNext()) {
-                    String txt = artifactList.next();
-                    if (txt != null && StringUtils.isNotEmpty(txt)) {
-                        taskFile.setExcludes(txt.trim());
-                    }
-                }
-            }
-
-            taskFile.setExcludes("**/.dm/*");
-            taskFile.setExcludes("**/.metadata/*");
-            taskFile.setExcludes("**/.dm");
-            taskFile.setExcludes("**/.metadata");
+        ScannerFilter(String[] inclusionsx, String[] exclusionsx, File dirName) {
+            project = new Project();
+            project.setBaseDir(dirName);
+            fileSet = new FileSet();
+            fileSet.setProject(project);
+            fileSet.setDir(dirName);
+            fileSet.appendIncludes(Values.trimCopy(inclusionsx));
+            fileSet.appendExcludes(Values.trimCopy(exclusionsx));
+            fileSet.appendExcludes(DEFAULT_EXCLUDES);
         }
 
-        public FileSet getIncludesSet() {
-            return taskFile;
+        FileSet getFileSet() {
+            return fileSet;
         }
 
-        public Project getProject() {
-            return antProject;
+        Project getProject() {
+            return project;
         }
     }
 
     public FileAntScanner(File dirName, String[] patterns, String[] patternsExc, int depth) {
-         baseDir = dirName;
-         filter = new ScannerFilter(patterns, patternsExc, dirName);
-         xfiles = scanFiles(dirName, filter, depth);
+        ScannerFilter filter = new ScannerFilter(patterns, patternsExc, dirName);
+        xfiles = scanFiles(dirName, filter, depth);
     }
 
     public Collection<File> getFiles() {
@@ -162,15 +141,15 @@ public class FileAntScanner implements Serializable {
     }
 
     public File[] toArray() {
-        arr = new File[xfiles.size()];
+        File[] arr = new File[xfiles.size()];
         return xfiles.toArray(arr);
     }
 
     private Collection<File> scanFiles(File dirName, ScannerFilter filter, int depth) {
-        String[] dfiles = filter.getIncludesSet().getDirectoryScanner(filter.getProject()).getIncludedFiles();
+        String[] dfiles = filter.getFileSet().getDirectoryScanner(filter.getProject()).getIncludedFiles();
         List<File> files = new ArrayList<File>(dfiles.length);
         for (String dfile : dfiles) {
-            files.add(new File(baseDir.getAbsolutePath() + "/" + dfile));
+            files.add(new File(dirName.getAbsolutePath() + "/" + dfile));
         }
         return files;
     }
