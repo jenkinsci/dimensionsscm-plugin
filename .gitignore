@@ -7,6 +7,8 @@
 /.project
 /.settings/
 /bin/
+/lib/*
+!/lib/README.md
 /nb-configuration.xml
 /target/
 /work/

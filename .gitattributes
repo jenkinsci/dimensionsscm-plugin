@@ -1,0 +1,15 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Standardize on LF-only line-endings for these extensions
+*.css        text eol=lf
+*.groovy     text eol=lf
+*.html       text eol=lf
+*.java       text eol=lf
+*.jelly      text eol=lf
+*.js         text eol=lf
+*.json       text eol=lf
+*.md         text eol=lf
+*.properties text eol=lf
+*.txt        text eol=lf
+*.xml        text eol=lf
