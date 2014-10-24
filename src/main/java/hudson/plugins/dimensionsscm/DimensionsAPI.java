@@ -84,25 +84,9 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import com.serena.dmclient.api.Baseline;
-import com.serena.dmclient.api.BulkOperator;
-import com.serena.dmclient.api.DimensionsConnection;
-import com.serena.dmclient.api.DimensionsConnectionDetails;
-import com.serena.dmclient.api.DimensionsConnectionManager;
-import com.serena.dmclient.api.DimensionsNetworkException;
-import com.serena.dmclient.api.DimensionsObjectFactory;
-import com.serena.dmclient.api.DimensionsRelatedObject;
-import com.serena.dmclient.api.DimensionsResult;
-import com.serena.dmclient.api.DimensionsRuntimeException;
-import com.serena.dmclient.api.Filter;
-import com.serena.dmclient.api.ItemRevision;
-import com.serena.dmclient.api.Project;
-import com.serena.dmclient.api.Request;
-import com.serena.dmclient.api.SystemAttributes;
-import com.serena.dmclient.api.SystemRelationship;
-import com.serena.dmclient.objects.DimensionsObject;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -120,6 +104,24 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+
+import com.serena.dmclient.api.Baseline;
+import com.serena.dmclient.api.BulkOperator;
+import com.serena.dmclient.api.DimensionsConnection;
+import com.serena.dmclient.api.DimensionsConnectionDetails;
+import com.serena.dmclient.api.DimensionsConnectionManager;
+import com.serena.dmclient.api.DimensionsNetworkException;
+import com.serena.dmclient.api.DimensionsObjectFactory;
+import com.serena.dmclient.api.DimensionsRelatedObject;
+import com.serena.dmclient.api.DimensionsResult;
+import com.serena.dmclient.api.DimensionsRuntimeException;
+import com.serena.dmclient.api.Filter;
+import com.serena.dmclient.api.ItemRevision;
+import com.serena.dmclient.api.Project;
+import com.serena.dmclient.api.Request;
+import com.serena.dmclient.api.SystemAttributes;
+import com.serena.dmclient.api.SystemRelationship;
+import com.serena.dmclient.objects.DimensionsObject;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -680,11 +682,13 @@ public class DimensionsAPI implements Serializable {
             String dateBefore = (toDate != null) ? formatDatabaseDate(toDate.getTime(), tz) : formatDatabaseDate(Calendar.getInstance().getTime(), tz);
 
             Filter filter = new Filter();
-
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+            if (baselineName != null || !isStream(connection, projectName)) {
+                filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+            } else {
+                filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+            }
             filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
             filter.orders().add(new Filter.Order(SystemAttributes.REVISION_COMMENT, Filter.ORDER_ASCENDING));
             filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
@@ -1751,13 +1755,19 @@ public class DimensionsAPI implements Serializable {
             filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
 
             if (dateAfter != null) {
-                filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
-                filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                if (!isStream(connection, projName)) {
+                    filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                } else {
+                    filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                }
             }
 
             if (dateBefore != null) {
-                filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
-                filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+                if (!isStream(connection, projName)) {
+                    filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+                } else {
+                    filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+                }
             }
 
             for (int ii = 0;ii < reqStr.length; ii++) {
