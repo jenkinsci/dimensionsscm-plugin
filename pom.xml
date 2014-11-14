@@ -1,79 +1,79 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <parent>
+    <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <version>1.549</version>
-  </parent>
+    </parent>
 
-  <groupId>org.jenkins-ci.plugins</groupId>
-  <artifactId>dimensionsscm</artifactId>
-  <packaging>hpi</packaging>
-  <version>0.8.9-SNAPSHOT</version>
-  <name>Dimensions SCM plugin</name>
-  <description>Dimension SCM plugin for Hudson and Jenkins</description>
-  <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>dimensionsscm</artifactId>
+    <packaging>hpi</packaging>
+    <version>0.8.9-SNAPSHOT</version>
 
-  <developers>
-    <developer>
-      <id>TPayne</id>
-      <name>Tim Payne</name>
-      <email>tpayne@serena.com</email>
-      <roles>
-          <role>Developer</role>
-      </roles>
-    </developer>
-  </developers>
+    <name>Jenkins Dimensions CM plugin</name>
+    <description>Integrates Jenkins with Serena Dimension CM SCM.</description>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.serena</groupId>
-      <artifactId>dmclient</artifactId>
-      <version>12.2</version>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
+    <developers>
+        <developer>
+            <id>dconneely</id>
+            <name>David Conneely</name>
+        </developer>
+        <developer>
+            <id>tpayne</id>
+            <name>Tim Payne</name>
+        </developer>
+    </developers>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.serena</groupId>
+            <artifactId>dmclient</artifactId>
+            <version>12.2</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
-  <build>
-    <finalName>${project.artifactId}</finalName>
-    <defaultGoal>package</defaultGoal>
-    <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-               <source>1.6</source>
-               <target>1.6</target>
-            </configuration>
-         </plugin>
-         <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.4.3</version>
-            <configuration>
-               <forkMode>always</forkMode>
-            </configuration>
-         </plugin>
-    </plugins>
-  </build>
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <defaultGoal>package</defaultGoal>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.4.3</version>
+                <configuration>
+                    <forkMode>always</forkMode>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
-  <scm>
-      <connection>scm:git:git://github.com/jenkinsci/dimensionsscm-plugin.git</connection>
-      <developerConnection>scm:git:git@github.com:jenkinsci/dimensionsscm-plugin.git</developerConnection>
-    <tag>HEAD</tag>
-  </scm>
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/dimensionsscm-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/dimensionsscm-plugin.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
-  <repositories>
-    <repository>
-      <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
-    </repository>
-    <repository>
-        <id>serena-lib</id>
-        <url>file:${project.basedir}/lib/</url>
-    </repository>
-  </repositories>
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+        <repository>
+            <id>serena-lib</id>
+            <url>file:${project.basedir}/lib/</url>
+        </repository>
+    </repositories>
 
     <pluginRepositories>
         <pluginRepository>
@@ -82,4 +82,3 @@
         </pluginRepository>
     </pluginRepositories>
 </project>  
-
