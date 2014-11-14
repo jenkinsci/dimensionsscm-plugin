@@ -1,84 +1,50 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.549</version>
+        <version>1.532.3</version>
     </parent>
-
-    <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>dimensionsscm</artifactId>
-    <packaging>hpi</packaging>
     <version>0.8.9-SNAPSHOT</version>
-
+    <packaging>hpi</packaging>
     <name>Jenkins Dimensions CM plugin</name>
     <description>Integrates Jenkins with Serena Dimension CM SCM.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
-
     <developers>
         <developer>
+            <!-- David Conneely is the current plugin maintainer. -->
             <id>dconneely</id>
             <name>David Conneely</name>
         </developer>
         <developer>
+            <!-- Tim Payne created the plugin and maintained it for many years. -->
             <id>tpayne</id>
             <name>Tim Payne</name>
         </developer>
     </developers>
-
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/dimensionsscm-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/dimensionsscm-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/dimensionsscm-plugin</url>
+    </scm>
+    <issueManagement>
+        <system>Serena Support</system>
+        <url>http://support.serena.com/case/</url>
+    </issueManagement>
+    <properties>
+        <!-- Manage maven-release-plugin version from 2.2.2 to 2.5.1 to work around Maven/Git issues. -->
+        <maven-release-plugin.version>2.5.1</maven-release-plugin.version>
+        <!-- The Serena Dimensions CM dmclient.jar file must be installed into your local Maven repository. -->
+        <serena-dmclient-api.version>12.2</serena-dmclient-api.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>com.serena</groupId>
             <artifactId>dmclient</artifactId>
-            <version>12.2</version>
+            <version>${serena-dmclient-api.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
-    <build>
-        <finalName>${project.artifactId}</finalName>
-        <defaultGoal>package</defaultGoal>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.4.3</version>
-                <configuration>
-                    <forkMode>always</forkMode>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
-    <scm>
-        <connection>scm:git:git://github.com/jenkinsci/dimensionsscm-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/dimensionsscm-plugin.git</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
-
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-        <repository>
-            <id>serena-lib</id>
-            <url>file:${project.basedir}/lib/</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
-</project>  
+</project>
