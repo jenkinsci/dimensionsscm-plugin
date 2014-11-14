@@ -166,7 +166,6 @@ public class DimensionsChangeLogWriter {
             pw.print(logStr);
         }
         pw.flush();
-        return;
     }
 
     /**

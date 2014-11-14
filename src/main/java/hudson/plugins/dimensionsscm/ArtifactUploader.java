@@ -225,7 +225,6 @@ public class ArtifactUploader extends Notifier implements Serializable {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
             throws IOException, InterruptedException {
-        long key = -1L;
         Logger.debug("Invoking perform callout " + this.getClass().getName());
         FilePath workspace = build.getWorkspace();
         boolean bRet = false;
@@ -246,7 +245,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 Logger.debug("Calculating version of Dimensions...");
 
                 int version = 2009;
-                key = dmSCM.login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(), scm.getJobServer(),
+                long key = dmSCM.login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(), scm.getJobServer(),
                         build);
 
                 if (key > 0L) {
@@ -264,7 +263,6 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
                 // Get the details of the master.
                 InetAddress netAddr = InetAddress.getLocalHost();
-                byte[] ipAddr = netAddr.getAddress();
                 String hostname = netAddr.getHostName();
 
                 String projectName = build.getProject().getName();
@@ -336,6 +334,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
             Logger.debug("Loading " + this.getClass().getName());
         }
 
+        @Override
         public String getDisplayName() {
             return "Load any build artifacts into the Dimensions repository";
         }

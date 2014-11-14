@@ -91,7 +91,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Calendar;
+import java.util.Locale;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -119,14 +119,12 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
      * Utility routine to create command file for dmcli.
      */
     private File createCmdFile(final File area, final File tempFile) throws IOException {
-        Calendar nowDateCal = Calendar.getInstance();
-        FileWriter logFileWriter = null;
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 
         try {
-            tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
-            logFileWriter = new FileWriter(tmpFile);
+            tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+            FileWriter logFileWriter = new FileWriter(tmpFile);
             fmtWriter = new PrintWriter(logFileWriter, true);
 
             String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
@@ -162,7 +160,9 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
         } catch (Exception e) {
             throw new IOException("Unable to write command log - " + e.getMessage());
         } finally {
-            fmtWriter.close();
+            if (fmtWriter != null) {
+                fmtWriter.close();
+            }
         }
         return tmpFile;
     }
@@ -221,17 +221,15 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
             if (validFiles.length > 0) {
                 if (requests != null) {
                     requests = requests.replaceAll(" ", "");
-                    requests = requests.toUpperCase();
+                    requests = requests.toUpperCase(Locale.ROOT);
                 }
 
                 File tempFile = null;
                 PrintWriter fmtWriter = null;
 
                 try {
-                    FileWriter logFileWriter = null;
-                    Calendar nowDateCal = Calendar.getInstance();
-                    tempFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
-                    logFileWriter = new FileWriter(tempFile);
+                    tempFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+                    FileWriter logFileWriter = new FileWriter(tempFile);
                     fmtWriter = new PrintWriter(logFileWriter, true);
 
                     for (File f : validFiles) {
@@ -245,7 +243,9 @@ public class CheckInCmdTask extends GenericCmdTask implements FileCallable<Boole
                     bRet = false;
                     throw new IOException("Unable to write command log - " + e.getMessage());
                 } finally {
-                    fmtWriter.close();
+                    if (fmtWriter != null) {
+                        fmtWriter.close();
+                    }
                 }
 
                 File cmdFile = createCmdFile(area, tempFile);

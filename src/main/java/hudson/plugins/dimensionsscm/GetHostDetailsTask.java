@@ -109,8 +109,6 @@ public class GetHostDetailsTask implements FileCallable<Boolean> {
         // This here code is executed on the slave.
         try {
             InetAddress netAddr = InetAddress.getLocalHost();
-            // Get IP address.
-            byte[] ipAddr = netAddr.getAddress();
             // Get hostname and compare.
             return netAddr.getHostName().equals(masteripaddr);
         } catch (UnknownHostException e) {

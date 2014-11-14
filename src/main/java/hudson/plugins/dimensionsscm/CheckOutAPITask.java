@@ -92,6 +92,8 @@ import hudson.remoting.VirtualChannel;
 import hudson.util.VariableResolver;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Locale;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -170,11 +172,11 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
             if (baseline != null) {
                 baseline = baseline.trim();
-                baseline = baseline.toUpperCase();
+                baseline = baseline.toUpperCase(Locale.ROOT);
             }
             if (requests != null) {
                 requests = requests.replaceAll(" ", "");
-                requests = requests.toUpperCase();
+                requests = requests.toUpperCase(Locale.ROOT);
             }
 
             Logger.debug("Extra parameters - " + baseline + " " + requests);
@@ -206,14 +208,13 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
 
                 listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
 
-                for (int xx = 0; xx < requestsProcess.length; xx++) {
+                for (String reqId : requestsProcess) {
                     if (!bRet) {
                         break;
                     }
                     String folderN = "/";
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
-                    String reqId = requestsProcess[xx];
 
                     Logger.debug("Checking out '" + folderN + "'...");
 
@@ -234,11 +235,10 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                 }
             } else {
                 // Iterate through the project folders and process them in Dimensions.
-                for (int ii = 0; ii < folders.length; ii++) {
+                for (String folderN : folders) {
                     if (!bRet) {
                         break;
                     }
-                    String folderN = folders[ii];
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
@@ -264,21 +264,22 @@ public class CheckOutAPITask extends GenericAPITask implements FileCallable<Bool
                 }
             }
 
-            if (cmdLog.length() > 0 && listener.getLogger() != null) {
+            PrintStream log = listener.getLogger();
+            if (!Values.isNullOrEmpty(cmdLog) && log != null) {
                 Logger.debug("Found command output to log to the build logger");
-                listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
+                log.println("[DIMENSIONS] (Note: Dimensions command output was - ");
                 cmdLog = cmdLog.replaceAll("\n\n", "\n");
-                listener.getLogger().println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
-                listener.getLogger().flush();
+                log.println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
+                log.flush();
             }
 
-            if (!bRet) {
-                listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
-                listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
-                listener.getLogger().println("[DIMENSIONS] that may have been detected.");
-                listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                listener.getLogger().flush();
+            if (!bRet && log != null) {
+                log.println("[DIMENSIONS] ==========================================================");
+                log.println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
+                log.println("[DIMENSIONS] Please review the command output and correct any issues");
+                log.println("[DIMENSIONS] that may have been detected.");
+                log.println("[DIMENSIONS] ==========================================================");
+                log.flush();
             }
         } catch (Exception e) {
             String errMsg = e.getMessage();

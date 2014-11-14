@@ -130,6 +130,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         this.requests = new HashSet<DmRequests>();
     }
 
+    @Override
     public void setParent(ChangeLogSet parent) {
         super.setParent(parent);
     }
@@ -146,10 +147,10 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         return this.message;
     }
 
-    public void setDateString(String DateString) throws ParseException {
+    public void setDateString(String dateString) throws ParseException {
         date = Calendar.getInstance();
         TimeZone tz = TimeZone.getTimeZone("UTC");
-        date.setTime(DateUtils.parse(DateString, tz));
+        date.setTime(DateUtils.parse(dateString, tz));
     }
 
     public Collection<DmFiles> getFiles() {

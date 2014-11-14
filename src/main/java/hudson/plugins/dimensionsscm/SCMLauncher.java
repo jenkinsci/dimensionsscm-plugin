@@ -93,7 +93,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Calendar;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -102,30 +101,14 @@ import java.util.Calendar;
  * @author Tim Payne
  */
 public class SCMLauncher implements Serializable {
-    static class dmLauncher extends LocalLauncher {
-        private TaskListener listener;
-
-        /**
-         * Get listener.
-         */
-        public TaskListener getListener() {
-            return this.listener;
-        }
-
-        dmLauncher(TaskListener listener) {
-            super(listener);
-            this.listener = listener;
-        }
-    }
-
     private final String[] args;
-    private final dmLauncher proc;
+    private final Launcher launcher;
     private final FilePath workArea;
     private String results;
 
     public SCMLauncher(final String[] args, final TaskListener listener, final FilePath area) {
         this.args = args;
-        this.proc = new dmLauncher(listener);
+        this.launcher = new LocalLauncher(listener);
         this.workArea = area;
     }
 
@@ -140,13 +123,11 @@ public class SCMLauncher implements Serializable {
      * Execute the process.
      */
     public Boolean execute() throws IOException, InterruptedException {
-        File tmpFile = null;
         boolean bRet = false;
-        TaskListener listener = proc.getListener();
+        TaskListener listener = launcher.getListener();
 
         // Need to capture output into a file so I can parse it.
-        Calendar nowDateCal = Calendar.getInstance();
-        tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
+        File tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
 
         FileOutputStream fos = new FileOutputStream(tmpFile);
         StreamBuildListener os = new StreamBuildListener(fos);
@@ -162,7 +143,7 @@ public class SCMLauncher implements Serializable {
         }
 
         try {
-            Launcher.ProcStarter ps = proc.launch();
+            Launcher.ProcStarter ps = launcher.launch();
             ps.cmds(args);
             ps.stdout(os.getLogger());
             ps.stdin(null);
@@ -178,15 +159,12 @@ public class SCMLauncher implements Serializable {
         } finally {
             os.getLogger().flush();
             fos.close();
-            os = null;
-            fos = null;
         }
 
         if (tmpFile != null) {
             // Get the log file into a string for processing...
             results = new String(FileUtils.readAllBytes(tmpFile));
             tmpFile.delete();
-            tmpFile = null;
         }
 
         return bRet;

@@ -90,8 +90,9 @@ import hudson.model.TaskListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.util.Calendar;
+import java.util.Locale;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -120,14 +121,12 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
      * Utility routine to create command file for dmcli.
      */
     private File createCmdFile(final String reqId, final String projDir, final File area) throws IOException {
-        Calendar nowDateCal = Calendar.getInstance();
-        FileWriter logFileWriter = null;
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 
         try {
-            tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
-            logFileWriter = new FileWriter(tmpFile);
+            tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+            FileWriter logFileWriter = new FileWriter(tmpFile);
             fmtWriter = new PrintWriter(logFileWriter, true);
 
             String coCmd = "UPDATE /BRIEF ";
@@ -198,7 +197,9 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
         } catch (Exception e) {
             throw new IOException("Unable to write command log - " + e.getMessage());
         } finally {
-            fmtWriter.close();
+            if (fmtWriter != null) {
+                fmtWriter.close();
+            }
         }
         return tmpFile;
     }
@@ -230,6 +231,7 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
     /**
      * Process the checkout.
      */
+    @Override
     public Boolean execute(final File exe, final File param, final File area) throws IOException {
         FilePath wa = new FilePath(area);
         boolean bRet = true;
@@ -252,11 +254,11 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
 
             if (baseline != null) {
                 baseline = baseline.trim();
-                baseline = baseline.toUpperCase();
+                baseline = baseline.toUpperCase(Locale.ROOT);
             }
             if (requests != null) {
                 requests = requests.replaceAll(" ", "");
-                requests = requests.toUpperCase();
+                requests = requests.toUpperCase(Locale.ROOT);
             }
 
             String cmdLog = null;
@@ -286,15 +288,14 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
 
                 listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
 
-                for (int xx = 0; xx < requestsProcess.length; xx++) {
+                for (String reqId : requestsProcess) {
                     if (!bRet) {
                         break;
                     }
                     String folderN = "/";
-                    String reqId = requestsProcess[xx];
                     File fileName = new File(folderN);
                     FilePath projectDir = new FilePath(fileName);
-                    String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
+                    String projDir = projectDir.getRemote();
 
                     File cmdFile = createCmdFile(reqId, projDir, area);
                     if (cmdFile == null) {
@@ -334,14 +335,13 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
                 }
             } else {
                 // Iterate through the project folders and process them in Dimensions.
-                for (int ii = 0; ii < folders.length; ii++) {
+                for (String folderN : folders) {
                     if (!bRet) {
                         break;
                     }
-                    String folderN = folders[ii];
                     File fileName = new File(folderN);
                     FilePath projectDir = new FilePath(fileName);
-                    String projDir = (projectDir!=null) ? projectDir.getRemote() : null;
+                    String projDir = projectDir.getRemote();
 
                     File cmdFile = createCmdFile(null, projDir, area);
                     if (cmdFile == null) {
@@ -392,20 +392,21 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
             }
             param.delete();
 
-            if (cmdLog.length() > 0 && listener.getLogger() != null) {
-                listener.getLogger().println("[DIMENSIONS] (Note: Dimensions command output was - ");
+            PrintStream log = listener.getLogger();
+            if (!Values.isNullOrEmpty(cmdLog) && log != null) {
+                log.println("[DIMENSIONS] (Note: Dimensions command output was - ");
                 cmdLog = cmdLog.replaceAll("\n\n", "\n");
-                listener.getLogger().println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
-                listener.getLogger().flush();
+                log.println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
+                log.flush();
             }
 
-            if (!bRet) {
-                listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                listener.getLogger().println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
-                listener.getLogger().println("[DIMENSIONS] Please review the command output and correct any issues");
-                listener.getLogger().println("[DIMENSIONS] that may have been detected.");
-                listener.getLogger().println("[DIMENSIONS] ==========================================================");
-                listener.getLogger().flush();
+            if (!bRet && log != null) {
+                log.println("[DIMENSIONS] ==========================================================");
+                log.println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
+                log.println("[DIMENSIONS] Please review the command output and correct any issues");
+                log.println("[DIMENSIONS] that may have been detected.");
+                log.println("[DIMENSIONS] ==========================================================");
+                log.flush();
             }
             return bRet;
         } catch (Exception e) {

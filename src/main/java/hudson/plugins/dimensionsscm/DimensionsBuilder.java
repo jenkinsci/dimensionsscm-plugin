@@ -96,6 +96,7 @@ import hudson.model.Result;
 import hudson.tasks.Builder;
 import hudson.util.VariableResolver;
 import java.io.IOException;
+import java.util.Locale;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -249,7 +250,7 @@ public class DimensionsBuilder extends Builder {
                     String requests = myResolver.resolve("DM_TARGET_REQUEST");
                     if (requests != null) {
                         requests = requests.replaceAll(" ", "");
-                        requests = requests.toUpperCase();
+                        requests = requests.toUpperCase(Locale.ROOT);
                     }
 
                     {
@@ -328,13 +329,13 @@ public class DimensionsBuilder extends Builder {
         @Override
         public Builder newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             // Get variables and then construct a new object.
-            Boolean batch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectBatch")));
-            Boolean buildClean = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectClean")));
-            Boolean capture = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectCapture")));
+            Boolean batch = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectBatch"));
+            Boolean buildClean = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectClean"));
+            Boolean capture = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectCapture"));
 
-            Boolean audit = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectAudit")));
-            Boolean populate = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectPopulate")));
-            Boolean touch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectTouch")));
+            Boolean audit = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectAudit"));
+            Boolean populate = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectPopulate"));
+            Boolean touch = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectTouch"));
 
             String area = req.getParameter("dimensionsbuilder.projectArea");
             String buildConfig = req.getParameter("dimensionsbuilder.projectConfig");

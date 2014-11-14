@@ -105,19 +105,18 @@ public final class DimensionsChangeSetList extends ChangeLogSet<DimensionsChange
         this.build = build;
         Collections.reverse(logs);
         this.changeSets = Collections.unmodifiableList(logs);
-        for (DimensionsChangeSet log : logs)
+        for (DimensionsChangeSet log : logs) {
             log.setParent(this);
+        }
     }
 
+    @Override
     public boolean isEmptySet() {
         return changeSets.isEmpty();
     }
 
+    @Override
     public Iterator<DimensionsChangeSet> iterator() {
         return changeSets.iterator();
-    }
-
-    public List<DimensionsChangeSet> getLogs() {
-        return changeSets;
     }
 }

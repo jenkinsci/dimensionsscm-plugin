@@ -95,7 +95,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Calendar;
+import java.util.Locale;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -176,14 +176,12 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
                         "\"...");
                 listener.getLogger().flush();
 
-                Calendar nowDateCal = Calendar.getInstance();
-                FileWriter logFileWriter = null;
                 PrintWriter fmtWriter = null;
                 File tmpFile = null;
 
                 try {
-                    tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
-                    logFileWriter = new FileWriter(tmpFile);
+                    tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+                    FileWriter logFileWriter = new FileWriter(tmpFile);
                     fmtWriter = new PrintWriter(logFileWriter, true);
 
                     for (File f : validFiles) {
@@ -198,7 +196,9 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
                     bRet = false;
                     throw new IOException("Unable to write command log - " + e.getMessage());
                 } finally {
-                    fmtWriter.close();
+                    if (fmtWriter != null) {
+                        fmtWriter.close();
+                    }
                 }
 
                 // Debug for printing out files
@@ -214,7 +214,7 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
 
                     if (requests != null) {
                         requests = requests.replaceAll(" ", "");
-                        requests = requests.toUpperCase();
+                        requests = requests.toUpperCase(Locale.ROOT);
                     }
 
                     DimensionsResult res = dmSCM.UploadFiles(key, wd, projectId, tmpFile, jobId, buildNo, requests,

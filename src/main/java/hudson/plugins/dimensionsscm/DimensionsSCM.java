@@ -115,6 +115,7 @@ import java.io.Serializable;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.servlet.ServletException;
@@ -171,10 +172,6 @@ public class DimensionsSCM extends SCM implements Serializable {
     private transient DimensionsAPI cachedAPI;
     private transient DimensionsSCMRepositoryBrowser browser;
 
-    public DimensionsSCM getSCM() {
-        return this;
-    }
-
     public DimensionsAPI getAPI() {
         DimensionsAPI api = this.cachedAPI;
         if (api == null) {
@@ -184,6 +181,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         return api;
     }
 
+    @Override
     public DimensionsSCMRepositoryBrowser getBrowser() {
         return this.browser;
     }
@@ -389,10 +387,9 @@ public class DimensionsSCM extends SCM implements Serializable {
     public void buildEnvVars(AbstractBuild<?, ?> build, Map<String, String> env) {
         // To be implemented when build support put in.
         super.buildEnvVars(build, env);
-        return;
     }
 
-    private static String[] DEFAULT_FOLDERS = new String[] { "/" };
+    private static final String[] DEFAULT_FOLDERS = new String[] { "/" };
 
     @DataBoundConstructor
     public DimensionsSCM(String project, String[] folders, String workarea, boolean canJobDelete, boolean canJobForce,
@@ -440,14 +437,13 @@ public class DimensionsSCM extends SCM implements Serializable {
     @Override
     public boolean checkout(final AbstractBuild build, final Launcher launcher, final FilePath workspace,
             final BuildListener listener, final File changelogFile) throws IOException, InterruptedException {
-        boolean bRet = false;
-
         if (!isCanJobUpdate()) {
             Logger.debug("Skipping checkout - " + this.getClass().getName());
         }
 
         Logger.debug("Invoking checkout - " + this.getClass().getName());
 
+        boolean bRet;
         try {
             // Load other Dimensions plugins if set.
             DimensionsBuildWrapper.DescriptorImpl bwplugin = (DimensionsBuildWrapper.DescriptorImpl)
@@ -482,7 +478,6 @@ public class DimensionsSCM extends SCM implements Serializable {
 
                 // Get the details of the master.
                 InetAddress netAddr = InetAddress.getLocalHost();
-                byte[] ipAddr = netAddr.getAddress();
                 String hostname = netAddr.getHostName();
 
                 boolean master = true;
@@ -583,11 +578,11 @@ public class DimensionsSCM extends SCM implements Serializable {
 
                 if (baseline != null) {
                     baseline = baseline.trim();
-                    baseline = baseline.toUpperCase();
+                    baseline = baseline.toUpperCase(Locale.ROOT);
                 }
                 if (requests != null) {
                     requests = requests.replaceAll(" ", "");
-                    requests = requests.toUpperCase();
+                    requests = requests.toUpperCase(Locale.ROOT);
                 }
 
                 Logger.debug("Extra parameters - " + baseline + " " + requests);
@@ -602,11 +597,10 @@ public class DimensionsSCM extends SCM implements Serializable {
                 bRet = true;
 
                 // Iterate through the project folders and process them in Dimensions.
-                for (int ii = 0; ii < folders.length; ii++) {
+                for (String folderN : folders) {
                     if (!bRet) {
                         break;
                     }
-                    String folderN = folders[ii];
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
@@ -739,11 +733,10 @@ public class DimensionsSCM extends SCM implements Serializable {
             if (key > 0L) {
                 String[] folders = getFolders();
                 // Iterate through the project folders and process them in Dimensions
-                for (int ii = 0; ii < folders.length; ii++) {
+                for (String folderN : folders) {
                     if (bChanged) {
                         break;
                     }
-                    String folderN = folders[ii];
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
@@ -874,14 +867,14 @@ public class DimensionsSCM extends SCM implements Serializable {
             String permissions = req.getParameter("dimensionsscm.permissions");
             String eol = req.getParameter("dimensionsscm.eol");
 
-            Boolean canJobDelete = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete")));
-            Boolean canJobForce = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce")));
-            Boolean canJobRevert = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert")));
-            Boolean canJobUpdate = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobUpdate")));
-            Boolean canJobExpand = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobExpand")));
-            Boolean canJobNoMetadata = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoMetadata")));
-            Boolean canJobNoTouch = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoTouch")));
-            Boolean forceAsSlave = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.forceAsSlave")));
+            Boolean canJobDelete = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete"));
+            Boolean canJobForce = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce"));
+            Boolean canJobRevert = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert"));
+            Boolean canJobUpdate = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobUpdate"));
+            Boolean canJobExpand = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobExpand"));
+            Boolean canJobNoMetadata = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoMetadata"));
+            Boolean canJobNoTouch = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoTouch"));
+            Boolean forceAsSlave = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.forceAsSlave"));
 
             String jobUserName = req.getParameter("dimensionsscm.jobUserName");
             String jobPasswd = req.getParameter("dimensionsscm.jobPasswd");
@@ -1085,10 +1078,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                 String xuser = (jobuser != null) ? jobuser : user;
                 String xpasswd = (jobPasswd != null) ? jobPasswd : passwd;
                 String xdatabase = (jobDatabase != null) ? jobDatabase : database;
-                long key = -1L;
                 String dmS = xserver + "-" + xuser + ":" + xdatabase;
                 Logger.debug("Invoking serverCheck - " + dmS);
-                key = connectionCheck.login(xuser, xpasswd, xdatabase, xserver);
+                long key = connectionCheck.login(xuser, xpasswd, xdatabase, xserver);
                 if (key < 1L) {
                     return FormValidation.error("Connection test failed");
                 } else {

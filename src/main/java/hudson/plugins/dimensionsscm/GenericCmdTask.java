@@ -92,7 +92,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Calendar;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -109,7 +108,7 @@ public class GenericCmdTask implements FileCallable<Boolean> {
     private final String server;
     protected final int version;
 
-    private String exec = "dmcli";
+    private static final String EXEC = "dmcli";
 
     /**
      * Utility routine to look for an executable in the path.
@@ -123,14 +122,12 @@ public class GenericCmdTask implements FileCallable<Boolean> {
      * Utility routine to create parameter file for dmcli.
      */
      protected File createParamFile() throws IOException {
-        Calendar nowDateCal = Calendar.getInstance();
-        FileWriter logFileWriter = null;
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 
         try {
-            tmpFile = File.createTempFile("dmCm" + nowDateCal.getTimeInMillis(), null, null);
-            logFileWriter = new FileWriter(tmpFile);
+            tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+            FileWriter logFileWriter = new FileWriter(tmpFile);
             fmtWriter = new PrintWriter(logFileWriter, true);
             fmtWriter.println("-host " + server);
             fmtWriter.println("-user " + userName);
@@ -140,7 +137,9 @@ public class GenericCmdTask implements FileCallable<Boolean> {
         } catch (Exception e) {
             throw new IOException("Unable to write command log - " + e.getMessage());
         } finally {
-            fmtWriter.close();
+            if (fmtWriter != null) {
+                fmtWriter.close();
+            }
         }
         return tmpFile;
     }
@@ -167,9 +166,9 @@ public class GenericCmdTask implements FileCallable<Boolean> {
         try {
             listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
 
-            File exe = getExecutable(exec);
+            File exe = getExecutable(EXEC);
             if (exe == null) {
-                listener.getLogger().println("[DIMENSIONS] Error: Cannot locate '" + exec + "' on the slave node.");
+                listener.getLogger().println("[DIMENSIONS] Error: Cannot locate '" + EXEC + "' on the slave node.");
             } else {
                 listener.getLogger().println("[DIMENSIONS] Located '" + exe.getAbsolutePath() + "' on the slave node.");
 

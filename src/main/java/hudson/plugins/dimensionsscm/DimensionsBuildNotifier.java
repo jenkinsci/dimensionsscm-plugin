@@ -99,6 +99,7 @@ import hudson.tasks.Publisher;
 import hudson.util.VariableResolver;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Locale;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -319,7 +320,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
 
                     if (requests != null) {
                         requests = requests.replaceAll(" ", "");
-                        requests = requests.toUpperCase();
+                        requests = requests.toUpperCase(Locale.ROOT);
                     }
 
                     if (blnScope != null && blnScope.length() > 0 && blnScope.equals("REVISED")) {

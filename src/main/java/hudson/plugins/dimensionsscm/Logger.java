@@ -138,7 +138,7 @@ public class Logger implements Serializable {
      * Change the output writer for logging messages.
      * @param pw new PrintWriter to send debug output messages to.
      */
-    public void setOut(PrintWriter pw) {
-        this.pw = pw;
+    public static void setOut(PrintWriter pw) {
+        Logger.pw = pw;
     }
 }

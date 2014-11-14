@@ -84,27 +84,6 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import hudson.FilePath;
-import hudson.model.AbstractBuild;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.serena.dmclient.api.Baseline;
 import com.serena.dmclient.api.BulkOperator;
 import com.serena.dmclient.api.DimensionsConnection;
@@ -122,6 +101,27 @@ import com.serena.dmclient.api.Request;
 import com.serena.dmclient.api.SystemAttributes;
 import com.serena.dmclient.api.SystemRelationship;
 import com.serena.dmclient.objects.DimensionsObject;
+import hudson.FilePath;
+import hudson.model.AbstractBuild;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -158,28 +158,11 @@ public class DimensionsAPI implements Serializable {
     private String dmRequest;
     private String projectPath;
 
-    private String dateType = "edit";
+    private static final String DATE_TYPE = "edit";
     private boolean allRevisions;
     private int version = -1;
-    private ConcurrentHashMap conns = new ConcurrentHashMap();
+    private final ConcurrentMap<Long, DimensionsConnection> conns = new ConcurrentHashMap<Long, DimensionsConnection>();
     private PrintStream listener;
-
-    // Inline connection cache.
-    private class ConnectionCache {
-        private DimensionsConnection connection;
-
-        ConnectionCache(DimensionsConnection connection) {
-            this.connection = connection;
-        }
-
-        /**
-         * Gets the Dimensions connection.
-         * @return the connection
-         */
-        public final DimensionsConnection getCon() {
-            return this.connection;
-        }
-    }
 
     /**
      * Gets the logger.
@@ -270,12 +253,8 @@ public class DimensionsAPI implements Serializable {
      */
     public final DimensionsConnection getCon(long key) {
         Logger.debug("Looking for key " + key);
-        if (conns == null) {
-            return null;
-        }
-        if (conns.containsKey(key)) {
-            ConnectionCache cc = (ConnectionCache) this.conns.get(key);
-            DimensionsConnection con = cc.getCon();
+        DimensionsConnection con = conns.get(key);
+        if (con != null) {
             try {
                 DimensionsConnectionManager.unregisterThreadConnection();
             } catch (Exception e) {
@@ -300,11 +279,7 @@ public class DimensionsAPI implements Serializable {
      */
     public final long login(String userID, String password, String database, String server)
             throws IllegalArgumentException, DimensionsRuntimeException {
-        DimensionsConnection connection = null;
         long key = sequence.getAndIncrement();
-        if (conns == null) {
-            conns = new ConcurrentHashMap();
-        }
 
         dmServer = server;
         dmDb = database;
@@ -331,32 +306,32 @@ public class DimensionsAPI implements Serializable {
             details.setDbConn(dbConn);
             details.setServer(dmServer);
             Logger.debug("Getting Dimensions connection...");
-            connection = DimensionsConnectionManager.getConnection(details);
+            DimensionsConnection connection = DimensionsConnectionManager.getConnection(details);
             if (connection != null) {
                 Logger.debug("Storing details for atomic key " + key + "...");
-                if (conns.putIfAbsent(key, new ConnectionCache(connection)) != null) {
+                if (conns.putIfAbsent(key, connection) != null) {
                     Logger.debug("Key is not unique, as already exists within the cache: " + key);
                 }
                 Logger.debug("Just added connection number " + conns.size());
                 if (version < 0) {
                     version = 2009;
                     // Get the server version.
-                    List inf = connection.getObjectFactory().getServerVersion(2);
+                    List<String> inf = connection.getObjectFactory().getServerVersion(2);
                     if (inf == null) {
                         Logger.debug("Detection of server information failed");
                     }
                     if (inf != null) {
                         Logger.debug("Server information detected -" + inf.size());
                         for (int i = 0; i < inf.size(); ++i) {
-                            String prop = (String) inf.get(i);
+                            String prop = inf.get(i);
                             Logger.debug(i + " - " + prop);
                         }
 
                         // Try and locate the server version.
                         // If not found, then get the schema version and use that.
-                        String serverx = (String) inf.get(2);
+                        String serverx = inf.get(2);
                         if (serverx == null) {
-                            serverx = (String) inf.get(0);
+                            serverx = inf.get(0);
                         }
                         if (serverx != null) {
                             Logger.debug("Detected server version: " + serverx);
@@ -421,10 +396,6 @@ public class DimensionsAPI implements Serializable {
      * Disconnects from the Dimensions repository
      */
     public final void logout(long key) {
-        if (conns == null) {
-            Logger.debug("Failed to close connection for key \"" + key + "\" - no connections exist!");
-            return;
-        }
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             Logger.debug("Failed to close connection for key \"" + key + "\" - connection not found!");
@@ -437,7 +408,7 @@ public class DimensionsAPI implements Serializable {
             } catch (DimensionsRuntimeException dne) {
                 Logger.debug("Exception thrown: DimensionsRuntimeException");
             }
-            this.conns.remove(key);
+            conns.remove(key);
             Logger.debug("Now have " + conns.size() + " connections in use...");
         }
     }
@@ -468,13 +439,10 @@ public class DimensionsAPI implements Serializable {
         if (startConn < 1 || startConn == database.length() - 1) {
             throw new ParseException(BAD_BASE_DATABASE_SPEC, startConn);
         }
-        String dbName = null;
-        String dbConn = null;
-        String dbPassword = null;
         if (endName < 0 || startConn <= endName) {
             // no '/' or '@' is before '/':
-            dbName = database.substring(0, startConn);
-            dbConn = database.substring(startConn + 1);
+            String dbName = database.substring(0, startConn);
+            String dbConn = database.substring(startConn + 1);
             dbCompts = new String[2];
             dbCompts[0] = dbName;
             dbCompts[1] = dbConn;
@@ -482,9 +450,9 @@ public class DimensionsAPI implements Serializable {
             // '/' at start or '/' immediately followed by '@':
             throw new ParseException(BAD_BASE_DATABASE_SPEC, endName);
         } else {
-            dbName = database.substring(0, endName);
-            dbPassword = database.substring(endName + 1, startConn);
-            dbConn = database.substring(startConn + 1);
+            String dbName = database.substring(0, endName);
+            String dbPassword = database.substring(endName + 1, startConn);
+            String dbConn = database.substring(startConn + 1);
             dbCompts = new String[3];
             dbCompts[0] = dbName;
             dbCompts[1] = dbConn;
@@ -698,9 +666,9 @@ public class DimensionsAPI implements Serializable {
             String projName;
 
             if (baselineName != null && requests == null) {
-                projName = baselineName.toUpperCase();
+                projName = baselineName.toUpperCase(Locale.ROOT);
             } else {
-                projName = projectName.toUpperCase();
+                projName = projectName.toUpperCase(Locale.ROOT);
             }
 
             List items = null;
@@ -718,7 +686,7 @@ public class DimensionsAPI implements Serializable {
                 // setup filter for baseline Name
                 Filter baselineFilter = new Filter();
                 baselineFilter.criteria().add(new Filter.Criterion(SystemAttributes.OBJECT_SPEC,
-                        baselineName.toUpperCase(), Filter.Criterion.EQUALS));
+                        baselineName.toUpperCase(Locale.ROOT), Filter.Criterion.EQUALS));
 
                 List<Baseline> baselineObjects = connection.getObjectFactory().getBaselines(baselineFilter);
                 Logger.debug("Baseline query for \"" + baselineName + "\" returned " + baselineObjects.size() + " baselines");
@@ -1026,7 +994,7 @@ public class DimensionsAPI implements Serializable {
                 boolean revisedBln = false;
                 Integer buildNo = build.getNumber();
 
-                if (blnScope != null || blnScope.length() > 0) {
+                if (blnScope != null && blnScope.length() > 0) {
                     if (blnScope.equals("REVISED")) {
                         revisedBln = true;
                         cmd = "CRB ";
@@ -1207,7 +1175,7 @@ public class DimensionsAPI implements Serializable {
             Integer fileVersion = (Integer) item.getAttribute(SystemAttributes.FILE_VERSION);
             String operation;
             if (fileVersion != null) {
-                x = fileVersion.intValue();
+                x = fileVersion;
             }
             Logger.debug("Creating a change set (" + x + ") " + i);
             if (x < 2) {
@@ -1289,6 +1257,7 @@ public class DimensionsAPI implements Serializable {
      */
     private static List getSortedItemList(List items) throws DimensionsRuntimeException {
         Collections.sort(items, new Comparator() {
+            @Override
             public int compare(Object oa1, Object oa2) {
                 int result = 0;
                 try {
@@ -1705,12 +1674,12 @@ public class DimensionsAPI implements Serializable {
     private boolean isStream(DimensionsConnection connection, final String projectId) {
         if (connection != null) {
             DimensionsObjectFactory fc = connection.getObjectFactory();
-            Project proj = fc.getProject(projectId.toUpperCase());
+            Project proj = fc.getProject(projectId.toUpperCase(Locale.ROOT));
             if (proj != null) {
                 proj.queryAttribute(SystemAttributes.WSET_IS_STREAM);
                 Boolean isStream = (Boolean) proj.getAttribute(SystemAttributes.WSET_IS_STREAM);
                 if (isStream != null) {
-                    return isStream.booleanValue();
+                    return isStream;
                 }
             }
         }
@@ -1770,11 +1739,10 @@ public class DimensionsAPI implements Serializable {
                 }
             }
 
-            for (int ii = 0;ii < reqStr.length; ii++) {
-                String xStr = reqStr[ii];
-                xStr.trim();
+            for (String xStr : reqStr) {
+                xStr = xStr.trim();
                 Logger.debug("Request to process is \"" + xStr + "\"");
-                Request requestObj = connection.getObjectFactory().findRequest(xStr.toUpperCase());
+                Request requestObj = connection.getObjectFactory().findRequest(xStr.toUpperCase(Locale.ROOT));
 
                 if (requestObj != null) {
                     Logger.debug("Request to process is \"" + requestObj.getName() + "\"");
@@ -1795,11 +1763,9 @@ public class DimensionsAPI implements Serializable {
                         }
                     }
 
-                    if (items != null) {
-                        Logger.debug("Request has " + items.size() + " items to process");
-                        BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
-                        bo.queryAttribute(attrs);
-                    }
+                    Logger.debug("Request has " + items.size() + " items to process");
+                    BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
+                    bo.queryAttribute(attrs);
                 }
             }
         }
