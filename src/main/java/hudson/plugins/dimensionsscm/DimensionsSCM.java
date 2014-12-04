@@ -89,24 +89,25 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
+import hudson.model.BuildListener;
+import hudson.model.ModelObject;
+import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
 import hudson.model.Hudson;
-import hudson.model.ModelObject;
 import hudson.model.Node;
 import hudson.model.Run;
-import hudson.model.TaskListener;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
 import hudson.scm.PollingResult.Change;
 import hudson.scm.RepositoryBrowsers;
-import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
+import hudson.scm.SCM;
 import hudson.util.FormValidation;
 import hudson.util.Scrambler;
 import hudson.util.VariableResolver;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -117,8 +118,11 @@ import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
+
 import javax.servlet.ServletException;
+
 import net.sf.json.JSONObject;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -170,6 +174,16 @@ public class DimensionsSCM extends SCM implements Serializable {
 
     private transient DimensionsAPI cachedAPI;
     private transient DimensionsSCMRepositoryBrowser browser;
+
+    private final String[] pathsToExclude;
+
+    // Patch matcher to reject nothing
+    private static class NullPathMatcher implements PathMatcher {
+        @Override
+        public boolean match(String matchText) {
+            return true;
+        }
+    }
 
     public DimensionsSCM getSCM() {
         return this;
@@ -357,6 +371,13 @@ public class DimensionsSCM extends SCM implements Serializable {
         return this.forceAsSlave;
     }
 
+    /**
+     * Gets paths excluded from changes tracking
+     */
+    public String[] getPathsToExclude() {
+        return pathsToExclude;
+    }
+
     @Extension
     public static final DescriptorImpl DM_DESCRIPTOR = new DescriptorImpl();
 
@@ -395,13 +416,18 @@ public class DimensionsSCM extends SCM implements Serializable {
     private static String[] DEFAULT_FOLDERS = new String[] { "/" };
 
     @DataBoundConstructor
-    public DimensionsSCM(String project, String[] folders, String workarea, boolean canJobDelete, boolean canJobForce,
+    public DimensionsSCM(String project, String[] folders, String[] pathsToExclude, String excludedPaths, String workarea,
+            boolean canJobDelete,
+            boolean canJobForce,
             boolean canJobRevert, String jobUserName, String jobPasswd, String jobServer, String jobDatabase,
             boolean canJobUpdate, String jobTimeZone, String jobWebUrl, String directory, String permissions,
             String eol, boolean canJobExpand, boolean canJobNoMetadata, boolean canJobNoTouch, boolean forceAsSlave) {
         // Check the folders specified have data specified.
         this.folders = folders != null ? Values.notEmptyOrElse(Values.trimCopy(folders), DEFAULT_FOLDERS) :
                 (Values.hasText(directory) ? new String[] { directory } : DEFAULT_FOLDERS);
+
+        this.pathsToExclude = (pathsToExclude != null) ? Values.notEmptyOrElse(Values.trimCopy(pathsToExclude),
+                Values.EMPTY_STRING_ARRAY) : Values.EMPTY_STRING_ARRAY;
 
         // Copying arguments to fields.
         this.project = Values.textOrElse(project, "${JOB_NAME}");
@@ -750,6 +776,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                     Logger.debug("Polling using key " + key);
                     Logger.debug("Polling '" + folderN + "'...");
 
+                    if (dmSCM.getPathMatcher() == null) {
+                        dmSCM.setPathMatcher(createPathMatcher());
+                    }
                     bChanged = dmSCM.hasRepositoryBeenUpdated(key, getProjectName(project.getLastBuild()), dname,
                             lastBuildCal, nowDateCal, tz);
                 }
@@ -771,6 +800,15 @@ public class DimensionsSCM extends SCM implements Serializable {
             Logger.debug("Polling returned true");
         }
         return bChanged;
+    }
+
+    /**
+     * Creates path matcher to ignore changes on certain paths
+     *
+     * @return path matcher
+     */
+    public PathMatcher createPathMatcher() {
+        return Values.isNullOrEmpty(getPathsToExclude()) ? new NullPathMatcher() : new DefaultPathMatcher(getPathsToExclude());
     }
 
     /**
@@ -873,6 +911,9 @@ public class DimensionsSCM extends SCM implements Serializable {
             String directory = req.getParameter("dimensionsscm.directory");
             String permissions = req.getParameter("dimensionsscm.permissions");
             String eol = req.getParameter("dimensionsscm.eol");
+            String excludedPaths = req.getParameter("dimensionsscm.excludedPaths");
+
+            String[] pathsToExclude = req.getParameterValues("dimensionsscm.pathsToExclude");
 
             Boolean canJobDelete = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete")));
             Boolean canJobForce = Boolean.valueOf("on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce")));
@@ -890,7 +931,8 @@ public class DimensionsSCM extends SCM implements Serializable {
             String jobTimeZone = req.getParameter("dimensionsscm.jobTimeZone");
             String jobWebUrl = req.getParameter("dimensionsscm.jobWebUrl");
 
-            DimensionsSCM scm = new DimensionsSCM(project, folders, null, canJobDelete, canJobForce, canJobRevert,
+            DimensionsSCM scm = new DimensionsSCM(project, folders, pathsToExclude, excludedPaths, null, canJobDelete, canJobForce,
+                    canJobRevert,
                     jobUserName, jobPasswd, jobServer, jobDatabase, canJobUpdate, jobTimeZone, jobWebUrl, directory,
                     permissions, eol, canJobExpand, canJobNoMetadata, canJobNoTouch, forceAsSlave);
 

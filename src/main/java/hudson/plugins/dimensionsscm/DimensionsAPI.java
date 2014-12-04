@@ -164,6 +164,9 @@ public class DimensionsAPI implements Serializable {
     private ConcurrentHashMap conns = new ConcurrentHashMap();
     private PrintStream listener;
 
+    // Dimensions paths matcher to match paths by patterns defined
+    private PathMatcher pathMatcher;
+
     // Inline connection cache.
     private class ConnectionCache {
         private DimensionsConnection connection;
@@ -179,6 +182,14 @@ public class DimensionsAPI implements Serializable {
         public final DimensionsConnection getCon() {
             return this.connection;
         }
+    }
+
+    public PathMatcher getPathMatcher() {
+        return pathMatcher;
+    }
+
+    public void setPathMatcher(PathMatcher pathMatcher) {
+        this.pathMatcher = pathMatcher;
     }
 
     /**
@@ -498,7 +509,6 @@ public class DimensionsAPI implements Serializable {
      */
     public boolean hasRepositoryBeenUpdated(final long key, final String projectName, final FilePath workspace,
             final Calendar fromDate, final Calendar toDate, final TimeZone tz) throws IOException, InterruptedException {
-        boolean bChanged = false;
         DimensionsConnection connection = getCon(key);
         if (fromDate == null) {
             return true;
@@ -507,15 +517,23 @@ public class DimensionsAPI implements Serializable {
             throw new IOException("Not connected to an SCM repository");
         }
         try {
-            List items = calcRepositoryDiffs(key, projectName, null, null, workspace, fromDate, toDate, tz);
+            @SuppressWarnings("unchecked")
+            List<ItemRevision> items = calcRepositoryDiffs(key, projectName, null, null, workspace, fromDate, toDate, tz);
             if (items != null) {
-                bChanged = (items.size() > 0);
+                PathMatcher pathMatcher = getPathMatcher();
+                for (ItemRevision itemRevision : items) {
+                    String fullPathName = (String) itemRevision.getAttribute(SystemAttributes.FULL_PATH_NAME);
+                    // Match when fullPathName is not ignored, false otherwise
+                    if (pathMatcher.match(fullPathName)) {
+                        return true;
+                    }
+                }
             }
         } catch (Exception e) {
             // e.printStackTrace();
             throw new IOException("Unable to run hasRepositoryBeenUpdated - " + e.getMessage());
         }
-        return bChanged;
+        return false;
     }
 
     /**
