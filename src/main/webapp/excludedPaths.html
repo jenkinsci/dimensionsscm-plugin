@@ -1,0 +1,6 @@
+'Paths to exclude from monitoring' allow multiple path patterns to be specified which will be disregarded when the SCM
+is polled for changes to decide whether to trigger a build or not.
+<BR><BR>
+Ant-style wildcards (like '?', '*' and '**') can be used to specify path patterns to exclude. For example, '**/*.class'
+would exclude all class files in the project/stream from causing a rebuild. Use 'folder-name/**' to exclude all of a
+folder's subfolders and files from causing a rebuild.

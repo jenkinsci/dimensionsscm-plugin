@@ -156,6 +156,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     private final String jobDatabase;
 
     private final String[] folders;
+    private final String[] pathsToExclude;
 
     private final String jobTimeZone;
     private final String jobWebUrl;
@@ -171,6 +172,16 @@ public class DimensionsSCM extends SCM implements Serializable {
 
     private transient DimensionsAPI cachedAPI;
     private transient DimensionsSCMRepositoryBrowser browser;
+
+    /**
+     * Patch matcher that rejects nothing and includes everything.
+     */
+    private static class NullPathMatcher implements PathMatcher {
+        @Override
+        public boolean match(String matchText) {
+            return true;
+        }
+    }
 
     public DimensionsAPI getAPI() {
         DimensionsAPI api = this.cachedAPI;
@@ -251,10 +262,17 @@ public class DimensionsSCM extends SCM implements Serializable {
     }
 
     /**
-     * Gets the project paths.
+     * Gets the project paths to monitor.
      */
     public String[] getFolders() {
         return this.folders;
+    }
+
+    /**
+     * Gets paths excluded from monitoring.
+     */
+    public String[] getPathsToExclude() {
+        return pathsToExclude;
     }
 
     /**
@@ -286,7 +304,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     }
 
     /**
-     * Gets the timezone for the connection.
+     * Gets the time zone for the connection.
      */
     public String getJobTimeZone() {
         return this.jobTimeZone;
@@ -392,13 +410,16 @@ public class DimensionsSCM extends SCM implements Serializable {
     private static final String[] DEFAULT_FOLDERS = new String[] { "/" };
 
     @DataBoundConstructor
-    public DimensionsSCM(String project, String[] folders, String workarea, boolean canJobDelete, boolean canJobForce,
-            boolean canJobRevert, String jobUserName, String jobPasswd, String jobServer, String jobDatabase,
-            boolean canJobUpdate, String jobTimeZone, String jobWebUrl, String directory, String permissions,
-            String eol, boolean canJobExpand, boolean canJobNoMetadata, boolean canJobNoTouch, boolean forceAsSlave) {
+    public DimensionsSCM(String project, String[] folders, String[] pathsToExclude, String workarea,
+            boolean canJobDelete, boolean canJobForce, boolean canJobRevert, String jobUserName, String jobPasswd,
+            String jobServer, String jobDatabase, boolean canJobUpdate, String jobTimeZone, String jobWebUrl,
+            String directory, String permissions, String eol, boolean canJobExpand, boolean canJobNoMetadata,
+            boolean canJobNoTouch, boolean forceAsSlave) {
         // Check the folders specified have data specified.
         this.folders = folders != null ? Values.notEmptyOrElse(Values.trimCopy(folders), DEFAULT_FOLDERS) :
                 (Values.hasText(directory) ? new String[] { directory } : DEFAULT_FOLDERS);
+        this.pathsToExclude = pathsToExclude != null ? Values.notEmptyOrElse(Values.trimCopy(pathsToExclude),
+                Values.EMPTY_STRING_ARRAY) : Values.EMPTY_STRING_ARRAY;
 
         // Copying arguments to fields.
         this.project = Values.textOrElse(project, "${JOB_NAME}");
@@ -743,6 +764,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                     Logger.debug("Polling using key " + key);
                     Logger.debug("Polling '" + folderN + "'...");
 
+                    if (dmSCM.getPathMatcher() == null) {
+                        dmSCM.setPathMatcher(createPathMatcher());
+                    }
                     bChanged = dmSCM.hasRepositoryBeenUpdated(key, getProjectName(project.getLastBuild()), dname,
                             lastBuildCal, nowDateCal, tz);
                 }
@@ -764,6 +788,16 @@ public class DimensionsSCM extends SCM implements Serializable {
             Logger.debug("Polling returned true");
         }
         return bChanged;
+    }
+
+    /**
+     * Creates path matcher to ignore changes on certain paths.
+     *
+     * @return path matcher
+     */
+    public PathMatcher createPathMatcher() {
+        return Values.isNullOrEmpty(getPathsToExclude()) ? new NullPathMatcher()
+                : new DefaultPathMatcher(getPathsToExclude(), null);
     }
 
     /**
@@ -861,6 +895,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         public SCM newInstance(StaplerRequest req, JSONObject formData) throws FormException {
             // Get variables and then construct a new object.
             String[] folders = req.getParameterValues("dimensionsscm.folders");
+            String[] pathsToExclude = req.getParameterValues("dimensionsscm.pathsToExclude");
 
             String project = req.getParameter("dimensionsscm.project");
             String directory = req.getParameter("dimensionsscm.directory");
@@ -883,9 +918,9 @@ public class DimensionsSCM extends SCM implements Serializable {
             String jobTimeZone = req.getParameter("dimensionsscm.jobTimeZone");
             String jobWebUrl = req.getParameter("dimensionsscm.jobWebUrl");
 
-            DimensionsSCM scm = new DimensionsSCM(project, folders, null, canJobDelete, canJobForce, canJobRevert,
-                    jobUserName, jobPasswd, jobServer, jobDatabase, canJobUpdate, jobTimeZone, jobWebUrl, directory,
-                    permissions, eol, canJobExpand, canJobNoMetadata, canJobNoTouch, forceAsSlave);
+            DimensionsSCM scm = new DimensionsSCM(project, folders, pathsToExclude, null, canJobDelete, canJobForce,
+                    canJobRevert, jobUserName, jobPasswd, jobServer, jobDatabase, canJobUpdate, jobTimeZone, jobWebUrl,
+                    directory, permissions, eol, canJobExpand, canJobNoMetadata, canJobNoTouch, forceAsSlave);
 
             scm.browser = RepositoryBrowsers.createInstance(DimensionsSCMRepositoryBrowser.class, req, formData,
                     "browser");

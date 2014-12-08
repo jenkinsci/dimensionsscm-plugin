@@ -22,6 +22,22 @@
        </f:repeatable>
     </f:entry>
 
+    <f:entry title="${%Paths to exclude from monitoring}">
+       <f:repeatable var="pathToExclude" items="${scm.pathsToExclude}" noAddButton="true" minimum="1">
+           <table width="98%" cellpadding="2" cellspacing="2">
+               <f:entry title="Path" help="/plugin/dimensionsscm/excludedPaths.html">
+                   <f:textbox name="dimensionsscm.pathsToExclude" value="${h.defaulted(pathToExclude, '')}" />
+               </f:entry>
+               <f:entry>
+                   <div align="right">
+                       <input type="button" value="${%Add path...}" class="repeatable-add show-if-last" />
+                       <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+                   </div>
+               </f:entry>
+           </table>
+       </f:repeatable>
+    </f:entry>
+
     <f:entry title="${%Clear the contents of the workspace}" help="/plugin/dimensionsscm/candelete.html">
     <f:checkbox name="dimensionsscm.canJobDelete" default="false" checked="${scm.canJobDelete}"/>
     </f:entry>
@@ -99,11 +115,11 @@
                     <f:option value="UNCHANGED" selected="${'UNCHANGED'==scm.eol}">Leave files as they are</f:option>
                 </select>
             </f:entry>
-			
+
             <f:entry title="${%Use slave based checkout}" help="/plugin/dimensionsscm/forceAsSlave.html">
                <f:checkbox name="dimensionsscm.forceAsSlave" default="false" checked="${scm.forceAsSlave}"/>
             </f:entry>
-			
+
         </f:optionalBlock>
 
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
