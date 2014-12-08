@@ -9,8 +9,8 @@
     <artifactId>dimensionsscm</artifactId>
     <version>0.8.9-SNAPSHOT</version>
     <packaging>hpi</packaging>
-    <name>Jenkins Dimensions CM plugin</name>
-    <description>Integrates Jenkins with Serena Dimension CM SCM.</description>
+    <name>Dimensions CM Plugin</name>
+    <description>This plugin integrates the Serena Dimensions CM SCM with Jenkins.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
     <developers>
         <developer>
