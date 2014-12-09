@@ -117,7 +117,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -688,9 +687,9 @@ public class DimensionsAPI implements Serializable {
             String projName;
 
             if (baselineName != null && requests == null) {
-                projName = baselineName.toUpperCase(Locale.ROOT);
+                projName = baselineName.toUpperCase(Values.ROOT_LOCALE);
             } else {
-                projName = projectName.toUpperCase(Locale.ROOT);
+                projName = projectName.toUpperCase(Values.ROOT_LOCALE);
             }
 
             List items = null;
@@ -708,7 +707,7 @@ public class DimensionsAPI implements Serializable {
                 // setup filter for baseline Name
                 Filter baselineFilter = new Filter();
                 baselineFilter.criteria().add(new Filter.Criterion(SystemAttributes.OBJECT_SPEC,
-                        baselineName.toUpperCase(Locale.ROOT), Filter.Criterion.EQUALS));
+                        baselineName.toUpperCase(Values.ROOT_LOCALE), Filter.Criterion.EQUALS));
 
                 List<Baseline> baselineObjects = connection.getObjectFactory().getBaselines(baselineFilter);
                 Logger.debug("Baseline query for \"" + baselineName + "\" returned " + baselineObjects.size() + " baselines");
@@ -1696,7 +1695,7 @@ public class DimensionsAPI implements Serializable {
     private boolean isStream(DimensionsConnection connection, final String projectId) {
         if (connection != null) {
             DimensionsObjectFactory fc = connection.getObjectFactory();
-            Project proj = fc.getProject(projectId.toUpperCase(Locale.ROOT));
+            Project proj = fc.getProject(projectId.toUpperCase(Values.ROOT_LOCALE));
             if (proj != null) {
                 proj.queryAttribute(SystemAttributes.WSET_IS_STREAM);
                 Boolean isStream = (Boolean) proj.getAttribute(SystemAttributes.WSET_IS_STREAM);
@@ -1764,7 +1763,7 @@ public class DimensionsAPI implements Serializable {
             for (String xStr : reqStr) {
                 xStr = xStr.trim();
                 Logger.debug("Request to process is \"" + xStr + "\"");
-                Request requestObj = connection.getObjectFactory().findRequest(xStr.toUpperCase(Locale.ROOT));
+                Request requestObj = connection.getObjectFactory().findRequest(xStr.toUpperCase(Values.ROOT_LOCALE));
 
                 if (requestObj != null) {
                     Logger.debug("Request to process is \"" + requestObj.getName() + "\"");

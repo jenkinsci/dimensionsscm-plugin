@@ -86,7 +86,6 @@ package hudson.plugins.dimensionsscm;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.Locale;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -103,7 +102,7 @@ public class PathUtils implements Serializable {
      public static File getExecutable(String exeName) {
         // Get the path environment.
         String exec = exeName;
-        if (System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("windows")) {
+        if (System.getProperty("os.name").toLowerCase(Values.ROOT_LOCALE).startsWith("windows")) {
             exec += ".exe";
         }
 

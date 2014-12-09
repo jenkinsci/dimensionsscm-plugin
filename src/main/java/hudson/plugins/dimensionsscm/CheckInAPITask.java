@@ -95,7 +95,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Locale;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -214,7 +213,7 @@ public class CheckInAPITask extends GenericAPITask implements FileCallable<Boole
 
                     if (requests != null) {
                         requests = requests.replaceAll(" ", "");
-                        requests = requests.toUpperCase(Locale.ROOT);
+                        requests = requests.toUpperCase(Values.ROOT_LOCALE);
                     }
 
                     DimensionsResult res = dmSCM.UploadFiles(key, wd, projectId, tmpFile, jobId, buildNo, requests,

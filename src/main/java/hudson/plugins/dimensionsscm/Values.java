@@ -87,6 +87,7 @@ package hudson.plugins.dimensionsscm;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM repositories.
@@ -96,8 +97,9 @@ import java.util.List;
  * @author David Conneely
  */
 class Values {
-    static Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-    static String[] EMPTY_STRING_ARRAY = new String[0];
+    static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    static final String[] EMPTY_STRING_ARRAY = new String[0];
+    static final Locale ROOT_LOCALE = Locale.US;
 
     /**
      * Prevent casual instantiation.
@@ -132,7 +134,7 @@ class Values {
      * @return false if value is null, empty or just whitespace; true otherwise
      */
     static boolean hasText(String value) {
-        return value != null && !value.trim().isEmpty();
+        return value != null && value.trim().length() != 0;
     }
 
     /**
@@ -163,7 +165,7 @@ class Values {
      * @return true if value is null or empty; false otherwise
      */
     static boolean isNullOrEmpty(String value) {
-        return value == null || value.isEmpty();
+        return value == null || value.length() == 0;
     }
 
     /**
@@ -210,7 +212,7 @@ class Values {
     static String textOrElse(String value, String defaultValue) {
         if (!isNullOrEmpty(value)) {
             value = value.trim();
-            if (!value.isEmpty()) {
+            if (value.length() != 0) {
                 return value;
             }
         }
@@ -263,7 +265,7 @@ class Values {
         for (String value : values) {
             if (!isNullOrEmpty(value)) {
                 value = value.trim();
-                if (!value.isEmpty()) {
+                if (value.length() != 0) {
                     outlist.add(value);
                 }
             }

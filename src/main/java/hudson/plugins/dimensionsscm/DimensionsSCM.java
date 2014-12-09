@@ -115,7 +115,6 @@ import java.io.Serializable;
 import java.io.Writer;
 import java.net.InetAddress;
 import java.util.Calendar;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.servlet.ServletException;
@@ -599,11 +598,11 @@ public class DimensionsSCM extends SCM implements Serializable {
 
                 if (baseline != null) {
                     baseline = baseline.trim();
-                    baseline = baseline.toUpperCase(Locale.ROOT);
+                    baseline = baseline.toUpperCase(Values.ROOT_LOCALE);
                 }
                 if (requests != null) {
                     requests = requests.replaceAll(" ", "");
-                    requests = requests.toUpperCase(Locale.ROOT);
+                    requests = requests.toUpperCase(Values.ROOT_LOCALE);
                 }
 
                 Logger.debug("Extra parameters - " + baseline + " " + requests);

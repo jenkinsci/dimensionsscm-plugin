@@ -86,7 +86,6 @@ package hudson.plugins.dimensionsscm;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -106,7 +105,7 @@ public class Logger implements Serializable {
         Map<String, String> env = System.getenv();
         boolean debugEnabled = false;
         for (String key : env.keySet()) {
-            String upperKey = key.toUpperCase(Locale.ROOT);
+            String upperKey = key.toUpperCase(Values.ROOT_LOCALE);
             if (upperKey.equals(DM_JENKINS_LOGGING)) {
                 debugEnabled = true;
                 break;

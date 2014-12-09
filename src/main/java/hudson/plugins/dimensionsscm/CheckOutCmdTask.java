@@ -92,7 +92,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.util.Locale;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -254,11 +253,11 @@ public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Bool
 
             if (baseline != null) {
                 baseline = baseline.trim();
-                baseline = baseline.toUpperCase(Locale.ROOT);
+                baseline = baseline.toUpperCase(Values.ROOT_LOCALE);
             }
             if (requests != null) {
                 requests = requests.replaceAll(" ", "");
-                requests = requests.toUpperCase(Locale.ROOT);
+                requests = requests.toUpperCase(Values.ROOT_LOCALE);
             }
 
             String cmdLog = null;

@@ -96,7 +96,6 @@ import hudson.model.Result;
 import hudson.tasks.Builder;
 import hudson.util.VariableResolver;
 import java.io.IOException;
-import java.util.Locale;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -250,7 +249,7 @@ public class DimensionsBuilder extends Builder {
                     String requests = myResolver.resolve("DM_TARGET_REQUEST");
                     if (requests != null) {
                         requests = requests.replaceAll(" ", "");
-                        requests = requests.toUpperCase(Locale.ROOT);
+                        requests = requests.toUpperCase(Values.ROOT_LOCALE);
                     }
 
                     {
