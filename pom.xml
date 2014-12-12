@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -10,7 +11,7 @@
     <artifactId>dimensionsscm</artifactId>
     <version>0.8.10-SNAPSHOT</version>
     <packaging>hpi</packaging>
-    <name>Dimensions CM Plugin</name>
+    <name>Jenkins Dimensions Plugin</name>
     <description>This plugin integrates the Serena Dimensions CM SCM with Jenkins.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
 
@@ -46,7 +47,7 @@
         <serena-dmclient-api.version>12.2</serena-dmclient-api.version>
     </properties>
 
-    <!-- Allows builds without customizing ~/.m2/settings.xml -->
+    <!-- Allows builds without custom Jenkins profile in ~/.m2/settings.xml. -->
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
