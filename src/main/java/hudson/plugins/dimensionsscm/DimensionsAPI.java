@@ -103,6 +103,7 @@ import com.serena.dmclient.api.SystemRelationship;
 import com.serena.dmclient.objects.DimensionsObject;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
+import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -121,6 +122,7 @@ import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -496,12 +498,16 @@ public class DimensionsAPI implements Serializable {
                     String fullPathName = (String) itemRevision.getAttribute(SystemAttributes.FULL_PATH_NAME);
                     // Match when fullPathName is not ignored, false otherwise.
                     if (pathMatcher.match(fullPathName)) {
+                        LOGGER.log(Level.FINE, "Found " + items.size() + " changed item(s), " +
+                                "and at least one ('" + fullPathName + "') passed the " + pathMatcher);
                         return true;
                     }
                 }
             }
+            LOGGER.log(Level.FINE, "Found " + (items == null ? "nil" : items.size()) + " changed item(s), " +
+                    ((items == null || items.isEmpty()) ? "so" : "but") + " none passed the " + getPathMatcher());
         } catch (Exception e) {
-            // e.printStackTrace();
+            LOGGER.log(Level.FINE, "Caught Exception", e);
             throw new IOException("Unable to run hasRepositoryBeenUpdated - " + e.getMessage());
         }
         return false;
@@ -1454,11 +1460,15 @@ public class DimensionsAPI implements Serializable {
         // Catch any exceptions that may be thrown by the Java API and for now return no changes.
         // Going forward it would be good to trap all the possible exception types and do something about them.
         try {
-            Logger.debug("Looking for changed files in '" + path + "' in project: " + srcProject.getName());
+            long time0 = System.currentTimeMillis();
             List rels = srcProject.getChildItems(filter);
-            Logger.debug("Found " + rels.size());
+            long time1 = System.currentTimeMillis();
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.log(Level.FINE, "queryItems() - Project(" + srcProject.getName() + ").getChildItems(" +
+                        Values.toString(filter) + ") found " + rels.size() + " rel(s) in " + (time1 - time0) + " ms");
+            }
             if (rels.size() == 0) {
-                return null;
+                return Collections.emptyList();
             }
             List items = new ArrayList(rels.size());
             for (int i = 0; i < rels.size(); ++i) {
@@ -1469,9 +1479,8 @@ public class DimensionsAPI implements Serializable {
             bo.queryAttribute(attrs);
             return items;
         } catch (Exception e) {
-            // e.printStackTrace();
-            Logger.debug("Exception detected from the Java API: " + e.getMessage());
-            return null;
+            LOGGER.log(Level.FINE, "Caught exception", e);
+            return Collections.emptyList();
         }
     }
 

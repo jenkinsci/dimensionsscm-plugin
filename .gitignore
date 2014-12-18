@@ -9,6 +9,7 @@
 /bin/
 /lib/*
 !/lib/README.md
+/nbactions.xml
 /nb-configuration.xml
 /target/
 /work/

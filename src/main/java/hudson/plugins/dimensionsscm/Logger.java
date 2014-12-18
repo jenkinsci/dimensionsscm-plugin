@@ -84,60 +84,37 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.util.Map;
+import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
+import java.util.logging.Level;
 
-/**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
- *
- * @author Tim Payne
- */
-public class Logger implements Serializable {
-    private static final String DM_JENKINS_LOGGING = "DM_JENKINS_LOGGING";
-    private static final boolean DEBUG_ENABLED = queryDebugEnabled();
-
-    private static PrintWriter pw = new PrintWriter(System.out, true);
-
-    private static boolean queryDebugEnabled() {
-        // Search through the system environment and see if we have logging enabled.
-        Map<String, String> env = System.getenv();
-        boolean debugEnabled = false;
-        for (String key : env.keySet()) {
-            String upperKey = key.toUpperCase(Values.ROOT_LOCALE);
-            if (upperKey.equals(DM_JENKINS_LOGGING)) {
-                debugEnabled = true;
-                break;
+class Logger {
+    /**
+     * Print a message to the log. This is a compatibility layer for the previous logging mechanism.
+     * Once everything is using <tt>LogInitializer.LOGGER</tt>, this method can be removed.
+     */
+    static void debug(String str) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+            boolean found = false;
+            String sourceClass = null;
+            String sourceMethod = null;
+            for (StackTraceElement stackTraceElement : stackTraceElements) {
+                sourceClass = stackTraceElement.getClassName();
+                sourceMethod = stackTraceElement.getMethodName();
+                if (found && !Logger.class.getName().equals(sourceClass)) {
+                    break;
+                }
+                if (!found && Logger.class.getName().equals(sourceClass)) {
+                    found = true;
+                }
+            }
+            // Without this, <tt>getSourceClass()</tt> and <tt>getSourceMethod()</tt> for every <tt>LogRecord</tt>
+            // would return <tt>hudson.plugins.dimensionsscm.Logger</tt> and <tt>debug</tt> respectively.
+            if (sourceClass != null && sourceMethod != null) {
+                LOGGER.logp(Level.FINE, sourceClass, sourceMethod, str);
+            } else {
+                LOGGER.log(Level.FINE, str);
             }
         }
-        return debugEnabled;
-    }
-
-    /**
-     * Is logging enabled?
-     * @return true if calling debug() will write output
-     */
-    public static boolean isDebugEnabled() {
-        return DEBUG_ENABLED;
-    }
-
-    /**
-     * Print a message to the log.
-     *
-     * @param str the message
-     */
-    public static void debug(String str) {
-        if (isDebugEnabled()) {
-            pw.println("DEBUG (" + DateUtils.getNowStrDate() + ") :" + str);
-        }
-    }
-
-    /**
-     * Change the output writer for logging messages.
-     * @param pw new PrintWriter to send debug output messages to.
-     */
-    public static void setOut(PrintWriter pw) {
-        Logger.pw = pw;
     }
 }

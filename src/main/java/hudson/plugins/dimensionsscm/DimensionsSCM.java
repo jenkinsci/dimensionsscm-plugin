@@ -97,6 +97,7 @@ import hudson.model.ModelObject;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
 import hudson.scm.PollingResult.Change;
@@ -117,6 +118,7 @@ import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.logging.Level;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -179,6 +181,11 @@ public class DimensionsSCM extends SCM implements Serializable {
         @Override
         public boolean match(String matchText) {
             return true;
+        }
+
+        @Override
+        public String toString() {
+            return "NullPathMatcher()";
         }
     }
 
@@ -730,6 +737,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             return false;
         }
         if (project.getLastBuild() == null) {
+            LOGGER.log(Level.FINE, "There is no lastBuild, so returning true");
             return true;
         }
         DimensionsAPI dmSCM = getAPI();
@@ -760,31 +768,33 @@ public class DimensionsSCM extends SCM implements Serializable {
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
-                    Logger.debug("Polling using key " + key);
-                    Logger.debug("Polling '" + folderN + "'...");
-
                     if (dmSCM.getPathMatcher() == null) {
                         dmSCM.setPathMatcher(createPathMatcher());
                     }
                     bChanged = dmSCM.hasRepositoryBeenUpdated(key, getProjectName(project.getLastBuild()), dname,
                             lastBuildCal, nowDateCal, tz);
+                    if (LOGGER.isLoggable(Level.FINE)) {
+                        LOGGER.log(Level.FINE, "Polled folder '" + dname.getRemote() + "' between lastBuild="
+                                + Values.toString(lastBuildCal) + " and now=" + Values.toString(nowDateCal)
+                                + " where jobTimeZone=[" + getJobTimeZone() + "]. "
+                                + (bChanged ? "Found changes" : "No changes"));
+                    }
+                }
+                if (LOGGER.isLoggable(Level.FINE)) {
+                    LOGGER.log(Level.FINE, bChanged ? "Found changes in at least one of the folders, so returning true"
+                            : "No changes in any of the folders, so returning false");
                 }
             }
         } catch (Exception e) {
+            LOGGER.log(Level.FINE, "Caught Exception, so returning false", e);
             String errMsg = e.getMessage();
             if (errMsg == null) {
                 errMsg = "An unknown error occurred. Please try the operation again.";
             }
             listener.fatalError("Unable to run pollChanges callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run pollChanges callout - " + e.getMessage());
             bChanged = false;
         } finally {
             dmSCM.logout(key);
-        }
-
-        if (bChanged) {
-            Logger.debug("Polling returned true");
         }
         return bChanged;
     }

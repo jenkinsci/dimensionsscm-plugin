@@ -84,10 +84,16 @@
  */
 package hudson.plugins.dimensionsscm;
 
+import com.serena.dmclient.api.Filter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM repositories.
@@ -271,5 +277,138 @@ class Values {
             }
         }
         return outlist.isEmpty() ? EMPTY_STRING_ARRAY : outlist.toArray(EMPTY_STRING_ARRAY);
+    }
+
+    /**
+     * Convert a <tt>Calendar</tt> instance into a string suitable for logging.
+     * The format is language-neutral, but includes time zone information.
+     *
+     * @param cal Calendar instance to convert to a String.
+     * @return String form including time zone.
+     */
+    static String toString(Calendar cal) {
+        if (cal == null) {
+            return "null";
+        }
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        df.setTimeZone(cal.getTimeZone());
+        return "Calendar(" + df.format(cal.getTime()) + ")";
+    }
+
+    /**
+     * Convert a <tt>Date</tt> instance into a string suitable for logging.
+     * The format is language-neutral, and is in UTC time zone (since Date instances don't have a time zone).
+     *
+     * @param date Date instance to convert to a String.
+     * @return String form in UTC.
+     */
+    static String toString(Date date) {
+        if (date == null) {
+            return "null";
+        }
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return "Date(" + df.format(date) + ")";
+    }
+
+    /**
+     * Convert a <tt>Collection</tt> instance into a string suitable for logging.
+     * The format is that of Arrays.toString.
+     *
+     * @param collection Collection instance to convert to a String.
+     * @return String form.
+     */
+    static String toString(Collection<?> collection) {
+        if (collection == null) {
+            return "null";
+        }
+        return Arrays.toString(collection.toArray());
+    }
+
+    /**
+     * Convert a <tt>Filter</tt> instance into a string suitable for logging.
+     *
+     * @param filter Filter instance to convert to a String.
+     * @return String form.
+     */
+    static String toString(Filter filter) {
+        List<Filter.Criterion> criteria = filter.criteria();
+        List<Filter.Order> orders = filter.orders();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Filter([");
+        boolean comma = false;
+        for (Filter.Criterion criterion : criteria) {
+            if (comma) {
+                sb.append(',');
+                sb.append(' ');
+            } else {
+                comma = true;
+            }
+            sb.append(decodeAttribute(criterion.getAttribute()));
+            sb.append(decodeFlags(criterion.getFlags()));
+            sb.append(decodeValue(criterion.getValue()));
+        }
+        sb.append("], [");
+        comma = false;
+        for (Filter.Order order : orders) {
+            if (comma) {
+                sb.append(',');
+                sb.append(' ');
+            } else {
+                comma = true;
+            }
+            sb.append(decodeAttribute(order.getAttribute()));
+            sb.append(decodeDirection(order.getDirection()));
+        }
+        sb.append("])");
+        return sb.toString();
+    }
+
+    /** Helper method used by {@linkplain #toString(Filter)}. */
+    private static String decodeAttribute(int attrNum) {
+        switch (attrNum) {
+            case -1201: return "CREATION_DATE";
+            case -1801: return "ITEMFILE_FILENAME";
+            case -1802: return "ITEMFILE_DIR";
+            case -1803: return "REVISION";
+            case -1804: return "IS_LATEST_REV";
+            case -1805: return "IS_EXTRACTED";
+            case -1806: return "FULL_PATH_NAME";
+            case -1807: return "REVISION_COMMENT";
+            default: return "#" + attrNum;
+        }
+    }
+
+    /** Helper method used by {@linkplain #toString(Filter)}. */
+    private static String decodeFlags(int flags) {
+        switch (flags) {
+        case 0: case 8: return " == ";
+        case 16: return " < ";
+        case 32: return " > ";
+        case 64: case 72: return " <> ";
+        case 80: return " >= ";
+        case 96: return " <= ";
+        default: return " ~" + flags + "~ ";
+        }
+    }
+
+    /** Helper method used by {@linkplain #toString(Filter)}. */
+    private static String decodeDirection(int direction) {
+        switch (direction) {
+        case 1: return " ASC";
+        case -1: return " DESC";
+        default: return " ~" + direction;
+        }
+    }
+
+    /** Helper method used by {@linkplain #toString(Filter)}. */
+    private static String decodeValue(Object value) {
+        if (value == null) {
+            return "null";
+        } else if (value instanceof String) {
+            return "'" + (String) value + "'";
+        } else {
+            return value.toString();
+        }
     }
 }
