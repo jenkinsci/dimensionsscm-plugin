@@ -85,7 +85,6 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
-import hudson.FilePath.FileCallable;
 import hudson.model.TaskListener;
 import java.io.File;
 import java.io.FileWriter;
@@ -99,7 +98,7 @@ import java.io.PrintWriter;
  *
  * @author Tim Payne
  */
-public class CheckOutCmdTask extends GenericCmdTask implements FileCallable<Boolean> {
+public class CheckOutCmdTask extends GenericCmdTask {
     private final boolean bFreshBuild;
     private final boolean isDelete;
     private final boolean isRevert;

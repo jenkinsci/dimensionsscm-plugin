@@ -158,8 +158,7 @@ public class GenericCmdTask implements FileCallable<Boolean> {
     }
 
     @Override
-    public Boolean invoke(File area, VirtualChannel channel)
-              throws IOException {
+    public Boolean invoke(File area, VirtualChannel channel) throws IOException {
         boolean retStatus = false;
 
         // This here code is executed on the slave.

@@ -85,7 +85,6 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
-import hudson.FilePath.FileCallable;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
@@ -100,7 +99,7 @@ import java.io.PrintStream;
  *
  * @author Tim Payne
  */
-public class CheckOutAPITask extends GenericAPITask implements FileCallable<Boolean> {
+public class CheckOutAPITask extends GenericAPITask {
     private final boolean bFreshBuild;
     private final boolean isDelete;
     private final boolean isRevert;

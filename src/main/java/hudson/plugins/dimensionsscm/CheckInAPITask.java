@@ -86,7 +86,6 @@ package hudson.plugins.dimensionsscm;
 
 import com.serena.dmclient.api.DimensionsResult;
 import hudson.FilePath;
-import hudson.FilePath.FileCallable;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
@@ -102,7 +101,7 @@ import java.io.PrintWriter;
  *
  * @author Tim Payne
  */
-public class CheckInAPITask extends GenericAPITask implements FileCallable<Boolean> {
+public class CheckInAPITask extends GenericAPITask {
     private final boolean isForceTip;
     private final boolean isForceCheckIn;
     private final VariableResolver<String> myResolver;
