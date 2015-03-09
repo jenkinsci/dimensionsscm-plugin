@@ -121,11 +121,7 @@ public class FileScanner implements Serializable {
         }
 
         @Override
-        public boolean accept(File dir, String name) {
-            // Skip metadata no matter what.
-            if (isIgnoredMetadataFolder(name)) {
-                return false;
-            }
+        public boolean accept(File basedir, String name) {
             for (String filter : artifactExcFilter) {
                 if (Pattern.matches(filter, name)) {
                     return false;
@@ -140,9 +136,9 @@ public class FileScanner implements Serializable {
         }
     }
 
-    public FileScanner(File dirName, String[] patterns, String[] patternsExc, int depth) {
+    public FileScanner(File basedir, String[] patterns, String[] patternsExc, int depth) {
         ScannerFilter filter = new ScannerFilter(patterns, patternsExc);
-        xfiles = scanFiles(dirName, filter, depth);
+        xfiles = scanFiles(basedir, basedir, filter, depth);
     }
 
     public Collection<File> getFiles() {
@@ -154,32 +150,42 @@ public class FileScanner implements Serializable {
         return xfiles.toArray(xarr);
     }
 
-    private static boolean isIgnoredMetadataFolder(String name) {
-        return ".metadata".equals(name) || ".dm".equals(name);
+    private static boolean isIgnorable(File folder) {
+        if (folder == null) {
+            return true;
+        }
+        if (folder.isDirectory()) {
+            String name = folder.getName();
+            // Dimensions CM work area metadata folders (old or new format).
+            if (".metadata".equals(name) || ".dm".equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    private Collection<File> scanFiles(File file, FilenameFilter filter, int depth) {
-        if (file == null || isIgnoredMetadataFolder(file.getName())) {
+    private Collection<File> scanFiles(File basedir, File subdir, FilenameFilter filter, int depth) {
+        if (isIgnorable(subdir)) {
             return Collections.emptyList();
         }
-        File[] childFiles = file.listFiles();
+        File[] childFiles = subdir.listFiles();
         if (childFiles == null || childFiles.length == 0) {
             return Collections.emptyList();
         }
         List<File> ret = new ArrayList<File>();
         for (File childFile : childFiles) {
-            if (childFile == null || isIgnoredMetadataFolder(childFile.getName())) {
+            if (isIgnorable(childFile)) {
                 continue;
             }
             String path = childFile.getAbsolutePath();
-            path = path.substring(file.getAbsolutePath().length() + 1);
-            if (filter == null || filter.accept(file, path)) {
+            path = path.substring(basedir.getAbsolutePath().length() + 1);
+            if (filter == null || filter.accept(basedir, path)) {
                 ret.add(childFile);
             }
-            if (depth < 0 || (depth > 0 && childFile.isDirectory())) {
-                ret.addAll(scanFiles(childFile, filter, depth - 1));
+            if (depth != 0 && childFile.isDirectory()) {
+                ret.addAll(scanFiles(basedir, childFile, filter, depth - 1));
             }
         }
-        return ret;
+        return Collections.unmodifiableList(ret);
     }
 }
