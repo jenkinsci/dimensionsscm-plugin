@@ -22,7 +22,8 @@
             <name>David Conneely</name>
         </developer>
         <developer>
-            <!-- Tim Payne created the plugin and maintained it for many years. -->
+            <!-- Tim Payne created the plugin and maintained it for many years,
+                 but he is now doing more interesting things :). -->
             <id>tpayne</id>
             <name>Tim Payne</name>
         </developer>
@@ -41,7 +42,7 @@
     </issueManagement>
 
     <properties>
-        <!-- Manage maven-release-plugin version from 2.2.2 to 2.5.1 to work around Maven/Git issues. -->
+        <!-- Manage maven-release-plugin version to 2.5.1 to work around Maven/Git issues. -->
         <maven-release-plugin.version>2.5.1</maven-release-plugin.version>
     </properties>
 
