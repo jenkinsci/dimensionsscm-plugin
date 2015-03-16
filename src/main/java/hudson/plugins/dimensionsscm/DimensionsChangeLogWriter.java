@@ -85,12 +85,14 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.Util;
+import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
@@ -116,9 +118,10 @@ public class DimensionsChangeLogWriter {
             write(changeSets, writer, appendFile);
             writer.flush();
             bRet = true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new IOException("Unable to write change log - " + e.getMessage());
+        } catch (IOException e) {
+            String message = Values.exceptionMessage("Unable to write change log: " + changelogFile, e, "no message");
+            LOGGER.log(Level.FINE, message, e);
+            throw (IOException) new IOException(message).initCause(e);
         } finally {
             if (writer != null) {
                 writer.close();

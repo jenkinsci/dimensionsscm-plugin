@@ -112,7 +112,8 @@ public class GetHostDetailsTask implements FileCallable<Boolean> {
             // Get hostname and compare.
             return netAddr.getHostName().equals(masteripaddr);
         } catch (UnknownHostException e) {
-            throw new IOException(e.getMessage());
+            throw (IOException) new IOException(Values.exceptionMessage("Exception getting hostname", e,
+                    "no message")).initCause(e);
         }
     }
 }

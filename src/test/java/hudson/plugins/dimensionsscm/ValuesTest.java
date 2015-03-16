@@ -84,9 +84,6 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -96,6 +93,8 @@ import org.junit.Test;
  * @author David Conneely
  */
 public class ValuesTest {
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
+
     @Test
     public void testBooleanOrElse() {
         Assert.assertEquals(false, Values.booleanOrElse(null, false));
@@ -140,38 +139,6 @@ public class ValuesTest {
     }
 
     @Test
-    public void testHasText() {
-        Assert.assertEquals(false, Values.hasText(null));
-        Assert.assertEquals(false, Values.hasText(""));
-        Assert.assertEquals(false, Values.hasText("  "));
-        Assert.assertEquals(false, Values.hasText("\r\n"));
-        Assert.assertEquals(true, Values.hasText("A"));
-        Assert.assertEquals(true, Values.hasText(" A "));
-        Assert.assertEquals(true, Values.hasText("\\ \r\n"));
-    }
-
-    @Test
-    public void testIntOrElse() {
-        Assert.assertEquals(0, Values.intOrElse(null, 0));
-        Assert.assertEquals(99, Values.intOrElse(null, 99));
-        Assert.assertEquals(0, Values.intOrElse("", 0));
-        Assert.assertEquals(-15, Values.intOrElse("", -15));
-        Assert.assertEquals(99, Values.intOrElse("99", 0));
-        Assert.assertEquals(-15, Values.intOrElse("-15", 99));
-        Assert.assertEquals(3, Values.intOrElse("003", 0));
-        Assert.assertEquals(99, Values.intOrElse("00A", 99));
-        Assert.assertEquals(99, Values.intOrElse("4.1", 99));
-        Assert.assertEquals(1, Values.intOrElse("1  ", 99));
-        Assert.assertEquals(1, Values.intOrElse("  1", 99));
-        Assert.assertEquals(1, Values.intOrElse(" 1 ", 99));
-        Assert.assertEquals(-1, Values.intOrElse("-1  ", 99));
-        Assert.assertEquals(-1, Values.intOrElse("  -1", 99));
-        Assert.assertEquals(-1, Values.intOrElse(" -1 ", 99));
-        Assert.assertEquals(99, Values.intOrElse("- 1 ", 99));
-        Assert.assertEquals(99, Values.intOrElse(" - 1", 99));
-    }
-
-    @Test
     public void testIsNullOrEmpty_String() {
         Assert.assertEquals(true, Values.isNullOrEmpty((String) null));
         Assert.assertEquals(true, Values.isNullOrEmpty(""));
@@ -183,7 +150,7 @@ public class ValuesTest {
     @Test
     public void testIsNullOrEmpty_Array() {
         Assert.assertEquals(true, Values.isNullOrEmpty((String[]) null));
-        Assert.assertEquals(true, Values.isNullOrEmpty(Values.EMPTY_STRING_ARRAY));
+        Assert.assertEquals(true, Values.isNullOrEmpty(EMPTY_STRING_ARRAY));
         Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { null }));
         Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { "" }));
         Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { " " }));
@@ -191,24 +158,13 @@ public class ValuesTest {
         Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { "A" }));
     }
 
-    @Test
-    public void testIsNullOrEmpty_Collection() {
-        Assert.assertEquals(true, Values.isNullOrEmpty((Collection<?>) null));
-        Assert.assertEquals(true, Values.isNullOrEmpty(Collections.EMPTY_LIST));
-        Assert.assertEquals(false, Values.isNullOrEmpty(Collections.singleton(null)));
-        Assert.assertEquals(false, Values.isNullOrEmpty(Collections.singletonList("")));
-        Assert.assertEquals(false, Values.isNullOrEmpty(Arrays.asList(" ")));
-        Assert.assertEquals(false, Values.isNullOrEmpty(Arrays.asList("", "")));
-        Assert.assertEquals(false, Values.isNullOrEmpty(Collections.singletonList("A")));
-    }
-
-    private static final String[][] STRING_ARRAY_INPUTS = { null, Values.EMPTY_STRING_ARRAY,
+    private static final String[][] STRING_ARRAY_INPUTS = { null, EMPTY_STRING_ARRAY,
             new String[] { null, "", "   " }, new String[] { null, "",  "Value 1 ", "    Value 2    ", "  " } };
     private static final String[] NOT_EMPTY_OR_ELSE_DEFAULTS = new String[] { "default" };
     private static final String[][] NOT_EMPTY_OR_ELSE_EXPECTS = new String[][] { NOT_EMPTY_OR_ELSE_DEFAULTS,
             NOT_EMPTY_OR_ELSE_DEFAULTS, STRING_ARRAY_INPUTS[2], STRING_ARRAY_INPUTS[3] };
-    private static final String[][] TRIM_COPY_EXPECTS = { Values.EMPTY_STRING_ARRAY, Values.EMPTY_STRING_ARRAY,
-            Values.EMPTY_STRING_ARRAY, new String[] { "Value 1", "Value 2" } };
+    private static final String[][] TRIM_COPY_EXPECTS = { EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY,
+            EMPTY_STRING_ARRAY, new String[] { "Value 1", "Value 2" } };
 
     @Test
     public void testNotEmptyOrElse() {
@@ -216,6 +172,24 @@ public class ValuesTest {
             String[] inputs = STRING_ARRAY_INPUTS[i];
             String[] expects = NOT_EMPTY_OR_ELSE_EXPECTS[i];
             Assert.assertArrayEquals(expects, Values.notEmptyOrElse(inputs, NOT_EMPTY_OR_ELSE_DEFAULTS));
+        }
+    }
+
+    @Test
+    public void testExceptionMessage() {
+        Assert.assertEquals("First message (null: no message)",
+                Values.exceptionMessage("First message", null, "no message"));
+        try {
+            throw new UnsupportedOperationException();
+        } catch (UnsupportedOperationException e) {
+            Assert.assertEquals("Second message (UnsupportedOperationException: no message)",
+                    Values.exceptionMessage("Second message", e, "no message"));
+        }
+        try {
+            throw new IllegalArgumentException("Third message");
+        } catch (IllegalArgumentException e) {
+            Assert.assertEquals("Fourth message (IllegalArgumentException: Third message)",
+                    Values.exceptionMessage("Fourth message", e, "no message"));
         }
     }
 

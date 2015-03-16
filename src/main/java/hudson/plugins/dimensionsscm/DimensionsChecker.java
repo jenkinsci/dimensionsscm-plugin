@@ -84,9 +84,9 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
 import hudson.model.Project;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import java.io.Serializable;
 
 /**
@@ -100,19 +100,19 @@ public class DimensionsChecker implements Serializable {
     /**
      * Checks if all the plugins that need to be loaded are loaded.
      */
-    public static boolean isValidPluginCombination(AbstractBuild build, BuildListener listener) {
-        if (build.getProject() instanceof Project) {
-            Project buildProject = (Project) build.getProject();
-            if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
+    static boolean isValidPluginCombination(Run build, TaskListener listener) {
+        if (build.getParent() instanceof Project) {
+            Project buildProject = (Project) build.getParent();
+            if (!(buildProject.getScm() instanceof DimensionsSCM)) {
                 Logger.debug("Not using a DimensionsSCM engine - bye");
                 return false;
             }
 
             DimensionsBuildWrapper bwplugin = (DimensionsBuildWrapper) buildProject.getBuildWrappers().get(
                     DimensionsBuildWrapper.DMWBLD_DESCRIPTOR);
-            DimensionsBuildNotifier bnplugin = (DimensionsBuildNotifier) build.getProject().getPublishersList().get(
+            DimensionsBuildNotifier bnplugin = (DimensionsBuildNotifier) buildProject.getPublishersList().get(
                     DimensionsBuildNotifier.class);
-            ArtifactUploader anplugin = (ArtifactUploader) build.getProject().getPublishersList().get(
+            ArtifactUploader anplugin = (ArtifactUploader) buildProject.getPublishersList().get(
                     ArtifactUploader.class);
 
             if (bwplugin != null) {

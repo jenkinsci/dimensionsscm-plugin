@@ -93,6 +93,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Hudson;
+import hudson.model.Job;
 import hudson.model.ModelObject;
 import hudson.model.Node;
 import hudson.model.Run;
@@ -413,6 +414,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         super.buildEnvVars(build, env);
     }
 
+    private static final String[] EMPTY_STRING_ARRAY = new String[] { };
     private static final String[] DEFAULT_FOLDERS = new String[] { "/" };
 
     @DataBoundConstructor
@@ -425,7 +427,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         this.folders = folders != null ? Values.notEmptyOrElse(Values.trimCopy(folders), DEFAULT_FOLDERS) :
                 (Values.hasText(directory) ? new String[] { directory } : DEFAULT_FOLDERS);
         this.pathsToExclude = pathsToExclude != null ? Values.notEmptyOrElse(Values.trimCopy(pathsToExclude),
-                Values.EMPTY_STRING_ARRAY) : Values.EMPTY_STRING_ARRAY;
+                EMPTY_STRING_ARRAY) : EMPTY_STRING_ARRAY;
 
         // Copying arguments to fields.
         this.project = Values.textOrElse(project, "${JOB_NAME}");
@@ -553,13 +555,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 bRet = generateChangeSet(build, listener, changelogFile);
             }
         } catch (Exception e) {
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run checkout callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            listener.fatalError(Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again"));
             bRet = false;
         }
         return bRet;
@@ -568,8 +564,8 @@ public class DimensionsSCM extends SCM implements Serializable {
     /**
      * Generate the changeset.
      */
-    private boolean generateChangeSet(final AbstractBuild build, final BuildListener listener,
-            final File changelogFile) throws IOException, InterruptedException {
+    private boolean generateChangeSet(final AbstractBuild build, final TaskListener listener, final File changelogFile)
+            throws IOException, InterruptedException {
         long key = -1L;
         boolean bRet = false;
         DimensionsAPI dmSCM = new DimensionsAPI();
@@ -650,8 +646,8 @@ public class DimensionsSCM extends SCM implements Serializable {
                         pw.println("</changelog>");
                         pw.flush();
                         bRet = true;
-                    } catch (Exception e) {
-                        throw new IOException("Unable to write change log - " + e.getMessage());
+                    } catch (IOException e) {
+                        throw (IOException) new IOException(Values.exceptionMessage("Unable to write change log: " + changelogFile, e, "no message")).initCause(e);
                     } finally {
                         if (writer != null) {
                             writer.close();
@@ -660,13 +656,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 }
             }
         } catch (Exception e) {
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run change set callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run change set callout - " + e.getMessage());
+            listener.fatalError(Values.exceptionMessage("Unable to run change set callout", e, "no message - try again"));
             bRet = false;
         } finally {
             dmSCM.logout(key, build);
@@ -725,7 +715,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
-    private boolean pollCMChanges(final AbstractProject project, final Launcher launcher, final FilePath workspace,
+    private boolean pollCMChanges(final Job project, final Launcher launcher, final FilePath workspace,
             final TaskListener listener) throws IOException, InterruptedException {
         boolean bChanged = false;
 
@@ -786,12 +776,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.FINE, "Caught Exception, so returning false", e);
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run pollChanges callout - " + errMsg);
+            String message = Values.exceptionMessage("Unable to run pollChanges callout", e, "no message - try again");
+            LOGGER.log(Level.FINE, message, e);
+            listener.fatalError(message);
             bChanged = false;
         } finally {
             dmSCM.logout(key);
@@ -1097,7 +1084,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                     return FormValidation.ok("Timezone test succeeded!");
                 }
             } catch (Exception e) {
-                return FormValidation.error("timezone check error:" + e.getMessage());
+                return FormValidation.error(Values.exceptionMessage("Timezone check error", e, "no message"));
             }
         }
 
@@ -1132,7 +1119,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                     return FormValidation.ok("Connection test succeeded!");
                 }
             } catch (Exception e) {
-                return FormValidation.error("Server connection error:" + e.getMessage());
+                return FormValidation.error(Values.exceptionMessage("Server connection check error", e, "no message"));
             }
         }
     }

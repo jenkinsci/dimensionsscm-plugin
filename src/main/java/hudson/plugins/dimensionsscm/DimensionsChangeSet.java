@@ -172,8 +172,9 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
     @Override
     public User getAuthor() {
-        if (this.developer == null)
-            throw new RuntimeException("No author in this changeset!");
+        if (this.developer == null) {
+            throw new RuntimeException("Unable to determine changeset developer");
+        }
         return User.get(this.developer, true);
     }
 

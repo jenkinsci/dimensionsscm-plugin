@@ -150,7 +150,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
             }
 
             if (requests != null && version != 10) {
-                if (requests.indexOf(",")==0) {
+                if (requests.indexOf(',') == -1) {
                     cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                 } else {
                     cmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
@@ -192,8 +192,9 @@ public class CheckOutCmdTask extends GenericCmdTask {
 
             fmtWriter.println(cmd);
             fmtWriter.flush();
-        } catch (Exception e) {
-            throw new IOException("Unable to write command log - " + e.getMessage());
+        } catch (IOException e) {
+            throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tmpFile, e,
+                    "no message")).initCause(e);
         } finally {
             if (fmtWriter != null) {
                 fmtWriter.close();
@@ -328,8 +329,9 @@ public class CheckOutCmdTask extends GenericCmdTask {
                     cmdLog += outputStr;
                     cmdLog += "\n";
 
-                    if (!bRet && isForce)
+                    if (!bRet && isForce) {
                         bRet = true;
+                    }
                 }
             } else {
                 // Iterate through the project folders and process them in Dimensions.
@@ -408,14 +410,8 @@ public class CheckOutCmdTask extends GenericCmdTask {
             }
             return bRet;
         } catch (Exception e) {
-            String errMsg = e.getMessage();
             param.delete();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run checkout callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            listener.fatalError(Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again"));
             return false;
         }
     }

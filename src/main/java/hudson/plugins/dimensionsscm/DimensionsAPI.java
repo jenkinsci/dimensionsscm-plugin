@@ -102,7 +102,7 @@ import com.serena.dmclient.api.SystemAttributes;
 import com.serena.dmclient.api.SystemRelationship;
 import com.serena.dmclient.objects.DimensionsObject;
 import hudson.FilePath;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import java.io.File;
 import java.io.IOException;
@@ -374,7 +374,8 @@ public class DimensionsAPI implements Serializable {
                 }
             }
         } catch (Exception e) {
-            throw new DimensionsRuntimeException("Login to Dimensions failed - " + e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Login to Dimensions failed",
+                    e, "no message")).initCause(e);
         }
         if (conns.containsKey(key)) {
             return key;
@@ -390,19 +391,14 @@ public class DimensionsAPI implements Serializable {
      * @param password Dimensions password
      * @param database base database name
      * @param server hostname of the remote dimensions server
-     * @param AbstractBuild build Details of the invoking build
+     * @param build Details of the invoking build
      * @return a long
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final long login(String userID, String password, String database, String server, AbstractBuild build)
+    public final long login(String userID, String password, String database, String server, Run build)
             throws IllegalArgumentException, DimensionsRuntimeException {
         Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \"" +
-                build.getProject().getName() + "\"");
-        if (build.getBuiltOn().getNodeName() == null) {
-            Logger.debug("  build.getBuiltOn().getNodeName() is null!");
-        } else {
-            Logger.debug("  build.getBuiltOn().getNodeName(): \"" + build.getBuiltOn().getNodeName() + "\"");
-        }
+                build.getParent().getName() + "\"");
         final long key = login(userID, password, database, server);
         Logger.debug("  key: \"" + key + "\"");
         return key;
@@ -432,9 +428,9 @@ public class DimensionsAPI implements Serializable {
     /**
      * Disconnects from the Dimensions repository, with additional tracing from supplied build details.
      */
-    public final void logout(long key, AbstractBuild build) {
+    public final void logout(long key, Run build) {
         Logger.debug("DimensionsAPI.logout - build number: \"" + build.getNumber() + "\", project: \"" +
-                build.getProject().getName() + "\"");
+                build.getParent().getName() + "\"");
         logout(key);
     }
 
@@ -507,8 +503,9 @@ public class DimensionsAPI implements Serializable {
             LOGGER.log(Level.FINE, "Found " + (items == null ? "nil" : items.size()) + " changed item(s), " +
                     ((items == null || items.isEmpty()) ? "so" : "but") + " none passed the " + getPathMatcher());
         } catch (Exception e) {
-            LOGGER.log(Level.FINE, "Caught Exception", e);
-            throw new IOException("Unable to run hasRepositoryBeenUpdated - " + e.getMessage());
+            String message = Values.exceptionMessage("Unable to run hasRepositoryBeenUpdated", e, "no message");
+            LOGGER.log(Level.FINE, message, e);
+            throw (IOException) new IOException(message).initCause(e);
         }
         return false;
     }
@@ -552,7 +549,7 @@ public class DimensionsAPI implements Serializable {
                 }
 
                 if (requests != null && version != 10) {
-                    if (requests.indexOf(",") == 0) {
+                    if (requests.indexOf(',') == -1) {
                         cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                     } else {
                         cmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
@@ -611,8 +608,7 @@ public class DimensionsAPI implements Serializable {
                 }
             }
         } catch (Exception e) {
-            //e.printStackTrace();
-            throw new IOException(e.getMessage());
+            throw (IOException) new IOException(Values.exceptionMessage("Exception during checkout", e, "no message")).initCause(e);
         }
         return bRet;
     }
@@ -651,8 +647,8 @@ public class DimensionsAPI implements Serializable {
                 write.writeLog(null, changelogFile);
             }
         } catch (Exception e) {
-            //e.printStackTrace();
-            throw new IOException(e.getMessage());
+            throw (IOException) new IOException(Values.exceptionMessage("Exception calculating change set", e,
+                    "no message")).initCause(e);
         }
         return true;
     }
@@ -707,7 +703,8 @@ public class DimensionsAPI implements Serializable {
                 try {
                     items = getItemsInRequests(connection, projName, requests, dateAfter, dateBefore);
                 } catch (Exception e) {
-                    throw new IOException(e.getMessage());
+                    throw (IOException) new IOException(Values.exceptionMessage("Exception getting items in requests", e,
+                            "no message")).initCause(e);
                 }
             } else if (baselineName != null) {
                 // setup filter for baseline Name
@@ -735,8 +732,8 @@ public class DimensionsAPI implements Serializable {
             }
             return items;
         } catch (Exception e) {
-            //e.printStackTrace();
-            throw new IOException("Unable to run calcRepositoryDiffs - " + (e != null ? e.getMessage() : "an unknown exception occurred."));
+            throw (IOException) new IOException(Values.exceptionMessage("Unable to run calcRepositoryDiffs", e,
+                    "no message")).initCause(e);
         }
     }
 
@@ -760,7 +757,8 @@ public class DimensionsAPI implements Serializable {
             }
             return null;
         } catch (Exception e) {
-            throw new DimensionsRuntimeException(e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Lock project", e,
+                    "no message")).initCause(e);
         }
     }
 
@@ -784,7 +782,8 @@ public class DimensionsAPI implements Serializable {
             }
             return null;
         } catch (Exception e) {
-            throw new DimensionsRuntimeException(e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Unlock project", e,
+                    "no message")).initCause(e);
         }
     }
 
@@ -792,7 +791,7 @@ public class DimensionsAPI implements Serializable {
      * Build a baseline.
      */
     public DimensionsResult buildBaseline(long key, String area, String projectId, boolean batch, boolean buildClean,
-            String buildConfig, String options, boolean capture, String requests, String targets, AbstractBuild build,
+            String buildConfig, String options, boolean capture, String requests, String targets, Run build,
             String blnName) throws DimensionsRuntimeException {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
@@ -805,7 +804,7 @@ public class DimensionsAPI implements Serializable {
                 if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
-                    cmd += "\"" + projectId + "_" + build.getProject().getName() + "_" + buildNo + "\"";
+                    cmd += "\"" + projectId + "_" + build.getParent().getName() + "_" + buildNo + "\"";
                 }
                 if (area != null && area.length() > 0) {
                     cmd += " /AREA=\"" + area + "\"";
@@ -827,21 +826,21 @@ public class DimensionsAPI implements Serializable {
                     cmd += " /BUILD_CONFIG=\"" + buildConfig + "\"";
                 }
                 if (options != null && options.length() > 0) {
-                    if (options.indexOf(",") == 0) {
+                    if (options.indexOf(',') == -1) {
                         cmd += "/BUILD_OPTIONS=(\"" + options + "\") ";
                     } else {
                         cmd += "/BUILD_OPTIONS=(" + options + ") ";
                     }
                 }
                 if (requests != null && requests.length() > 0) {
-                    if (requests.indexOf(",") == 0) {
+                    if (requests.indexOf(',') == -1) {
                         cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                     } else {
                         cmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
                     }
                 }
                 if (targets != null && targets.length() > 0) {
-                    if (targets.indexOf(",") == 0) {
+                    if (targets.indexOf(',') == -1) {
                         cmd += "/TARGETS=(\"" + targets + "\") ";
                     } else {
                         cmd += "/TARGETS=(" + targets + ") ";
@@ -855,7 +854,8 @@ public class DimensionsAPI implements Serializable {
             }
             return null;
         } catch (Exception e) {
-            throw new DimensionsRuntimeException(e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Build baseline", e,
+                    "no message")).initCause(e);
         }
     }
 
@@ -864,7 +864,7 @@ public class DimensionsAPI implements Serializable {
      */
     public DimensionsResult buildProject(long key, String area, String projectId, boolean batch, boolean buildClean,
             String buildConfig, String options, boolean capture, String requests, String targets, String stage,
-            String type, boolean audit, boolean populate, boolean touch, AbstractBuild build)
+            String type, boolean audit, boolean populate, boolean touch, Run build)
             throws DimensionsRuntimeException {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
@@ -915,21 +915,21 @@ public class DimensionsAPI implements Serializable {
                     cmd += " /BUILD_CONFIG=\"" + buildConfig + "\"";
                 }
                 if (options != null && options.length() > 0) {
-                    if (options.indexOf(",") == 0) {
+                    if (options.indexOf(',') == -1) {
                         cmd += "/BUILD_OPTIONS=(\"" + options + "\") ";
                     } else {
                         cmd += "/BUILD_OPTIONS=(" + options + ") ";
                     }
                 }
                 if (requests != null && requests.length() > 0) {
-                    if (requests.indexOf(",") == 0) {
+                    if (requests.indexOf(',') == -1) {
                         cmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                     } else {
                         cmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
                     }
                 }
                 if (targets != null && targets.length() > 0) {
-                    if (targets.indexOf(",") == 0) {
+                    if (targets.indexOf(',') == -1) {
                         cmd += "/TARGETS=(\"" + targets + "\") ";
                     } else {
                         cmd += "/TARGETS=(" + targets + ") ";
@@ -943,7 +943,8 @@ public class DimensionsAPI implements Serializable {
             }
             return null;
         } catch (Exception e) {
-            throw new DimensionsRuntimeException(e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Build project", e,
+                    "no message")).initCause(e);
         }
     }
 
@@ -974,7 +975,7 @@ public class DimensionsAPI implements Serializable {
                 ciCmd += " /COMMENT=\"Build artifacts saved by Hudson/Jenkins for job '" + projectName + "' - build " + buildNo + "\"";
                 ciCmd += " /USER_DIRECTORY=\"" + rootDir.getRemote() + "\"";
                 if (requests != null && requests.length() > 0) {
-                    if (requests.indexOf(",") == 0) {
+                    if (requests.indexOf(',') == -1) {
                         ciCmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                     } else {
                         ciCmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
@@ -999,14 +1000,15 @@ public class DimensionsAPI implements Serializable {
             }
             return null;
         } catch (Exception e) {
-            throw new DimensionsRuntimeException(e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Upload files", e,
+                    "no message")).initCause(e);
         }
     }
 
     /**
      * Create a project tag.
      */
-    public DimensionsResult createBaseline(long key, String projectVersion, AbstractBuild build, String blnScope,
+    public DimensionsResult createBaseline(long key, String projectVersion, Run build, String blnScope,
             String blnTemplate, String blnOwningPart, String blnType, String requestId, String blnId, String blnName,
             StringBuffer cblId) throws DimensionsRuntimeException {
         DimensionsConnection connection = getCon(key);
@@ -1042,15 +1044,16 @@ public class DimensionsAPI implements Serializable {
                     String cId = blnName;
 
                     cId = cId.replace("[PROJECTID]", projectName);
-                    cId = cId.replace("[HUDSON_PROJECT]", build.getProject().getName().trim());
+                    cId = cId.replace("[HUDSON_PROJECT]", build.getParent().getName().trim());
                     cId = cId.replace("[BUILDNO]", buildNo.toString());
                     cId = cId.replace("[CURRENT_DATE]", DateUtils.getNowStrDateVerbose().trim());
                     if (blnId != null && blnId.length() > 0) {
-                        cId = cId.replace("[DM_BASELINE]", blnId.substring(blnId.indexOf(":") + 1).trim());
+                        cId = cId.replace("[DM_BASELINE]", blnId.substring(blnId.indexOf(':') + 1).trim());
                     }
-                    cblId.append("\"" + productName + ":" + cId + "\"");
+                    cblId.append('"').append(productName).append(':').append(cId).append('"');
                 } else {
-                    cblId.append("\"" + productName + ":" + projectName + "_" + build.getProject().getName() + "_" + buildNo + "\"");
+                    cblId.append('"').append(productName).append(':').append(projectName).append('_')
+                            .append(build.getParent().getName()).append('_').append(buildNo).append('"');
                 }
 
                 cmd += cblId.toString() + " /WORKSET=\"" + projectVersion + "\"";
@@ -1088,7 +1091,7 @@ public class DimensionsAPI implements Serializable {
 
                 if (!revisedBln) {
                     cmd += " /DESCRIPTION=\"Baseline created by Hudson/Jenkins for job '" +
-                            build.getProject().getName() + "' - build " + build.getNumber() + "\"";
+                            build.getParent().getName() + "' - build " + build.getNumber() + "\"";
                 }
 
 
@@ -1100,14 +1103,15 @@ public class DimensionsAPI implements Serializable {
             }
             return null;
         } catch (Exception e) {
-            throw new DimensionsRuntimeException(e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Create baseline", e,
+                    "no message")).initCause(e);
         }
     }
 
     /**
      * Deploy a baseline.
      */
-    public DimensionsResult deployBaseline(long key, String projectId, AbstractBuild build, String state,
+    public DimensionsResult deployBaseline(long key, String projectId, Run build, String state,
             String blnName) throws DimensionsRuntimeException {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
@@ -1120,14 +1124,14 @@ public class DimensionsAPI implements Serializable {
                 if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
-                    cmd += "\"" + projectId + "_" + build.getProject().getName() + "_" + buildNo + "\"";
+                    cmd += "\"" + projectId + "_" + build.getParent().getName() + "_" + buildNo + "\"";
                 }
                 cmd += " /WORKSET=\"" + projectId + "\"";
                 if (state != null && state.length() > 0) {
                     cmd += " /STAGE=\"" + state + "\"";
                 }
                 cmd += " /COMMENT=\"Project Baseline deployed by Hudson/Jenkins for job '" +
-                        build.getProject().getName() + "' - build " + build.getNumber() + "\"";
+                        build.getParent().getName() + "' - build " + build.getNumber() + "\"";
                 DimensionsResult res = run(connection, cmd);
                 if (res != null) {
                     Logger.debug("Deploying baseline - " + res.getMessage());
@@ -1136,14 +1140,15 @@ public class DimensionsAPI implements Serializable {
             }
             return null;
         } catch (Exception e) {
-            throw new DimensionsRuntimeException(e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Deploy baseline", e,
+                    "no message")).initCause(e);
         }
     }
 
     /**
      * Action a baseline.
      */
-    public DimensionsResult actionBaseline(long key, String projectId, AbstractBuild build, String state,
+    public DimensionsResult actionBaseline(long key, String projectId, Run build, String state,
             String blnName) throws DimensionsRuntimeException {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
@@ -1156,14 +1161,14 @@ public class DimensionsAPI implements Serializable {
                 if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
-                    cmd += "\"" + projectId + "_" + build.getProject().getName() + "_" + buildNo + "\"";
+                    cmd += "\"" + projectId + "_" + build.getParent().getName() + "_" + buildNo + "\"";
                 }
                 cmd += " /WORKSET=\"" + projectId + "\"";
                 if (state != null && state.length() > 0) {
                     cmd += " /STATUS=\"" + state + "\"";
                 }
                 cmd += " /COMMENT=\"Project Baseline action by Hudson/Jenkins for job '" +
-                        build.getProject().getName() + "' - build " + build.getNumber() + "\"";
+                        build.getParent().getName() + "' - build " + build.getNumber() + "\"";
                 DimensionsResult res = run(connection, cmd);
                 if (res != null) {
                     Logger.debug("Actioning baseline - " + res.getMessage());
@@ -1172,7 +1177,8 @@ public class DimensionsAPI implements Serializable {
             }
             return null;
         } catch (Exception e) {
-            throw new DimensionsRuntimeException(e.getMessage());
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Action baseline", e,
+                    "no message")).initCause(e);
         }
     }
 
@@ -1212,7 +1218,7 @@ public class DimensionsAPI implements Serializable {
             }
             String spec = (String) item.getAttribute(SystemAttributes.OBJECT_SPEC);
             String revision = (String) item.getAttribute(SystemAttributes.REVISION);
-            String fileName = (String) item.getAttribute(SystemAttributes.FULL_PATH_NAME) + ";" + revision;
+            String fileName = ((String) item.getAttribute(SystemAttributes.FULL_PATH_NAME)) + ";" + revision;
             String author = (String) item.getAttribute(SystemAttributes.LAST_UPDATED_USER);
             String comment = (String) item.getAttribute(SystemAttributes.REVISION_COMMENT);
             String date = (String) item.getAttribute(getDateTypeAttribute(operation));
@@ -1299,8 +1305,8 @@ public class DimensionsAPI implements Serializable {
 
                     result = a1.compareTo(a2);
                 } catch (Exception e) {
-                    //e.printStackTrace();
-                    throw new DimensionsRuntimeException("Unable to sort item list - " + e.getMessage());
+                    throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage(
+                            "Unable to sort item list", e, "no message")).initCause(e);
                 }
                 return result;
             }
@@ -1341,12 +1347,13 @@ public class DimensionsAPI implements Serializable {
     }
 
     private static String preProcessSrcPath(String srcPath) {
-        String path = srcPath.equals("/") ? "" : srcPath; //$NON-NLS-1$ //$NON-NLS-2$
-        if (!path.endsWith("/") & !path.equals("")) { //$NON-NLS-1$ //$NON-NLS-2$
-            path += "/"; //$NON-NLS-1$
+        String path = srcPath.equals("/") ? "" : srcPath;
+        if (!path.endsWith("/") && !path.equals("")) {
+            path += "/";
         }
-        if (path.equals("\\/") || path.equals("/"))
+        if (path.equals("\\") || path.equals("/")) {
             path = "";
+        }
         if (path.indexOf('\\') != 0) {
             path = path.replace('\\', '/');
         }
@@ -1447,7 +1454,7 @@ public class DimensionsAPI implements Serializable {
         }
 
         String path = preProcessSrcPath(srcPath);
-        if (!(isRecursive && path.equals(""))) { //$NON-NLS-1$
+        if (!(isRecursive && path.equals(""))) {
             filter.criteria().add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
                     (isRecursive ? path + '%' : path), 0));
         }
@@ -1498,7 +1505,7 @@ public class DimensionsAPI implements Serializable {
         }
 
         String path = preProcessSrcPath(srcPath);
-        if (!(isRecursive && path.equals(""))) { //$NON-NLS-1$
+        if (!(isRecursive && path.equals(""))) {
             filter.criteria().add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
                     (isRecursive ? path + '%' : path), 0));
         }
@@ -1526,8 +1533,7 @@ public class DimensionsAPI implements Serializable {
             bo.queryAttribute(attrs);
             return items;
         } catch (Exception e) {
-            // e.printStackTrace();
-            Logger.debug("Exception detected from the Java API: " + e.getMessage());
+            Logger.debug(Values.exceptionMessage("Exception from the Java API querying items", e, "no message"));
             return null;
         }
     }
@@ -1548,7 +1554,7 @@ public class DimensionsAPI implements Serializable {
         Logger.debug("Looking for items against request " + request.getName());
 
         String path = preProcessSrcPath((srcPath.equals("") ? "/" : srcPath));
-        if (!(isRecursive && path.equals(""))) { //$NON-NLS-1$
+        if (!(isRecursive && path.equals(""))) {
             filter.criteria().add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
                     (isRecursive ? path + '%' : path), 0));
         }
@@ -1581,8 +1587,7 @@ public class DimensionsAPI implements Serializable {
             }
             return true;
         } catch (Exception e) {
-            // e.printStackTrace();
-            Logger.debug("Exception detected from the Java API: " + e.getMessage());
+            Logger.debug(Values.exceptionMessage("Exception from the Java API querying items", e, "no message"));
             return false;
         }
     }
@@ -1618,9 +1623,9 @@ public class DimensionsAPI implements Serializable {
             }
             return true;
         } catch (Exception e) {
-            // e.printStackTrace();
-            Logger.debug("Exception detected from the Java API: " + e.getMessage());
-            throw new DimensionsRuntimeException("getDmChildRequests - encountered a Java API exception");
+            String message = Values.exceptionMessage("Exception from the Java API querying child requests", e, "no message");
+            Logger.debug(message);
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(message).initCause(e);
         }
     }
 
@@ -1634,7 +1639,7 @@ public class DimensionsAPI implements Serializable {
      */
     static DimensionsResult run(DimensionsConnection connection, String cmd)
             throws IllegalArgumentException, DimensionsRuntimeException {
-        if (cmd == null || cmd.equals("")) { //$NON-NLS-1$
+        if (cmd == null || cmd.equals("")) {
             throw new IllegalArgumentException(NO_COMMAND_LINE);
         }
         Logger.debug("Running the command '" + cmd + "'...");
@@ -1643,8 +1648,9 @@ public class DimensionsAPI implements Serializable {
             DimensionsResult res = dof.runCommand(cmd);
             return res;
         } catch (Exception e) {
-            Logger.debug("Command failed to run");
-            throw new DimensionsRuntimeException("Dimension command failed -\n\t(" + cmd + ")\n\t(" + e.getMessage() + ")");
+            String message = Values.exceptionMessage("Dimensions command '" + cmd + "' failed", e, "no message");
+            Logger.debug(message);
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(message).initCause(e);
         }
     }
 
@@ -1734,7 +1740,7 @@ public class DimensionsAPI implements Serializable {
 
         if (requests != null && connection != null) {
             String[] reqStr = null;
-            if (requests.indexOf(",") > 0) {
+            if (requests.indexOf(',') != -1) {
                 reqStr = requests.split(",");
                 Logger.debug("User specified " + reqStr.length + " requests");
             } else {

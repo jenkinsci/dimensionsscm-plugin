@@ -229,7 +229,7 @@ public class DimensionsBuilder extends Builder {
         Logger.debug("Invoking perform callout " + this.getClass().getName());
         long key = -1L;
         try {
-            if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
+            if (!(build.getParent().getScm() instanceof DimensionsSCM)) {
                 listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
                 build.setResult(Result.FAILURE);
                 throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
@@ -237,7 +237,7 @@ public class DimensionsBuilder extends Builder {
 
             if (build.isBuilding()) {
                 if (scm == null) {
-                    scm = (DimensionsSCM)build.getProject().getScm();
+                    scm = (DimensionsSCM) build.getParent().getScm();
                 }
                 Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
                         scm.getJobServer());
@@ -281,13 +281,7 @@ public class DimensionsBuilder extends Builder {
                 }
             }
         } catch (Exception e) {
-            String errMsg;
-            if (e.getMessage() != null || e.getMessage().length() > 0) {
-                errMsg = e.getMessage();
-            } else {
-                errMsg = "Dimensions returned no error";
-            }
-            listener.fatalError("Unable to tag build in Dimensions - " + errMsg);
+            listener.fatalError(Values.exceptionMessage("Unable to tag build in Dimensions", e, "no message"));
             build.setResult(Result.FAILURE);
             return false;
         } finally {

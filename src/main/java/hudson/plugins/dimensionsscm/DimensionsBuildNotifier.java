@@ -407,7 +407,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 }
             }
         } catch (Exception e) {
-            listener.fatalError("Unable to tag build in Dimensions - " + e.getMessage());
+            listener.fatalError(Values.exceptionMessage("Unable to tag build in Dimensions", e, "no message"));
             build.setResult(Result.FAILURE);
             return false;
         } finally {

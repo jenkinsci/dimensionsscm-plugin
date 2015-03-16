@@ -135,7 +135,7 @@ public class CheckInCmdTask extends GenericCmdTask {
                     buildNo + "\"";
             ciCmd += " /USER_DIRECTORY=\"" + area.getAbsolutePath() + "\"";
             if (requests != null && requests.length() > 0) {
-                if (requests.indexOf(",") == 0) {
+                if (requests.indexOf(',') == -1) {
                     ciCmd += "/CHANGE_DOC_IDS=(\"" + requests + "\") ";
                 } else {
                     ciCmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
@@ -155,8 +155,9 @@ public class CheckInCmdTask extends GenericCmdTask {
 
             fmtWriter.println(ciCmd);
             fmtWriter.flush();
-        } catch (Exception e) {
-            throw new IOException("Unable to write command log - " + e.getMessage());
+        } catch (IOException e) {
+            throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tmpFile, e,
+                    "no message")).initCause(e);
         } finally {
             if (fmtWriter != null) {
                 fmtWriter.close();
@@ -237,9 +238,10 @@ public class CheckInCmdTask extends GenericCmdTask {
                         }
                     }
                     fmtWriter.flush();
-                } catch (Exception e) {
+                } catch (IOException e) {
                     bRet = false;
-                    throw new IOException("Unable to write command log - " + e.getMessage());
+                    throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tempFile, e,
+                            "no message")).initCause(e);
                 } finally {
                     if (fmtWriter != null) {
                         fmtWriter.close();
@@ -302,13 +304,7 @@ public class CheckInCmdTask extends GenericCmdTask {
             return bRet;
         } catch (Exception e) {
             param.delete();
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run checkout callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            listener.fatalError(Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again"));
             bRet = false;
         }
         return bRet;

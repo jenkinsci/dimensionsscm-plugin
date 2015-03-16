@@ -159,7 +159,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                     }
                 }
             } catch (Exception e) {
-                listener.fatalError("Unable to lock Dimensions project - " + e.getMessage());
+                listener.fatalError(Values.exceptionMessage("Unable to lock Dimensions project", e, "no message"));
             } finally {
                 scm.getAPI().logout(key, build);
             }
@@ -273,7 +273,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                         return false;
                     }
                 } catch (Exception e) {
-                    listener.fatalError("Unable to unlock Dimensions project - " + e.getMessage());
+                    listener.fatalError(Values.exceptionMessage("Unable to unlock Dimensions project", e, "no message"));
                     build.setResult(Result.FAILURE);
                     return false;
                 } finally {

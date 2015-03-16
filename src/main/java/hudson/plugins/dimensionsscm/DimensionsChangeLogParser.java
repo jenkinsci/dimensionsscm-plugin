@@ -85,7 +85,9 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.scm.ChangeLogParser;
+import hudson.scm.RepositoryBrowser;
 import hudson.util.Digester2;
 import java.io.File;
 import java.io.FileReader;
@@ -104,23 +106,29 @@ import org.xml.sax.SAXException;
  * @author Tim Payne
  */
 public class DimensionsChangeLogParser extends ChangeLogParser {
+    /** When move to 1.568+, can make this method's signature the same as the following method. */
     @Override
     public DimensionsChangeSetList parse(AbstractBuild build, File changelogFile) throws IOException, SAXException {
+        return parseInternal(build, build.getProject().getScm().getEffectiveBrowser(), changelogFile);
+    }
+
+    private DimensionsChangeSetList parseInternal(Run build, RepositoryBrowser<?> browser, File changelogFile) throws IOException, SAXException {
         Logger.debug("Looking for '" + changelogFile.getPath() + "'");
         if (!changelogFile.exists()) {
-            Logger.debug("Change log file does not exist");
-            throw new IOException("Specified change log file does not exist - " + changelogFile.getPath());
+            String message = "Specified change log file does not exist: " + changelogFile.getPath();
+            Logger.debug(message);
+            throw new IOException(message);
         } else {
             Reader reader = new FileReader(changelogFile);
             try {
-                return parse(build, reader);
+                return parseInternal(build, browser, reader);
             } finally {
                 IOUtils.closeQuietly(reader);
             }
         }
     }
 
-    public DimensionsChangeSetList parse(AbstractBuild build, Reader reader) throws IOException, SAXException {
+    private DimensionsChangeSetList parseInternal(Run build, RepositoryBrowser<?> browser, Reader reader) throws IOException, SAXException {
         List<DimensionsChangeSet> changesetList = new ArrayList<DimensionsChangeSet>();
         Digester digester = new Digester2();
         digester.push(changesetList);
@@ -143,6 +151,6 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
         digester.addSetNext("*/changeset/requests/request", "addRequest");
 
         digester.parse(reader);
-        return new DimensionsChangeSetList(build, changesetList);
+        return new DimensionsChangeSetList(build, browser, changesetList);
     }
 }

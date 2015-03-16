@@ -143,7 +143,7 @@ public class GenericAPITask implements FileCallable<Boolean> {
             }
         } catch (Exception e) {
             bRet = false;
-            throw new IOException(e.getMessage());
+            throw (IOException) new IOException(Values.exceptionMessage("Exception during login", e, "no message")).initCause(e);
         } finally {
             dmSCM.logout(key);
         }

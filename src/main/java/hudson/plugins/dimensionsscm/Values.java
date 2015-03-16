@@ -102,15 +102,12 @@ import java.util.TimeZone;
  *
  * @author David Conneely
  */
-class Values {
-    static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-    static final String[] EMPTY_STRING_ARRAY = new String[0];
+final class Values {
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
     static final Locale ROOT_LOCALE = Locale.US;
 
-    /**
-     * Prevent casual instantiation.
-     */
     private Values() {
+        /* prevent instantiation. */
     }
 
     /**
@@ -144,27 +141,6 @@ class Values {
     }
 
     /**
-     * Interpret a string as a decimal representation of a primitive integer. Ignores leading and trailing whitespace.
-     * <p>
-     * Currently not used.
-     *
-     * @param value string to try to interpret
-     * @param defaultIntValue how to interpret the string if non-integer
-     * @return integer interpreted from the string; defaultValue if not able to interpret
-     */
-    static int intOrElse(String value, int defaultIntValue) {
-        if (!isNullOrEmpty(value)) {
-            value = value.trim();
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                /* do nothing, fall through. */
-            }
-        }
-        return defaultIntValue;
-    }
-
-    /**
      * Is the value null or empty?
      *
      * @param value value to check if null or empty
@@ -183,17 +159,6 @@ class Values {
      */
     static <T> boolean isNullOrEmpty(T[] values) {
         return values == null || values.length == 0;
-    }
-
-    /**
-     * Is the collection null or empty?
-     *
-     * @param <T> type of the collection to check
-     * @param values collection to check if null or empty
-     * @return true if collection is null or empty; false otherwise
-     */
-    static <T> boolean isNullOrEmpty(Collection<? extends T> values) {
-        return values == null || values.isEmpty();
     }
 
     /**
@@ -223,6 +188,18 @@ class Values {
             }
         }
         return defaultValue;
+    }
+
+    /**
+     * Generate a message for the new exception when re-throwing an exception.
+     */
+    static String exceptionMessage(String newMessage, Exception e, String nullMessage) {
+        String className = e != null ? e.getClass().getSimpleName() : "null";
+        String msg = e != null ? e.getMessage() : nullMessage;
+        if (msg == null) {
+            msg = nullMessage;
+        }
+        return newMessage + " (" + className + ": " + msg + ")";
     }
 
     /**
@@ -344,9 +321,9 @@ class Values {
             } else {
                 comma = true;
             }
-            sb.append(decodeAttribute(criterion.getAttribute()));
-            sb.append(decodeFlags(criterion.getFlags()));
-            sb.append(decodeValue(criterion.getValue()));
+            sb.append(debugDecodeAttribute(criterion.getAttribute()));
+            sb.append(debugDecodeFlags(criterion.getFlags()));
+            sb.append(debugDecodeValue(criterion.getValue()));
         }
         sb.append("], [");
         comma = false;
@@ -357,15 +334,15 @@ class Values {
             } else {
                 comma = true;
             }
-            sb.append(decodeAttribute(order.getAttribute()));
-            sb.append(decodeDirection(order.getDirection()));
+            sb.append(debugDecodeAttribute(order.getAttribute()));
+            sb.append(debugDecodeDirection(order.getDirection()));
         }
         sb.append("])");
         return sb.toString();
     }
 
     /** Helper method used by {@linkplain #toString(Filter)}. */
-    private static String decodeAttribute(int attrNum) {
+    private static String debugDecodeAttribute(int attrNum) {
         switch (attrNum) {
             case -1201: return "CREATION_DATE";
             case -1801: return "ITEMFILE_FILENAME";
@@ -380,7 +357,7 @@ class Values {
     }
 
     /** Helper method used by {@linkplain #toString(Filter)}. */
-    private static String decodeFlags(int flags) {
+    private static String debugDecodeFlags(int flags) {
         switch (flags) {
         case 0: case 8: return " == ";
         case 16: return " < ";
@@ -393,7 +370,7 @@ class Values {
     }
 
     /** Helper method used by {@linkplain #toString(Filter)}. */
-    private static String decodeDirection(int direction) {
+    private static String debugDecodeDirection(int direction) {
         switch (direction) {
         case 1: return " ASC";
         case -1: return " DESC";
@@ -402,11 +379,11 @@ class Values {
     }
 
     /** Helper method used by {@linkplain #toString(Filter)}. */
-    private static String decodeValue(Object value) {
+    private static String debugDecodeValue(Object value) {
         if (value == null) {
             return "null";
         } else if (value instanceof String) {
-            return "'" + (String) value + "'";
+            return "'" + ((String) value) + "'";
         } else {
             return value.toString();
         }

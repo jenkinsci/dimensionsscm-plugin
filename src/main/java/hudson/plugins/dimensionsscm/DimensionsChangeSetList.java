@@ -85,7 +85,9 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
+import hudson.scm.RepositoryBrowser;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -98,11 +100,10 @@ import java.util.List;
  */
 public final class DimensionsChangeSetList extends ChangeLogSet<DimensionsChangeSet> {
     private final List<DimensionsChangeSet> changeSets;
-    private final AbstractBuild build;
 
-    DimensionsChangeSetList(AbstractBuild build, List<DimensionsChangeSet> logs) {
-        super(build);
-        this.build = build;
+    DimensionsChangeSetList(Run build, RepositoryBrowser<?> browser, List<DimensionsChangeSet> logs) {
+        /* When move to 1.568+, call super((Run) build, browser) as Run may be something other than an AbstractBuild instance. */
+        super((AbstractBuild) build);
         Collections.reverse(logs);
         this.changeSets = Collections.unmodifiableList(logs);
         for (DimensionsChangeSet log : logs) {

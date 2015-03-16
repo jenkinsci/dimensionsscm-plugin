@@ -280,13 +280,7 @@ public class CheckOutAPITask extends GenericAPITask {
                 log.flush();
             }
         } catch (Exception e) {
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run checkout callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run checkout callout - " + e.getMessage());
+            listener.fatalError(Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again"));
             bRet = false;
         }
         return bRet;

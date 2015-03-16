@@ -313,7 +313,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 build.setResult(Result.FAILURE);
             }
         } catch (Exception e) {
-            listener.fatalError("Unable to load build artifacts into Dimensions - " + e.getMessage());
+            listener.fatalError(Values.exceptionMessage("Unable to load build artifacts into Dimensions", e, "no message"));
             build.setResult(Result.FAILURE);
             return false;
         }

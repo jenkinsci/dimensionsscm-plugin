@@ -134,8 +134,9 @@ public class GenericCmdTask implements FileCallable<Boolean> {
             fmtWriter.println("-pass " + passwd);
             fmtWriter.println("-dbname " + database);
             fmtWriter.flush();
-        } catch (Exception e) {
-            throw new IOException("Unable to write command log - " + e.getMessage());
+        } catch (IOException e) {
+            throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tmpFile, e,
+                    "no message")).initCause(e);
         } finally {
             if (fmtWriter != null) {
                 fmtWriter.close();
@@ -182,13 +183,7 @@ public class GenericCmdTask implements FileCallable<Boolean> {
             }
             return retStatus;
         } catch (Exception e) {
-            String errMsg = e.getMessage();
-            if (errMsg == null) {
-                errMsg = "An unknown error occurred. Please try the operation again.";
-            }
-            listener.fatalError("Unable to run command callout - " + errMsg);
-            // e.printStackTrace();
-            //throw new IOException("Unable to run command callout - " + e.getMessage());
+            listener.fatalError(Values.exceptionMessage("Unable to run command callout", e, "no message - try again"));
             return false;
         }
     }
