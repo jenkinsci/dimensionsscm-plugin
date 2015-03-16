@@ -102,6 +102,8 @@ import com.serena.dmclient.api.SystemAttributes;
 import com.serena.dmclient.api.SystemRelationship;
 import com.serena.dmclient.objects.DimensionsObject;
 import hudson.FilePath;
+import hudson.model.AbstractBuild;
+import hudson.model.Node;
 import hudson.model.Run;
 import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import java.io.File;
@@ -390,8 +392,8 @@ public class DimensionsAPI implements Serializable {
      * @param userID Dimensions user ID
      * @param password Dimensions password
      * @param database base database name
-     * @param server hostname of the remote dimensions server
-     * @param build Details of the invoking build
+     * @param server hostname of the remote Dimensions server
+     * @param build details of the invoking build run
      * @return a long
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
@@ -399,6 +401,11 @@ public class DimensionsAPI implements Serializable {
             throws IllegalArgumentException, DimensionsRuntimeException {
         Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \"" +
                 build.getParent().getName() + "\"");
+        if (build instanceof AbstractBuild) {
+            Node node = ((AbstractBuild) build).getBuiltOn();
+            String nodeName = node != null ? node.getNodeName() : null;
+            Logger.debug("  build getBuiltOn().getNodeName(): " + (nodeName != null ? ("\"" + nodeName + "\"") : null));
+        }
         final long key = login(userID, password, database, server);
         Logger.debug("  key: \"" + key + "\"");
         return key;
