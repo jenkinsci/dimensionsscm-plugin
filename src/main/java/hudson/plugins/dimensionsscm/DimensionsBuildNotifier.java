@@ -103,8 +103,8 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
+ * A Notifier that can create, deploy, build or action a baseline (from the SCM project) as a post-build step in a Jenkins build.
+ * This experimental plugin extends Jenkins support for Dimensions CM SCM repositories.
  *
  * @author Tim Payne
  */

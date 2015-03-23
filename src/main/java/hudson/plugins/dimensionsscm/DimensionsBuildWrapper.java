@@ -103,8 +103,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
+ * A BuildWrapper to lock the SCM project (not stream) for the duration of the execution of a Jenkins build.
+ * This experimental plugin extends Jenkins support for Dimensions CM SCM repositories.
  *
  * @author Tim Payne
  */

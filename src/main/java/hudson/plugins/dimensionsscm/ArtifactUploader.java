@@ -105,8 +105,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
+ * A Notifier that can deliver built artifacts back to the SCM project/stream as a post-build step in a Jenkins build.
+ * This experimental plugin extends Jenkins support for Dimensions CM SCM repositories.
  *
  * @author Tim Payne
  */

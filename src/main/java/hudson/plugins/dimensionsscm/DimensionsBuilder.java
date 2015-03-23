@@ -100,8 +100,8 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
+ * A Builder to launch a Serena Build command on the SCM project as a step in a Jenkins build.
+ * This experimental plugin extends Jenkins support for Dimensions CM SCM repositories.
  *
  * @author Tim Payne
  */
