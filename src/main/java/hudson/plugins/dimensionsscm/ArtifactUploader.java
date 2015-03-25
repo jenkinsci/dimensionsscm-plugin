@@ -107,7 +107,6 @@ import org.kohsuke.stapler.StaplerRequest;
 /**
  * A Notifier that can deliver built artifacts back to the SCM project/stream as a post-build step in a Jenkins build.
  * This experimental plugin extends Jenkins support for Dimensions CM SCM repositories.
- *
  * @author Tim Payne
  */
 public class ArtifactUploader extends Notifier implements Serializable {
@@ -363,7 +362,19 @@ public class ArtifactUploader extends Notifier implements Serializable {
             String[] pAnt = req.getParameterValues("artifactuploader.patternsAnt");
             String[] pregExExc = req.getParameterValues("artifactuploader.patternsRegExExc");
             String[] pAntExc = req.getParameterValues("artifactuploader.patternsAntExc");
-            String pType = Values.textOrElse(req.getParameter("artifactuploader.patternType"), "regEx");
+            String pType = Values.textOrElse(req.getParameter("artifactuploader.patternType"), null);
+            if (pType == null) {
+                // Some versions of Jenkins rename the f:radioBlock's request parameter, but the formData JSON is named correctly.
+                JSONObject radioBlock = formData.getJSONObject("patternType");
+                if (radioBlock != null) {
+                    pType = radioBlock.getString("value");
+                }
+            }
+            if (pType == null) {
+                // Fallback value.
+                pType = "regEx";
+            }
+
             Boolean fTip = Values.booleanOrElse(req.getParameter("artifactuploader.forceCheckIn"), false);
             Boolean fMerge = Values.booleanOrElse(req.getParameter("artifactuploader.forceTip"), false);
 
