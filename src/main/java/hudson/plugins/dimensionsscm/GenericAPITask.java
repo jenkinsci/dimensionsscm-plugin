@@ -92,9 +92,8 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Class implementation of the checkout process.
- *
+ * Base class for callables using Java API.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class GenericAPITask implements FileCallable<Boolean> {

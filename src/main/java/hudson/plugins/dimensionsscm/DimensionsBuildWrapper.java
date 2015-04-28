@@ -103,9 +103,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * A BuildWrapper to lock the SCM project (not stream) for the duration of the execution of a Jenkins build.
- * This experimental plugin extends Jenkins support for Dimensions CM SCM repositories.
- *
+ * A BuildWrapper to lock an SCM project (not stream) for the duration of the execution of a Jenkins build.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class DimensionsBuildWrapper extends BuildWrapper {
@@ -148,7 +147,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                 key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
                         scm.getJobServer(), build);
                 if (key > 0L) {
-                    DimensionsResult res = scm.getAPI().lockProject(key, scm.getProjectName(build));
+                    DimensionsResult res = scm.getAPI().lockProject(key, scm.getProjectName(build, listener));
                     if (res == null) {
                         listener.getLogger().println("[DIMENSIONS] Locking the project in Dimensions failed");
                         build.setResult(Result.FAILURE);
@@ -258,7 +257,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                             scm.getJobServer(), build);
                     if (key > 0L) {
                         Logger.debug("Unlocking the project");
-                        DimensionsResult res = scm.getAPI().unlockProject(key, scm.getProjectName(build));
+                        DimensionsResult res = scm.getAPI().unlockProject(key, scm.getProjectName(build, listener));
                         if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] Unlocking the project in Dimensions failed");
                             build.setResult(Result.FAILURE);

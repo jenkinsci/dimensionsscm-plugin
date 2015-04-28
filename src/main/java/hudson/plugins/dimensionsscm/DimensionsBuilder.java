@@ -101,8 +101,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * A Builder to launch a Serena Build command on the SCM project as a step in a Jenkins build.
- * This experimental plugin extends Jenkins support for Dimensions CM SCM repositories.
- *
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class DimensionsBuilder extends Builder {
@@ -257,10 +256,10 @@ public class DimensionsBuilder extends Builder {
                         if (projectXType.equals("NONE")) {
                             projectXType = null;
                         }
-                        // This will active the build baseline functionality
+                        // This will activate the build baseline functionality.
                         listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().buildProject(key, projectArea, scm.getProjectName(build),
+                        DimensionsResult res = scm.getAPI().buildProject(key, projectArea, scm.getProjectName(build, listener),
                                 batch, buildClean, projectConfig, projectOptions, capture, requests, projectTargets,
                                 projectStage, projectXType, audit, populate, touch, build);
                         if (res == null) {

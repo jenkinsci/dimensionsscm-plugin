@@ -93,9 +93,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Class implementation of the checkout process.
- *
+ * Update local work area using dmcli command-line.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class CheckOutCmdTask extends GenericCmdTask {
@@ -124,8 +123,8 @@ public class CheckOutCmdTask extends GenericCmdTask {
 
         try {
             tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
-            FileWriter logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter, true);
+            // 'UPDATE' command file in platform-default encoding.
+            fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 
             String coCmd = "UPDATE /BRIEF ";
             if (version == 10) {
@@ -193,7 +192,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
             fmtWriter.println(cmd);
             fmtWriter.flush();
         } catch (IOException e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tmpFile, e,
+            throw (IOException) new IOException(Values.exceptionMessage("Unable to write UPDATE command file: " + tmpFile, e,
                     "no message")).initCause(e);
         } finally {
             if (fmtWriter != null) {
@@ -298,7 +297,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
 
                     File cmdFile = createCmdFile(reqId, projDir, area);
                     if (cmdFile == null) {
-                        listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
+                        listener.getLogger().println("[DIMENSIONS] Error: Cannot create UPDATE command file.");
                         param.delete();
                         return false;
                     }
@@ -345,7 +344,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
 
                     File cmdFile = createCmdFile(null, projDir, area);
                     if (cmdFile == null) {
-                        listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
+                        listener.getLogger().println("[DIMENSIONS] Error: Cannot create UPDATE command file.");
                         param.delete();
                         return false;
                     }

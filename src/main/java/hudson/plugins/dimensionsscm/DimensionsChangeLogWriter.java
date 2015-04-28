@@ -87,39 +87,38 @@ package hudson.plugins.dimensionsscm;
 import hudson.Util;
 import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.List;
 import java.util.logging.Level;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Write a change set.
- *
+ * Write an XML changelog (or append to it if it exists), without a closing tag.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
-public class DimensionsChangeLogWriter {
+class DimensionsChangeLogWriter {
     /**
-     * Save the change list to the changelogFile.
+     * Save the list of changes to the changelogFile.
      */
-    public boolean writeLog(List<DimensionsChangeSet> changeSets, File changelogFile) throws IOException {
+    static boolean writeLog(List<DimensionsChangeSet> changeSets, File changelogFile) throws IOException {
         boolean bRet = false;
         boolean appendFile = false;
-        Writer writer = null;
         if (changelogFile.exists()) {
             if (changelogFile.length() > 0) {
                 appendFile = true;
             }
         }
+        PrintWriter writer = null;
         try {
-            writer = new FileWriter(changelogFile, appendFile);
+            writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(changelogFile, appendFile), "UTF-8"));
             write(changeSets, writer, appendFile);
             writer.flush();
             bRet = true;
         } catch (IOException e) {
-            String message = Values.exceptionMessage("Unable to write change log: " + changelogFile, e, "no message");
+            String message = Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message");
             LOGGER.log(Level.FINE, message, e);
             throw (IOException) new IOException(message).initCause(e);
         } finally {
@@ -131,12 +130,11 @@ public class DimensionsChangeLogWriter {
     }
 
     /**
-     * Save the change list to the changelogFile.
+     * Write the list of changes to the PrintWriter.
      */
-    private void write(List<DimensionsChangeSet> changeSets, Writer writer, boolean appendFile) {
+    private static void write(List<DimensionsChangeSet> changeSets, PrintWriter pw, boolean appendFile) {
         Logger.debug("Writing logfile in append mode = " + appendFile);
         String logStr = "";
-        PrintWriter pw = new PrintWriter(writer);
         if (!appendFile) {
             pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             pw.println("<changelog>");
@@ -162,12 +160,8 @@ public class DimensionsChangeLogWriter {
                 logStr += "\t</changeset>\n";
             }
         }
-        Logger.debug("Writing to logfile '" + logStr + "'");
-        if (appendFile) {
-            pw.append(logStr);
-        } else {
-            pw.print(logStr);
-        }
+        Logger.debug("Writing to changelog: '" + logStr + "'");
+        pw.print(logStr);
         pw.flush();
     }
 

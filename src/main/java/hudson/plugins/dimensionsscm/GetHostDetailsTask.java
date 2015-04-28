@@ -92,9 +92,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Find out if the current host is remote.
- *
+ * Callable to find out if the current host is remote to the master.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class GetHostDetailsTask implements FileCallable<Boolean> {

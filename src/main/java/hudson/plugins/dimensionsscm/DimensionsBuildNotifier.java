@@ -104,8 +104,7 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * A Notifier that can create, deploy, build or action a baseline (from the SCM project) as a post-build step in a Jenkins build.
- * This experimental plugin extends Jenkins support for Dimensions CM SCM repositories.
- *
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class DimensionsBuildNotifier extends Notifier implements Serializable {
@@ -333,7 +332,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     }
 
                     {
-                        DimensionsResult res = scm.getAPI().createBaseline(key, scm.getProjectVersion(build), build,
+                        DimensionsResult res = scm.getAPI().createBaseline(key, scm.getProjectVersion(build, listener), build,
                                 blnScope, blnTemplate, blnOwningPart, blnType, requests, blnId, blnName, cblId);
                         if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] The build failed to be tagged in Dimensions");
@@ -349,7 +348,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     if (canBaselineDeploy) {
                         listener.getLogger().println("[DIMENSIONS] Submitting a deployment job to Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().deployBaseline(key, scm.getProjectName(build), build,
+                        DimensionsResult res = scm.getAPI().deployBaseline(key, scm.getProjectName(build, listener), build,
                                 deployState, cblId.toString());
                         if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be deployed in Dimensions");
@@ -368,7 +367,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     if (canBaselineBuild) {
                         listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().buildBaseline(key, area, scm.getProjectName(build), batch,
+                        DimensionsResult res = scm.getAPI().buildBaseline(key, area, scm.getProjectName(build, listener), batch,
                                 buildClean, buildConfig, buildOptions, capture, requests, buildTargets, build,
                                 cblId.toString());
                         if (res == null) {
@@ -387,7 +386,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     if (canBaselineAction) {
                         listener.getLogger().println("[DIMENSIONS] Actioning the build baseline in Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().actionBaseline(key, scm.getProjectName(build), build,
+                        DimensionsResult res = scm.getAPI().actionBaseline(key, scm.getProjectName(build, listener), build,
                                 actionState, cblId.toString());
                         if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be actioned in Dimensions");

@@ -110,11 +110,11 @@ import hudson.util.FormValidation;
 import hudson.util.Scrambler;
 import hudson.util.VariableResolver;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.io.Writer;
 import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Map;
@@ -128,22 +128,8 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Main Dimensions SCM class which creates the plugin logic.
- * <p>
- * Jenkins/Hudson required the following functions to be implemented.
- * <pre>
- * public boolean checkout(AbstractBuild build, Launcher launcher,
- *         FilePath workspace, BuildListener listener, File changelogFile)
- *         throws IOException, InterruptedException;
- * public boolean pollChanges(AbstractProject project, Launcher launcher,
- *         FilePath workspace, TaskListener listener)
- *         throws IOException, InterruptedException;
- * public ChangeLogParser createChangeLogParser();
- * public SCMDescriptor<?> getDescriptor();
- * </pre>
- * For this experimental plugin, only the main ones will be implemented.
- *
+ * An SCM that can poll, browse and update from Dimensions CM.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class DimensionsSCM extends SCM implements Serializable {
@@ -216,8 +202,8 @@ public class DimensionsSCM extends SCM implements Serializable {
      * Gets the expanded project name for the connection. Any variables in the project value will be expanded.
      * @return the project spec without a trailing version number (if there is one).
      */
-    public String getProjectName(Run<?, ?> run) {
-        String projectVersion = getProjectVersion(run);
+    public String getProjectName(Run<?, ?> run, TaskListener log) {
+        String projectVersion = getProjectVersion(run, log);
         int sc = projectVersion.lastIndexOf(';');
         return sc >= 0 ? projectVersion.substring(0, sc) : projectVersion;
     }
@@ -227,11 +213,11 @@ public class DimensionsSCM extends SCM implements Serializable {
      * expanded.
      * @return the project spec including its trailing version (if there is one).
      */
-    public String getProjectVersion(Run<?, ?> run) {
+    public String getProjectVersion(Run<?, ?> run, TaskListener log) {
         EnvVars env = null;
         if (run != null) {
             try {
-                env = run.getEnvironment();
+                env = run.getEnvironment(log);
             } catch (IOException e) {
                 /* don't expand */
             } catch (InterruptedException e) {
@@ -541,7 +527,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                     listener.getLogger().flush();
 
                     CheckOutCmdTask task = new CheckOutCmdTask(getJobUserName(), getJobPasswd(), getJobDatabase(),
-                            getJobServer(), getProjectVersion(build), baseline, requests, isCanJobDelete(),
+                            getJobServer(), getProjectVersion(build, listener), baseline, requests, isCanJobDelete(),
                             isCanJobRevert(), isCanJobForce(), isCanJobExpand(), isCanJobNoMetadata(),
                             isCanJobNoTouch(), (build.getPreviousBuild() == null), getFolders(), version,
                             permissions, eol, workspace, listener);
@@ -630,33 +616,32 @@ public class DimensionsSCM extends SCM implements Serializable {
                     Logger.debug("Looking for changes in '" + folderN + "'...");
 
                     // Check out the folder.
-                    bRet = dmSCM.createChangeSetLogs(key, getProjectName(build), dname, lastBuildCal, nowDateCal,
+                    bRet = dmSCM.createChangeSetLogs(key, getProjectName(build, listener), dname, lastBuildCal, nowDateCal,
                             changelogFile, tz, jobWebUrl, baseline, requests);
                     if (requests != null) {
                         break;
                     }
                 }
 
-                // Close the changes log file.
+                // Add the changelog file's closing tag.
                 {
-                    Writer writer = null;
+                    PrintWriter pw = null;
                     try {
-                        writer = new FileWriter(changelogFile, true);
-                        PrintWriter pw = new PrintWriter(writer);
+                        pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(changelogFile, true), "UTF-8"));
                         pw.println("</changelog>");
                         pw.flush();
                         bRet = true;
                     } catch (IOException e) {
-                        throw (IOException) new IOException(Values.exceptionMessage("Unable to write change log: " + changelogFile, e, "no message")).initCause(e);
+                        throw (IOException) new IOException(Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message")).initCause(e);
                     } finally {
-                        if (writer != null) {
-                            writer.close();
+                        if (pw != null) {
+                            pw.close();
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to run change set callout", e, "no message - try again"));
+            listener.fatalError(Values.exceptionMessage("Unable to run changelog callout", e, "no message - try again"));
             bRet = false;
         } finally {
             dmSCM.logout(key, build);
@@ -761,7 +746,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                     if (dmSCM.getPathMatcher() == null) {
                         dmSCM.setPathMatcher(createPathMatcher());
                     }
-                    bChanged = dmSCM.hasRepositoryBeenUpdated(key, getProjectName(project.getLastBuild()), dname,
+                    bChanged = dmSCM.hasRepositoryBeenUpdated(key, getProjectName(project.getLastBuild(), listener), dname,
                             lastBuildCal, nowDateCal, tz);
                     if (LOGGER.isLoggable(Level.FINE)) {
                         LOGGER.log(Level.FINE, "Polled folder '" + dname.getRemote() + "' between lastBuild="
@@ -818,7 +803,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     }
 
     /**
-     * Implementation class for Dimensions plugin.
+     * Implementation class for Dimensions CM SCM plugin.
      */
     public static class DescriptorImpl extends SCMDescriptor<DimensionsSCM> implements ModelObject {
         DimensionsAPI connectionCheck;

@@ -127,9 +127,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Main Dimensions API class.
- *
+ * Dimensions API facade.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class DimensionsAPI implements Serializable {
@@ -621,7 +620,7 @@ public class DimensionsAPI implements Serializable {
     }
 
     /**
-     * Generate change log.
+     * Generate changelog file.
      */
     public boolean createChangeSetLogs(final long key, final String projectName, final FilePath projectDir,
             final Calendar fromDate, final Calendar toDate, final File changelogFile, final TimeZone tz,
@@ -635,26 +634,25 @@ public class DimensionsAPI implements Serializable {
 
             Logger.debug("CM Url : " + (url != null ? url : "(null)"));
             if (requests != null) {
-                getLogger().println("[DIMENSIONS] Calculating change set for request(s) '" + requests + "'...");
+                getLogger().println("[DIMENSIONS] Calculating changes for request(s) '" + requests + "'...");
             } else {
-                getLogger().println("[DIMENSIONS] Calculating change set for directory '" +
+                getLogger().println("[DIMENSIONS] Calculating changes for directory '" +
                         (projectDir != null ? projectDir.getRemote() : "/") + "'...");
             }
             getLogger().flush();
 
             if (items != null) {
-                // Process the changesets...
+                // Write the list of changes into a changelog file.
                 List changes = createChangeList(items, tz, url);
-                Logger.debug("Writing changeset to " + changelogFile.getPath());
-                DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
-                write.writeLog(changes, changelogFile);
+                Logger.debug("Writing " + changes.size() + " changes to changelog file '" + changelogFile.getPath() + "'");
+                DimensionsChangeLogWriter.writeLog(changes, changelogFile);
             } else {
-                // No changes - just fake a log.
-                DimensionsChangeLogWriter write = new DimensionsChangeLogWriter();
-                write.writeLog(null, changelogFile);
+                // No changes, so create an empty changelog file.
+                Logger.debug("Writing null changes to changelog file '" + changelogFile.getPath() + "'");
+                DimensionsChangeLogWriter.writeLog(null, changelogFile);
             }
         } catch (Exception e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Exception calculating change set", e,
+            throw (IOException) new IOException(Values.exceptionMessage("Exception calculating changes", e,
                     "no message")).initCause(e);
         }
         return true;
@@ -979,7 +977,7 @@ public class DimensionsAPI implements Serializable {
             if (projectId != null) {
                 ciCmd += " /USER_FILELIST=\"" + cmdFile.getAbsolutePath() + "\"";
                 ciCmd += " /WORKSET=\"" + projectId + "\"";
-                ciCmd += " /COMMENT=\"Build artifacts saved by Hudson/Jenkins for job '" + projectName + "' - build " + buildNo + "\"";
+                ciCmd += " /COMMENT=\"Build artifacts delivered by Jenkins for job '" + projectName + "' - build " + buildNo + "\"";
                 ciCmd += " /USER_DIRECTORY=\"" + rootDir.getRemote() + "\"";
                 if (requests != null && requests.length() > 0) {
                     if (requests.indexOf(',') == -1) {
@@ -1203,7 +1201,7 @@ public class DimensionsAPI implements Serializable {
         //int SBM_LINK = 17;
 
         for (int i = 0; i < items.size(); ++i) {
-            Logger.debug("Processing change set " + i + "/" + items.size());
+            Logger.debug("Processing change " + i + "/" + items.size());
             ItemRevision item = (ItemRevision) items.get(i);
             int x = 0;
 
@@ -1217,7 +1215,6 @@ public class DimensionsAPI implements Serializable {
             if (fileVersion != null) {
                 x = fileVersion;
             }
-            Logger.debug("Creating a change set (" + x + ") " + i);
             if (x < 2) {
                 operation = "add";
             } else {
@@ -1240,8 +1237,8 @@ public class DimensionsAPI implements Serializable {
             if (comment == null) {
                 comment = "(None)";
             }
-            Logger.debug("Change set details -" + comment + " " + revision + " " + fileName + " " + author +
-                         " " + spec  + " " + date + " " + operation + " " + urlString);
+            Logger.debug("Change details -" + comment + " " + revision + " " + fileName + " " + author
+                    + " " + spec  + " " + date + " " + operation + " (" + x + ") "+ urlString);
 
             Calendar opDate = Calendar.getInstance();
             opDate.setTime(DateUtils.parse(date, tz));
@@ -1747,7 +1744,7 @@ public class DimensionsAPI implements Serializable {
         int[] attrs = getItemFileAttributes(true);
 
         if (requests != null && connection != null) {
-            String[] reqStr = null;
+            String[] reqStr;
             if (requests.indexOf(',') != -1) {
                 reqStr = requests.split(",");
                 Logger.debug("User specified " + reqStr.length + " requests");

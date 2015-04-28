@@ -96,9 +96,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Class implementation of the checkin process.
- *
+ * Deliver files to Dimensions CM repository using Java API.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class CheckInAPITask extends GenericAPITask {
@@ -106,7 +105,6 @@ public class CheckInAPITask extends GenericAPITask {
     private final boolean isForceCheckIn;
     private final VariableResolver<String> myResolver;
 
-    private final int version;
     private final int buildNo;
 
     private final String jobId;
@@ -123,11 +121,8 @@ public class CheckInAPITask extends GenericAPITask {
         super(parent, workspace, listener);
         Logger.debug("Creating task - " + this.getClass().getName());
 
-        // Server details (see superclass).
-        this.version = version;
-
         // Config details
-        this.projectId = parent.getProjectName(build);
+        this.projectId = parent.getProjectName(build, listener);
         this.isForceCheckIn = artifact.isForceCheckIn();
         this.isForceTip = artifact.isForceTip();
         this.owningPart = artifact.getOwningPart();
@@ -179,8 +174,8 @@ public class CheckInAPITask extends GenericAPITask {
 
                 try {
                     tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
-                    FileWriter logFileWriter = new FileWriter(tmpFile);
-                    fmtWriter = new PrintWriter(logFileWriter, true);
+                    // 'DELIVER/USER_FILELIST=' user filelist in platform-default encoding.
+                    fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 
                     for (File f : validFiles) {
                         if (f.isDirectory()) {
@@ -192,7 +187,7 @@ public class CheckInAPITask extends GenericAPITask {
                     fmtWriter.flush();
                 } catch (IOException e) {
                     bRet = false;
-                    throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tmpFile, e,
+                    throw (IOException) new IOException(Values.exceptionMessage("Unable to write user filelist: " + tmpFile, e,
                             "no message")).initCause(e);
                 } finally {
                     if (fmtWriter != null) {

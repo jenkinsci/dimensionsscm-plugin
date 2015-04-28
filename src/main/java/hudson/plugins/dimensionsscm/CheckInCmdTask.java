@@ -92,9 +92,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Class implementation of the checkin process.
- *
+ * Deliver files to Dimensions CM repository using dmcli command-line.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class CheckInCmdTask extends GenericCmdTask {
@@ -116,22 +115,22 @@ public class CheckInCmdTask extends GenericCmdTask {
     /**
      * Utility routine to create command file for dmcli.
      */
-    private File createCmdFile(final File area, final File tempFile) throws IOException {
+    private File createCmdFile(final File area, final File userFilelist) throws IOException {
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 
         try {
             tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
-            FileWriter logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter, true);
+            // 'DELIVER' command file in platform-default encoding.
+            fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 
             String ciCmd = "DELIVER /BRIEF /ADD /UPDATE /DELETE ";
             if (version == 10 || !isStream) {
                 ciCmd = "UPLOAD ";
             }
-            ciCmd += " /USER_FILELIST=\"" + tempFile.getAbsolutePath() + "\"";
+            ciCmd += " /USER_FILELIST=\"" + userFilelist.getAbsolutePath() + "\"";
             ciCmd += " /WORKSET=\"" + projectId + "\"";
-            ciCmd += " /COMMENT=\"Build artifacts saved by Hudson/Jenkins for job '" + jobId + "' - build " +
+            ciCmd += " /COMMENT=\"Build artifacts delivered by Jenkins for job '" + jobId + "' - build " +
                     buildNo + "\"";
             ciCmd += " /USER_DIRECTORY=\"" + area.getAbsolutePath() + "\"";
             if (requests != null && requests.length() > 0) {
@@ -156,7 +155,7 @@ public class CheckInCmdTask extends GenericCmdTask {
             fmtWriter.println(ciCmd);
             fmtWriter.flush();
         } catch (IOException e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tmpFile, e,
+            throw (IOException) new IOException(Values.exceptionMessage("Unable to write DELIVER command file: " + tmpFile, e,
                     "no message")).initCause(e);
         } finally {
             if (fmtWriter != null) {
@@ -223,13 +222,13 @@ public class CheckInCmdTask extends GenericCmdTask {
                     requests = requests.toUpperCase(Values.ROOT_LOCALE);
                 }
 
-                File tempFile = null;
+                File tmpFile = null;
                 PrintWriter fmtWriter = null;
 
                 try {
-                    tempFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
-                    FileWriter logFileWriter = new FileWriter(tempFile);
-                    fmtWriter = new PrintWriter(logFileWriter, true);
+                    tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+                    // 'DELIVER/USER_FILELIST=' user filelist in platform-default encoding.
+                    fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 
                     for (File f : validFiles) {
                         if (f.isDirectory()) {
@@ -239,8 +238,7 @@ public class CheckInCmdTask extends GenericCmdTask {
                     }
                     fmtWriter.flush();
                 } catch (IOException e) {
-                    bRet = false;
-                    throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tempFile, e,
+                    throw (IOException) new IOException(Values.exceptionMessage("Unable to write user filelist: " + tmpFile, e,
                             "no message")).initCause(e);
                 } finally {
                     if (fmtWriter != null) {
@@ -248,11 +246,11 @@ public class CheckInCmdTask extends GenericCmdTask {
                     }
                 }
 
-                File cmdFile = createCmdFile(area, tempFile);
+                File cmdFile = createCmdFile(area, tmpFile);
                 if (cmdFile == null) {
-                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create command file for Dimensions login.");
+                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create DELIVER command file.");
                     param.delete();
-                    tempFile.delete();
+                    tmpFile.delete();
                     return false;
                 }
 

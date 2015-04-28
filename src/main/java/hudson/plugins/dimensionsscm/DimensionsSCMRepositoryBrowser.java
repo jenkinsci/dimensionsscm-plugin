@@ -93,13 +93,12 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.export.ExportedBean;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
- *
+ * Dummy repository browser.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 @ExportedBean(defaultVisibility = 999)
-public abstract class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet> {
+public class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet> {
     @DataBoundConstructor
     public DimensionsSCMRepositoryBrowser() {
     }

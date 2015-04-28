@@ -94,9 +94,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Class implementation of the checkout process.
- *
+ * Update local work area using Java API.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class CheckOutAPITask extends GenericAPITask {
@@ -127,7 +126,7 @@ public class CheckOutAPITask extends GenericAPITask {
 
         // Config details.
         this.isDelete = parent.isCanJobDelete();
-        this.projectId = parent.getProjectVersion(build);
+        this.projectId = parent.getProjectVersion(build, listener);
         this.isRevert = parent.isCanJobRevert();
         this.isForce = parent.isCanJobForce();
         this.isExpand = parent.isCanJobExpand();

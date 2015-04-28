@@ -94,9 +94,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Class implementation of the command process.
- *
+ * Base class for callables using dmcli command-line.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class GenericCmdTask implements FileCallable<Boolean> {
@@ -127,15 +126,15 @@ public class GenericCmdTask implements FileCallable<Boolean> {
 
         try {
             tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
-            FileWriter logFileWriter = new FileWriter(tmpFile);
-            fmtWriter = new PrintWriter(logFileWriter, true);
+            // dmcli parameter file in platform-default encoding.
+            fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
             fmtWriter.println("-host " + server);
             fmtWriter.println("-user " + userName);
             fmtWriter.println("-pass " + passwd);
             fmtWriter.println("-dbname " + database);
             fmtWriter.flush();
         } catch (IOException e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Unable to write command log: " + tmpFile, e,
+            throw (IOException) new IOException(Values.exceptionMessage("Unable to write dmcli parameter file: " + tmpFile, e,
                     "no message")).initCause(e);
         } finally {
             if (fmtWriter != null) {

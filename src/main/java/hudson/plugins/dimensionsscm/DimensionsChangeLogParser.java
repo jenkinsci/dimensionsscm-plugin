@@ -85,13 +85,15 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.AbstractBuild;
-import hudson.model.Run;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.RepositoryBrowser;
 import hudson.util.Digester2;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,38 +102,58 @@ import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Represents a change set.
- *
+ * Parses a changelog file.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class DimensionsChangeLogParser extends ChangeLogParser {
-    /** When move to 1.568+, can make this method's signature the same as the following method. */
+    /** When move to 1.568+, change method signature to (Run build, RepositoryBrowser<?> browser, File changelogFile). */
     @Override
     public DimensionsChangeSetList parse(AbstractBuild build, File changelogFile) throws IOException, SAXException {
-        return parseInternal(build, build.getProject().getScm().getEffectiveBrowser(), changelogFile);
+        RepositoryBrowser<?> browser = build.getProject().getScm().getEffectiveBrowser();
+        Logger.debug("Looking for '" + changelogFile.getPath() + "'");
+        if (!changelogFile.canRead()) {
+            String message = "Specified changelog file does not exist or is not readable: " + changelogFile.getPath();
+            Logger.debug(message);
+            throw new FileNotFoundException(message);
+        }
+        List<DimensionsChangeSet> changesets;
+        try {
+            // Try to parse as UTF-8 initially, changelog files created by > 0.8.11 use UTF-8 encoding.
+            changesets = digest(changelogFile, "UTF-8");
+        } catch (IOException e) {
+            Logger.debug(Values.exceptionMessage("Failed to parse changelog file as UTF-8, retrying with default charset", e, "no message"));
+            // If that fails, it may be a changelog file created by <= 0.8.11 using platform default encoding.
+            changesets = digest(changelogFile, null);
+        }
+        return new DimensionsChangeSetList(build, browser, changesets);
     }
 
-    private DimensionsChangeSetList parseInternal(Run build, RepositoryBrowser<?> browser, File changelogFile) throws IOException, SAXException {
-        Logger.debug("Looking for '" + changelogFile.getPath() + "'");
-        if (!changelogFile.exists()) {
-            String message = "Specified change log file does not exist: " + changelogFile.getPath();
-            Logger.debug(message);
-            throw new IOException(message);
+    private List<DimensionsChangeSet> digest(File changelogFile, String charEncoding)
+            throws IOException, SAXException {
+        Reader reader;
+        if (charEncoding != null) {
+            reader = new InputStreamReader(new FileInputStream(changelogFile), charEncoding);
         } else {
-            Reader reader = new FileReader(changelogFile);
-            try {
-                return parseInternal(build, browser, reader);
-            } finally {
-                IOUtils.closeQuietly(reader);
-            }
+            reader = new FileReader(changelogFile);
+        }
+        try {
+            return digest(reader);
+        } finally {
+            IOUtils.closeQuietly(reader);
         }
     }
 
-    private DimensionsChangeSetList parseInternal(Run build, RepositoryBrowser<?> browser, Reader reader) throws IOException, SAXException {
-        List<DimensionsChangeSet> changesetList = new ArrayList<DimensionsChangeSet>();
+    private List<DimensionsChangeSet> digest(Reader reader) throws IOException, SAXException {
+        List<DimensionsChangeSet> changesets = new ArrayList<DimensionsChangeSet>();
+        Digester digester = createDigester(changesets);
+        digester.parse(reader);
+        return changesets;
+    }
+
+    private Digester createDigester(Object top) {
         Digester digester = new Digester2();
-        digester.push(changesetList);
+        digester.push(top);
 
         digester.addObjectCreate("*/changeset", DimensionsChangeSet.class);
         digester.addSetProperties("*/changeset");
@@ -149,8 +171,6 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
         digester.addSetProperties("*/changeset/requests/request");
         digester.addBeanPropertySetter("*/changeset/requests/request", "identifier");
         digester.addSetNext("*/changeset/requests/request", "addRequest");
-
-        digester.parse(reader);
-        return new DimensionsChangeSetList(build, browser, changesetList);
+        return digester;
     }
 }
