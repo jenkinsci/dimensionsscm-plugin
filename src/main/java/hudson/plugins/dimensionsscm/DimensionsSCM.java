@@ -1094,9 +1094,10 @@ public class DimensionsSCM extends SCM implements Serializable {
                 String xuser = (jobuser != null) ? jobuser : user;
                 String xpasswd = (jobPasswd != null) ? jobPasswd : passwd;
                 String xdatabase = (jobDatabase != null) ? jobDatabase : database;
-                String dmS = xserver + "-" + xuser + ":" + xdatabase;
-                Logger.debug("Invoking serverCheck - " + dmS);
+                LOGGER.log(Level.FINE, "Server connection check to user [" + xuser +
+                        "], database [" + xdatabase + "], server [" + xserver + "]");
                 long key = connectionCheck.login(xuser, xpasswd, xdatabase, xserver);
+                LOGGER.log(Level.FINE, "Server connection check returned key [" + key + "]");
                 if (key < 1L) {
                     return FormValidation.error("Connection test failed");
                 } else {
@@ -1104,7 +1105,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                     return FormValidation.ok("Connection test succeeded!");
                 }
             } catch (Exception e) {
-                return FormValidation.error(Values.exceptionMessage("Server connection check error", e, "no message"));
+                String message = Values.exceptionMessage("Server connection check error", e, "no message");
+                LOGGER.log(Level.FINE, message, e);
+                return FormValidation.error(message);
             }
         }
     }
