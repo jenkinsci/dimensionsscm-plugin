@@ -85,7 +85,6 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
-import hudson.FilePath.FileCallable;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import java.io.File;
@@ -94,25 +93,30 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * Base class for callables using dmcli command-line.
+ * Base class for Callables using dmcli command-line.
  * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
-public class GenericCmdTask implements FileCallable<Boolean> {
+abstract class GenericCmdTask extends BaseCallable {
     private final FilePath workspace;
-    protected final TaskListener listener;
+
+    /** listener is used by CheckInCmdTask and CheckOutCmdTask subclasses. */
+    final TaskListener listener;
+
     private final String userName;
     private final String passwd ;
     private final String database;
     private final String server;
-    protected final int version;
+
+    /** version is used by CheckInCmdTask and CheckOutCmdTask subclasses. */
+    final int version;
 
     private static final String EXEC = "dmcli";
 
     /**
      * Utility routine to look for an executable in the path.
      */
-     protected File getExecutable(String exeName) {
+     private File getExecutable(String exeName) {
         // Get the path environment.
         return PathUtils.getExecutable(exeName);
      }
@@ -120,7 +124,7 @@ public class GenericCmdTask implements FileCallable<Boolean> {
     /**
      * Utility routine to create parameter file for dmcli.
      */
-     protected File createParamFile() throws IOException {
+     private File createParamFile() throws IOException {
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 
@@ -144,7 +148,7 @@ public class GenericCmdTask implements FileCallable<Boolean> {
         return tmpFile;
     }
 
-    public GenericCmdTask(String userName, String passwd, String database, String server, int version,
+    GenericCmdTask(String userName, String passwd, String database, String server, int version,
             FilePath workspace, TaskListener listener) {
         this.workspace = workspace;
         this.listener = listener;
@@ -190,7 +194,5 @@ public class GenericCmdTask implements FileCallable<Boolean> {
     /**
      * Process the task. Template method to override in subclasses.
      */
-    public Boolean execute(final File exe, final File param, final File area) throws IOException {
-        return true;
-    }
+    abstract Boolean execute(final File exe, final File param, final File area) throws IOException;
 }

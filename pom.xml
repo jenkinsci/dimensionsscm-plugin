@@ -41,7 +41,8 @@
     </issueManagement>
 
     <properties>
-        <!-- Manage maven-release-plugin version to 2.5.1 to work around Maven/Git issues. -->
+        <!-- Manage maven-release-plugin version to 2.5.1 to work around Maven/Git issues.
+             See https://groups.google.com/forum/#!topic/jenkinsci-dev/qkmbl3HrYgk -->
         <maven-release-plugin.version>2.5.1</maven-release-plugin.version>
     </properties>
 
@@ -67,6 +68,19 @@
             <version>12.2</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <!-- Compatibility layer to be removed when parent POM reaches version 1.587.
+                 See https://wiki.jenkins-ci.org/display/JENKINS/Slave+To+Master+Access+Control -->
+            <groupId>org.jenkins-ci</groupId>
+            <artifactId>SECURITY-144-compat</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <!-- <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>remoting</artifactId>
+            <version>2.47</version>
+            <scope>provided</scope>
+        </dependency> -->
     </dependencies>
 
     <build>

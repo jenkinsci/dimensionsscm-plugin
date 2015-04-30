@@ -1,6 +1,6 @@
 /*
  * ===========================================================================
- *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
+ *  Copyright (c) 2015 Serena Software. All rights reserved.
  *
  *  Use of the Sample Code provided by Serena is governed by the following
  *  terms and conditions. By using the Sample Code, you agree to be bound by
@@ -84,78 +84,13 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import hudson.FilePath;
-import hudson.model.TaskListener;
-import hudson.remoting.VirtualChannel;
-import java.io.File;
-import java.io.IOException;
+import jenkins.MasterToSlaveFileCallable;
 
 /**
- * Base class for Callables using Java API.
+ * Base class for all Callable tasks in the plugin, so only one class needs to change for SECURIY-144, and can be changed back
+ * quickly if there are issues. See https://wiki.jenkins-ci.org/display/JENKINS/Slave+To+Master+Access+Control.
  * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
-abstract class GenericAPITask extends BaseCallable {
-    private final FilePath workspace;
-
-    /** listener is used by CheckInAPITask and CheckOutAPITask subclasses. */
-    final TaskListener listener;
-
-    private final String userName;
-    private final String passwd;
-    private final String database;
-    private final String server;
-
-    /** key is used by CheckInAPITask and CheckOutAPITask subclasses. */
-    long key = -1L;
-
-    /** dmSCM is used by CheckInAPITask and CheckOutAPITask subclasses. */
-    DimensionsAPI dmSCM;
-
-    GenericAPITask(DimensionsSCM parent, FilePath workspace, TaskListener listener) {
-        Logger.debug("Creating task - " + this.getClass().getName());
-
-        this.workspace = workspace;
-        this.listener = listener;
-
-        // Server details.
-        userName = parent.getJobUserName();
-        passwd = parent.getJobPasswd();
-        database = parent.getJobDatabase();
-        server = parent.getJobServer();
-    }
-
-    @Override
-    public Boolean invoke(File area, VirtualChannel channel) throws IOException {
-        boolean bRet = true;
-
-        try {
-            // This here code is executed on the slave.
-            listener.getLogger().println("[DIMENSIONS] Running build in '" + area.getAbsolutePath() + "'...");
-
-            if (dmSCM == null) {
-                dmSCM = new DimensionsAPI();
-            }
-            dmSCM.setLogger(listener.getLogger());
-
-            // Connect to Dimensions...
-            key = dmSCM.login(userName, passwd, database, server);
-            if (key > 0L) {
-                Logger.debug("Login worked.");
-                bRet = execute(area, channel);
-            }
-        } catch (Exception e) {
-            bRet = false;
-            throw (IOException) new IOException(Values.exceptionMessage("Exception during login", e, "no message")).initCause(e);
-        } finally {
-            dmSCM.logout(key);
-        }
-        dmSCM = null;
-        return bRet;
-    }
-
-    /**
-     * Template method for subclasses to override.
-     */
-    abstract Boolean execute(File area, VirtualChannel channel) throws IOException;
+abstract class BaseCallable extends MasterToSlaveFileCallable<Boolean> {
+    /* This abstract class exists temporarily to make it easier to change the base class of all Callable tasks in this plugin. */
 }

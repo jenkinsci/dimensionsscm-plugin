@@ -84,7 +84,6 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import hudson.FilePath.FileCallable;
 import hudson.remoting.VirtualChannel;
 import java.io.File;
 import java.io.IOException;
@@ -96,7 +95,7 @@ import java.net.UnknownHostException;
  * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
-public class GetHostDetailsTask implements FileCallable<Boolean> {
+public class GetHostDetailsTask extends BaseCallable {
     private final String masteripaddr;
 
     public GetHostDetailsTask(String master) {
