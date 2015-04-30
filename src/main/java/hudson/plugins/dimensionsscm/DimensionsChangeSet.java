@@ -98,9 +98,8 @@ import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Represents a change set.
- *
+ * Represents an individual change in the changelog.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 @ExportedBean(defaultVisibility = 999)

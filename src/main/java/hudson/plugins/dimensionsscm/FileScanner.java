@@ -97,9 +97,8 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
- *
+ * Scan for files to deliver using regular expression patterns.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class FileScanner implements Serializable {
@@ -139,10 +138,6 @@ public class FileScanner implements Serializable {
     public FileScanner(File basedir, String[] patterns, String[] patternsExc, int depth) {
         ScannerFilter filter = new ScannerFilter(patterns, patternsExc);
         xfiles = scanFiles(basedir, basedir, filter, depth);
-    }
-
-    public Collection<File> getFiles() {
-        return xfiles;
     }
 
     public File[] toArray() {

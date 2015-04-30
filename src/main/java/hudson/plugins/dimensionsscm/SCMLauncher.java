@@ -95,9 +95,8 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Class implementation of the launcher process.
- *
+ * Launch an executable (dmcli).
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class SCMLauncher implements Serializable {

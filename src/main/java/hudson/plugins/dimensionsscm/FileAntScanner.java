@@ -93,9 +93,8 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.types.FileSet;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
- *
+ * Scan for files to deliver using Ant-style patterns.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public class FileAntScanner implements Serializable {
@@ -134,10 +133,6 @@ public class FileAntScanner implements Serializable {
     public FileAntScanner(File dirName, String[] patterns, String[] patternsExc, int depth) {
         ScannerFilter filter = new ScannerFilter(patterns, patternsExc, dirName);
         xfiles = scanFiles(dirName, filter, depth);
-    }
-
-    public Collection<File> getFiles() {
-        return xfiles;
     }
 
     public File[] toArray() {

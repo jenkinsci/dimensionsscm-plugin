@@ -93,31 +93,30 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. Represents a list of changes.
- *
+ * Represents a list of changes from the changelog.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
 public final class DimensionsChangeSetList extends ChangeLogSet<DimensionsChangeSet> {
-    private final List<DimensionsChangeSet> changeSets;
+    private final List<DimensionsChangeSet> changes;
 
-    DimensionsChangeSetList(Run build, RepositoryBrowser<?> browser, List<DimensionsChangeSet> logs) {
+    DimensionsChangeSetList(Run build, RepositoryBrowser<?> browser, List<DimensionsChangeSet> changes) {
         /* When move to 1.568+, call super((Run) build, browser) as Run may be something other than an AbstractBuild instance. */
         super((AbstractBuild) build);
-        Collections.reverse(logs);
-        this.changeSets = Collections.unmodifiableList(logs);
-        for (DimensionsChangeSet log : logs) {
-            log.setParent(this);
+        Collections.reverse(changes);
+        this.changes = Collections.unmodifiableList(changes);
+        for (DimensionsChangeSet change : changes) {
+            change.setParent(this);
         }
     }
 
     @Override
     public boolean isEmptySet() {
-        return changeSets.isEmpty();
+        return changes.isEmpty();
     }
 
     @Override
     public Iterator<DimensionsChangeSet> iterator() {
-        return changeSets.iterator();
+        return changes.iterator();
     }
 }
