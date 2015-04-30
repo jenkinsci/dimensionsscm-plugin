@@ -96,11 +96,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM repositories.
- * <p>
  * This class provide some utility methods on strings, arrays and collections.
- *
- * @author David Conneely
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  */
 final class Values {
     private static final String[] EMPTY_STRING_ARRAY = new String[0];

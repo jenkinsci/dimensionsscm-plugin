@@ -89,19 +89,21 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.Serializable;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
- *
+ * Utility method to read a file into a byte array.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
-public class FileUtils implements Serializable {
+final class FileUtils {
+    private FileUtils() {
+        /* prevent instantiation. */
+    }
+
     /**
      * Utility routine to read file into memory.
      */
-    public static final byte[] readAllBytes(final File file) throws IOException {
+    static final byte[] readAllBytes(final File file) throws IOException {
         long len = file.length();
         if (len > (long) Integer.MAX_VALUE) {
             throw new IOException("File is too long to read entirely");

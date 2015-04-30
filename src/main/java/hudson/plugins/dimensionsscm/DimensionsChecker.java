@@ -87,16 +87,17 @@ package hudson.plugins.dimensionsscm;
 import hudson.model.Project;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import java.io.Serializable;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. A set of methods for checking the consistency of data passed
- * into the plugin.
- *
+ * Utility method for checking the consistency of a build's configuration with respect to the plugin.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
-public class DimensionsChecker implements Serializable {
+final class DimensionsChecker {
+    private DimensionsChecker() {
+        /* prevent instantiation. */
+    }
+
     /**
      * Checks if all the plugins that need to be loaded are loaded.
      */

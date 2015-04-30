@@ -85,21 +85,21 @@
 package hudson.plugins.dimensionsscm;
 
 import java.io.File;
-import java.io.Serializable;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories.
- *
+ * Utility method for finding an executable on the system path.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
-public class PathUtils implements Serializable {
-    private static final long serialVersionUID = 1L;
+final class PathUtils {
+    private PathUtils() {
+        /* prevent instantiation. */
+    }
 
     /**
-     * Utility routine to look for an executable in the path.
+     * Find an executable in the path.
      */
-     public static File getExecutable(String exeName) {
+    static File getExecutable(String exeName) {
         // Get the path environment.
         String exec = exeName;
         if (System.getProperty("os.name").toLowerCase(Values.ROOT_LOCALE).startsWith("windows")) {

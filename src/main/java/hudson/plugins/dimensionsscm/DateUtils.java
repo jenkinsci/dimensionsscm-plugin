@@ -84,7 +84,6 @@
  */
 package hudson.plugins.dimensionsscm;
 
-import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -93,15 +92,13 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * This experimental plugin extends Jenkins/Hudson support for Dimensions SCM
- * repositories. A set of methods for converting Date objects to and from
- * strings in a valid date format, and also validating that strings are in an
- * Oracle date format. Note: this class uses only Locale.US at the moment -
- * this may need changing.
- *
+ * Utility methods for converting Date objects to and from strings in a valid
+ * date format, and also validating that strings are in a supported Oracle-like
+ * date format. This class uses Locale.US at the moment - may need changing.
+ * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  * @author Tim Payne
  */
-public class DateUtils implements Serializable {
+final class DateUtils {
     private static final String DATE_PATTERN = "dd-MMM-yyyy";
     private static final String DATETIME_PATTERN = "dd-MMM-yyyy HH:mm:ss";
     private static final String RFCDATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
@@ -114,6 +111,10 @@ public class DateUtils implements Serializable {
      */
     private static final String[] PATTERNS = { DATETIME_PATTERN, DATE_PATTERN, RFCDATETIME_PATTERN };
 
+    private DateUtils() {
+        /* prevent instantiation. */
+    }
+
     /**
      * Parses a date from a string in known format, using default time zone.
      * NOTE: This should ONLY be used if the caller has no knowledge of the
@@ -122,7 +123,7 @@ public class DateUtils implements Serializable {
      * @param  dateStr  a String containing a date in known form
      * @return  a Date object, or null
      */
-    public static Date parse(String dateStr) {
+    static Date parse(String dateStr) {
         return parse(dateStr, DEFAULT_TIME_ZONE);
     }
 
@@ -132,7 +133,7 @@ public class DateUtils implements Serializable {
      * @param  tz  the TimeZone to be used when parsing the date string
      * @return  a Date object, or null
      */
-    public static Date parse(String dateStr, TimeZone tz) {
+    static Date parse(String dateStr, TimeZone tz) {
         Date date = null;
         dateStr = dateStr.trim();
         for (int i = 0; i < PATTERNS.length; ++i) {
@@ -156,7 +157,7 @@ public class DateUtils implements Serializable {
      * @param  dateStr  the String containing the date to be validated
      * @return  true if the string is in a valid format, false otherwise
      */
-    public static boolean validate(String dateStr) {
+    static boolean validate(String dateStr) {
         boolean ret = false;
         dateStr = dateStr.trim();
         for (int i = 0; i < PATTERNS.length; ++i) {
@@ -185,7 +186,7 @@ public class DateUtils implements Serializable {
      * @return 0 if the two dates are within toleranceMillis milliseconds of
      *        each other, negative if d1 < d2, positive if d1 > d2
      */
-    public static int compare(Date d1, Date d2, long toleranceMillis) {
+    static int compare(Date d1, Date d2, long toleranceMillis) {
         int ret;
         long diff = d1.getTime() - d2.getTime();
         if (Math.abs(diff) <= Math.abs(toleranceMillis)) {
@@ -210,7 +211,7 @@ public class DateUtils implements Serializable {
      * @param  date  the date to be formatted
      * @return  a String containing a date in known date-time form, or null
      */
-    public static String format(Date date) {
+    static String format(Date date) {
         return format(date, DEFAULT_TIME_ZONE);
     }
 
@@ -221,7 +222,7 @@ public class DateUtils implements Serializable {
      * @param  tz  the TimeZone to be used when parsing the date string
      * @return  a String containing a date in known date-time form, or null
      */
-    public static String format(Date date, TimeZone tz) {
+    static String format(Date date, TimeZone tz) {
         SimpleDateFormat df = new SimpleDateFormat(DATETIME_PATTERN, Locale.US);
         df.setTimeZone(tz);
         return df.format(date);
@@ -231,7 +232,7 @@ public class DateUtils implements Serializable {
      * Gets "now" in RFC format.
      * @return  a String containing a date in known RFC
      */
-    public static String getNowStrDate() {
+    static String getNowStrDate() {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Calendar opDate = Calendar.getInstance();
         df.setTimeZone(DEFAULT_TIME_ZONE);
@@ -243,7 +244,7 @@ public class DateUtils implements Serializable {
      * @param tz timezone
      * @return  a String containing a date in known RFC
      */
-    public static String getNowStrDate(TimeZone tz) {
+    static String getNowStrDate(TimeZone tz) {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Calendar opDate = Calendar.getInstance();
         df.setTimeZone(tz);
@@ -254,7 +255,7 @@ public class DateUtils implements Serializable {
      * Gets "now" in verbose format.
      * @return  a String containing a date in verbose format
      */
-    public static String getNowStrDateVerbose() {
+    static String getNowStrDateVerbose() {
         SimpleDateFormat df = new SimpleDateFormat("yyyy.MMMMM.dd hh:mm:ss aaa z");
         Calendar opDate = Calendar.getInstance();
         df.setTimeZone(DEFAULT_TIME_ZONE);
@@ -266,7 +267,7 @@ public class DateUtils implements Serializable {
      * @param opDate calendar date
      * @return  a String containing a date in known RFC
      */
-    public static String getStrDate(Calendar opDate) {
+    static String getStrDate(Calendar opDate) {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         df.setTimeZone(DEFAULT_TIME_ZONE);
         return df.format(opDate.getTime());
@@ -278,7 +279,7 @@ public class DateUtils implements Serializable {
      * @param tz timezone
      * @return  a String containing a date in known RFC
      */
-    public static String getStrDate(Calendar opDate, TimeZone tz) {
+    static String getStrDate(Calendar opDate, TimeZone tz) {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         df.setTimeZone(tz);
         return df.format(opDate.getTime());
