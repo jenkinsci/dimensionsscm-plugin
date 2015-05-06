@@ -325,11 +325,12 @@ public class DimensionsAPI implements Serializable {
             Logger.debug("Getting Dimensions connection...");
             DimensionsConnection connection = DimensionsConnectionManager.getConnection(details);
             if (connection != null) {
-                Logger.debug("Storing details for atomic key " + key + "...");
+                Logger.debug("Connection map key is " + key);
+                Logger.debug("Connection map size before putIfAbsent is " + conns.size());
                 if (conns.putIfAbsent(key, connection) != null) {
-                    Logger.debug("Key is not unique, as already exists within the cache: " + key);
+                    Logger.debug("Connection map already contains key " + key);
                 }
-                Logger.debug("Just added connection number " + conns.size());
+                Logger.debug("Connection map size after putIfAbsent is " + conns.size());
                 if (version < 0) {
                     version = 2009;
                     // Get the server version.
@@ -373,6 +374,8 @@ public class DimensionsAPI implements Serializable {
                         }
                     }
                 }
+            } else {
+                Logger.debug("Dimensions connection was null");
             }
         } catch (Exception e) {
             throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Login to Dimensions failed",

@@ -806,8 +806,6 @@ public class DimensionsSCM extends SCM implements Serializable {
      * Implementation class for Dimensions CM SCM plugin.
      */
     public static class DescriptorImpl extends SCMDescriptor<DimensionsSCM> implements ModelObject {
-        DimensionsAPI connectionCheck;
-
         private String server;
         private String userName;
         private String passwd;
@@ -1086,9 +1084,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 @QueryParameter("dimensionsscm.jobServer") final String jobServer,
                 @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase)
                 throws IOException, ServletException {
-            if (connectionCheck == null) {
-                connectionCheck = new DimensionsAPI();
-            }
+            DimensionsAPI connectionCheck = new DimensionsAPI();
             try {
                 String xserver = (jobServer != null) ? jobServer : server;
                 String xuser = (jobuser != null) ? jobuser : user;
