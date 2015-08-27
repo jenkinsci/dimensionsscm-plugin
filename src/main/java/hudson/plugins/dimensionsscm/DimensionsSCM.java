@@ -121,6 +121,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.servlet.ServletException;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -176,10 +177,26 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
     }
 
+    private static DimensionsAPI newDimensionsAPIWithCheck() {
+        try {
+            return new DimensionsAPI();
+        } catch (NoClassDefFoundError e) {
+            // One of the most common customer issues is not installing the API JAR files, make reporting of this clearer.
+            final Jenkins jenkins = Jenkins.getInstance();
+            final String path = jenkins != null ? new File(jenkins.getRootDir(),
+                    "plugins/dimensionsscm/WEB-INF/lib").getAbsolutePath() : "$JENKINS_HOME/plugins/dimensionsscm/WEB-INF/lib";
+            throw (NoClassDefFoundError) new NoClassDefFoundError("\r\n\r\n#\r\n" +
+                    "# Check the required JAR files (darius.jar, dmclient.jar, dmfile.jar, dmnet.jar) were copied to\r\n#\r\n" +
+                    "#     '" + path + "'\r\n#\r\n" +
+                    "# directory as described in the 'Installation' section of the Dimensions Plugin wiki page:\r\n#\r\n" +
+                    "#     https://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin\r\n#\r\n").initCause(e);
+        }
+    }
+
     public DimensionsAPI getAPI() {
         DimensionsAPI api = this.cachedAPI;
         if (api == null) {
-            api = new DimensionsAPI();
+            api = newDimensionsAPIWithCheck();
             this.cachedAPI = api;
         }
         return api;
@@ -554,7 +571,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             throws IOException, InterruptedException {
         long key = -1L;
         boolean bRet = false;
-        DimensionsAPI dmSCM = new DimensionsAPI();
+        DimensionsAPI dmSCM = newDimensionsAPIWithCheck();
 
         try {
             // When are we building files for?
@@ -1084,7 +1101,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 @QueryParameter("dimensionsscm.jobServer") final String jobServer,
                 @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase)
                 throws IOException, ServletException {
-            DimensionsAPI connectionCheck = new DimensionsAPI();
+            DimensionsAPI connectionCheck = newDimensionsAPIWithCheck();
             try {
                 String xserver = (jobServer != null) ? jobServer : server;
                 String xuser = (jobuser != null) ? jobuser : user;
