@@ -97,7 +97,6 @@ import java.util.TimeZone;
 
 /**
  * This class provide some utility methods on strings, arrays and collections.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
  */
 final class Values {
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -341,37 +340,58 @@ final class Values {
     /** Helper method used by {@linkplain #toString(Filter)}. */
     private static String debugDecodeAttribute(int attrNum) {
         switch (attrNum) {
-            case -1201: return "CREATION_DATE";
-            case -1801: return "ITEMFILE_FILENAME";
-            case -1802: return "ITEMFILE_DIR";
-            case -1803: return "REVISION";
-            case -1804: return "IS_LATEST_REV";
-            case -1805: return "IS_EXTRACTED";
-            case -1806: return "FULL_PATH_NAME";
-            case -1807: return "REVISION_COMMENT";
-            default: return "#" + attrNum;
+            case -1201:
+                return "CREATION_DATE";
+            case -1801:
+                return "ITEMFILE_FILENAME";
+            case -1802:
+                return "ITEMFILE_DIR";
+            case -1803:
+                return "REVISION";
+            case -1804:
+                return "IS_LATEST_REV";
+            case -1805:
+                return "IS_EXTRACTED";
+            case -1806:
+                return "FULL_PATH_NAME";
+            case -1807:
+                return "REVISION_COMMENT";
+            default:
+                return "#" + attrNum;
         }
     }
 
     /** Helper method used by {@linkplain #toString(Filter)}. */
     private static String debugDecodeFlags(int flags) {
         switch (flags) {
-        case 0: case 8: return " == ";
-        case 16: return " < ";
-        case 32: return " > ";
-        case 64: case 72: return " <> ";
-        case 80: return " >= ";
-        case 96: return " <= ";
-        default: return " ~" + flags + "~ ";
+            case 0:
+            case 8:
+                return " == ";
+            case 16:
+                return " < ";
+            case 32:
+                return " > ";
+            case 64:
+            case 72:
+                return " <> ";
+            case 80:
+                return " >= ";
+            case 96:
+                return " <= ";
+            default:
+                return " ~" + flags + "~ ";
         }
     }
 
     /** Helper method used by {@linkplain #toString(Filter)}. */
     private static String debugDecodeDirection(int direction) {
         switch (direction) {
-        case 1: return " ASC";
-        case -1: return " DESC";
-        default: return " ~" + direction;
+            case 1:
+                return " ASC";
+            case -1:
+                return " DESC";
+            default:
+                return " ~" + direction;
         }
     }
 

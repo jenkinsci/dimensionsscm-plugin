@@ -94,8 +94,6 @@ import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * Dummy repository browser.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 @ExportedBean(defaultVisibility = 999)
 public class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet> {

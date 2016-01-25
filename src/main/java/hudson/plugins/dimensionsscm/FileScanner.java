@@ -98,8 +98,6 @@ import java.util.regex.Pattern;
 
 /**
  * Scan for files to deliver using regular expression patterns.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class FileScanner implements Serializable {
     private final Collection<File> xfiles;

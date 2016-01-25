@@ -94,8 +94,6 @@ import org.apache.tools.ant.types.FileSet;
 
 /**
  * Scan for files to deliver using Ant-style patterns.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class FileAntScanner implements Serializable {
     private static final String[] DEFAULT_EXCLUDES = new String[] {

@@ -85,19 +85,15 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.Util;
-import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.List;
-import java.util.logging.Level;
 
 /**
  * Write an XML changelog (or append to it if it exists), without a closing tag.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 class DimensionsChangeLogWriter {
     /**
@@ -119,7 +115,7 @@ class DimensionsChangeLogWriter {
             bRet = true;
         } catch (IOException e) {
             String message = Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message");
-            LOGGER.log(Level.FINE, message, e);
+            Logger.debug(message, e);
             throw (IOException) new IOException(message).initCause(e);
         } finally {
             if (writer != null) {
@@ -177,24 +173,24 @@ class DimensionsChangeLogWriter {
         for (int i = 0; i < len; ++i) {
             char ch = str.charAt(i);
             switch (ch) {
-            case '<':
-                sb.append("&lt;");
-                break;
-            case '>':
-                sb.append("&gt;");
-                break;
-            case '"':
-                sb.append("&quot;");
-                break;
-            case '\'':
-                sb.append("&#039;");
-                break;
-            case '&':
-                sb.append("&amp;");
-                break;
-            default:
-                sb.append(ch);
-                break;
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '"':
+                    sb.append("&quot;");
+                    break;
+                case '\'':
+                    sb.append("&#039;");
+                    break;
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                default:
+                    sb.append(ch);
+                    break;
             }
         }
         return sb.toString();

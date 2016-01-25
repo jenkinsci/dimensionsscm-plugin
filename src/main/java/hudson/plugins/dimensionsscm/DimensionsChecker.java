@@ -90,8 +90,6 @@ import hudson.model.TaskListener;
 
 /**
  * Utility method for checking the consistency of a build's configuration with respect to the plugin.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 final class DimensionsChecker {
     private DimensionsChecker() {

@@ -87,13 +87,30 @@ package hudson.plugins.dimensionsscm;
 import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import java.util.logging.Level;
 
-class Logger {
+final class Logger {
+    private Logger() {
+        /* prevent instantiation. */
+    }
+
+    static boolean isDebugEnabled() {
+        return LOGGER.isLoggable(Level.FINE);
+    }
+
     /**
-     * Print a message to the log. This is a compatibility layer for the previous logging mechanism.
-     * Once everything is using <tt>LogInitializer.LOGGER</tt>, this method can be removed.
+     * Print a message to the Jenkins System Log under logger name `hudson.plugins.dimensionsscm`.
      */
     static void debug(String str) {
+        Logger.debug(str, null);
+    }
+
+    /**
+     * Print a message and an exception (with stack trace) to the Jenkins System Log under logger name `hudson.plugins.dimensionsscm`.
+     */
+    static void debug(String str, Throwable thr) {
         if (LOGGER.isLoggable(Level.FINE)) {
+            // Otherwise <tt>getSourceClass</tt> and <tt>getSourceMethod</tt>
+            // always return <tt>"hudson.plugins.dimensionsscm.Logger"</tt>
+            // and <tt>"debug"</tt> respectively.
             StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
             boolean found = false;
             String sourceClass = null;
@@ -108,12 +125,19 @@ class Logger {
                     found = true;
                 }
             }
-            // Without this, <tt>getSourceClass()</tt> and <tt>getSourceMethod()</tt> for every <tt>LogRecord</tt>
-            // would return <tt>hudson.plugins.dimensionsscm.Logger</tt> and <tt>debug</tt> respectively.
+            // The actual JDK logging method call.
             if (sourceClass != null && sourceMethod != null) {
-                LOGGER.logp(Level.FINE, sourceClass, sourceMethod, str);
+                if (thr == null) {
+                    LOGGER.logp(Level.FINE, sourceClass, sourceMethod, str);
+                } else {
+                    LOGGER.logp(Level.FINE, sourceClass, sourceMethod, str, thr);
+                }
             } else {
-                LOGGER.log(Level.FINE, str);
+                if (thr == null) {
+                    LOGGER.log(Level.FINE, str);
+                } else {
+                    LOGGER.log(Level.FINE, str, thr);
+                }
             }
         }
     }

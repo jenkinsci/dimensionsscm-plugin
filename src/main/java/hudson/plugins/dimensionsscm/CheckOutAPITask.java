@@ -95,8 +95,6 @@ import java.io.PrintStream;
 
 /**
  * Update local work area using Java API.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class CheckOutAPITask extends GenericAPITask {
     private final boolean bFreshBuild;
@@ -279,7 +277,9 @@ public class CheckOutAPITask extends GenericAPITask {
                 log.flush();
             }
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again"));
+            String message = Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             bRet = false;
         }
         return bRet;

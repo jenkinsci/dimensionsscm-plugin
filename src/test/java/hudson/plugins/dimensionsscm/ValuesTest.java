@@ -89,8 +89,6 @@ import org.junit.Test;
 
 /**
  * Test for Values class.
- *
- * @author David Conneely
  */
 public class ValuesTest {
     private static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -159,7 +157,7 @@ public class ValuesTest {
     }
 
     private static final String[][] STRING_ARRAY_INPUTS = { null, EMPTY_STRING_ARRAY,
-            new String[] { null, "", "   " }, new String[] { null, "",  "Value 1 ", "    Value 2    ", "  " } };
+            new String[] { null, "", "   " }, new String[] { null, "", "Value 1 ", "    Value 2    ", "  " } };
     private static final String[] NOT_EMPTY_OR_ELSE_DEFAULTS = new String[] { "default" };
     private static final String[][] NOT_EMPTY_OR_ELSE_EXPECTS = new String[][] { NOT_EMPTY_OR_ELSE_DEFAULTS,
             NOT_EMPTY_OR_ELSE_DEFAULTS, STRING_ARRAY_INPUTS[2], STRING_ARRAY_INPUTS[3] };
@@ -177,19 +175,16 @@ public class ValuesTest {
 
     @Test
     public void testExceptionMessage() {
-        Assert.assertEquals("First message (null: no message)",
-                Values.exceptionMessage("First message", null, "no message"));
+        Assert.assertEquals("First message (null: no message)", Values.exceptionMessage("First message", null, "no message"));
         try {
             throw new UnsupportedOperationException();
         } catch (UnsupportedOperationException e) {
-            Assert.assertEquals("Second message (UnsupportedOperationException: no message)",
-                    Values.exceptionMessage("Second message", e, "no message"));
+            Assert.assertEquals("Second message (UnsupportedOperationException: no message)", Values.exceptionMessage("Second message", e, "no message"));
         }
         try {
             throw new IllegalArgumentException("Third message");
         } catch (IllegalArgumentException e) {
-            Assert.assertEquals("Fourth message (IllegalArgumentException: Third message)",
-                    Values.exceptionMessage("Fourth message", e, "no message"));
+            Assert.assertEquals("Fourth message (IllegalArgumentException: Third message)", Values.exceptionMessage("Fourth message", e, "no message"));
         }
     }
 
@@ -203,12 +198,14 @@ public class ValuesTest {
         try {
             Values.requireCondition(arg1, arg1 > 0, "arg1 must be positive");
             Assert.fail();
-        } catch (IllegalArgumentException e) { }
+        } catch (IllegalArgumentException e) {
+        }
         Assert.assertEquals("A", Values.requireCondition(arg2, arg2.length() <= 10, "arg2 must be 10 or fewer chars"));
         try {
             Values.requireCondition(arg3, arg3.length() <= 10, "arg3 must be 10 or fewer chars");
             Assert.fail();
-        } catch (IllegalArgumentException e) { }
+        } catch (IllegalArgumentException e) {
+        }
     }
 
     /**
@@ -222,7 +219,8 @@ public class ValuesTest {
         try {
             Values.requireNotNull(arg1, "arg1 must be non-null");
             Assert.fail();
-        } catch (NullPointerException e) { }
+        } catch (NullPointerException e) {
+        }
     }
 
     @Test

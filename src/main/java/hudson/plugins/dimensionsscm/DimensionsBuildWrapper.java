@@ -104,8 +104,6 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * A BuildWrapper to lock an SCM project (not stream) for the duration of the execution of a Jenkins build.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class DimensionsBuildWrapper extends BuildWrapper {
     private DimensionsSCM scm;
@@ -141,8 +139,8 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             if (scm == null) {
                 scm = (DimensionsSCM) build.getProject().getScm();
             }
-            Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
-                    scm.getJobServer());
+            Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is "
+                    + scm.getJobServer());
             try {
                 key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
                         scm.getJobServer(), build);
@@ -158,14 +156,17 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                     }
                 }
             } catch (Exception e) {
-                listener.fatalError(Values.exceptionMessage("Unable to lock Dimensions project", e, "no message"));
+                String message = Values.exceptionMessage("Unable to lock Dimensions project", e, "no message");
+                listener.fatalError(message);
+                Logger.debug(message, e);
             } finally {
                 scm.getAPI().logout(key, build);
             }
         } else {
-            listener.fatalError("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
+            String message = "[DIMENSIONS] This plugin only works with a Dimensions SCM engine";
+            listener.fatalError(message);
             build.setResult(Result.FAILURE);
-            throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
+            throw new IOException(message);
         }
         return new EnvironmentImpl(build);
     }
@@ -250,8 +251,8 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             long key = -1L;
             if (scm != null) {
                 Logger.debug("Invoking build tearDown callout " + this.getClass().getName());
-                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
-                        scm.getJobServer());
+                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is "
+                        + scm.getJobServer());
                 try {
                     key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
                             scm.getJobServer(), build);
@@ -272,7 +273,9 @@ public class DimensionsBuildWrapper extends BuildWrapper {
                         return false;
                     }
                 } catch (Exception e) {
-                    listener.fatalError(Values.exceptionMessage("Unable to unlock Dimensions project", e, "no message"));
+                    String message = Values.exceptionMessage("Unable to unlock Dimensions project", e, "no message");
+                    listener.fatalError(message);
+                    Logger.debug(message, e);
                     build.setResult(Result.FAILURE);
                     return false;
                 } finally {

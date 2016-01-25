@@ -106,8 +106,6 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * A Notifier that can deliver built artifacts back to the SCM project/stream as a post-build step in a Jenkins build.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class ArtifactUploader extends Notifier implements Serializable {
     private static final String[] DEFAULT_INCLUDES_REGEX = new String[] { ".*" };
@@ -196,6 +194,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
     /**
      * Gets force checkin flag.
+     *
      * @return forceCheckIn
      */
     public boolean isForceCheckIn() {
@@ -312,7 +311,9 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 build.setResult(Result.FAILURE);
             }
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to load build artifacts into Dimensions", e, "no message"));
+            String message = Values.exceptionMessage("Unable to load build artifacts into Dimensions", e, "no message");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             build.setResult(Result.FAILURE);
             return false;
         }
@@ -339,7 +340,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
         }
 
         /**
-         *  This builder can be used with all project types.
+         * This builder can be used with all project types.
          */
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {

@@ -103,14 +103,24 @@ import org.xml.sax.SAXException;
 
 /**
  * Parses a changelog file.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class DimensionsChangeLogParser extends ChangeLogParser {
-    /** When move to 1.568+, change method signature to (Run build, RepositoryBrowser<?> browser, File changelogFile). */
+    /**
+     * When move to 1.568+, deprecate the AbstractBuild method and add the following method signature:
+     *
+     * <pre>
+     * @Override
+     * public DimensionsChangeSetList parse(Run run, RepositoryBrowser<?> browser, File changelogFile) throws IOException, SAXException { return new
+     * DimensionsChangeSetList(run, browser, digest(changelogFile)); }
+     * </pre>
+     */
     @Override
     public DimensionsChangeSetList parse(AbstractBuild build, File changelogFile) throws IOException, SAXException {
         RepositoryBrowser<?> browser = build.getProject().getScm().getEffectiveBrowser();
+        return new DimensionsChangeSetList(build, browser, digest(changelogFile));
+    }
+
+    private List<DimensionsChangeSet> digest(File changelogFile) throws IOException, SAXException {
         Logger.debug("Looking for '" + changelogFile.getPath() + "'");
         if (!changelogFile.canRead()) {
             String message = "Specified changelog file does not exist or is not readable: " + changelogFile.getPath();
@@ -126,7 +136,7 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
             // If that fails, it may be a changelog file created by <= 0.8.11 using platform default encoding.
             changesets = digest(changelogFile, null);
         }
-        return new DimensionsChangeSetList(build, browser, changesets);
+        return changesets;
     }
 
     private List<DimensionsChangeSet> digest(File changelogFile, String charEncoding)

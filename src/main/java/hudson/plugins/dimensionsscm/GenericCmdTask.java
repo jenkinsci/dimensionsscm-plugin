@@ -94,8 +94,6 @@ import java.io.PrintWriter;
 
 /**
  * Base class for Callables using dmcli command-line.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 abstract class GenericCmdTask extends BaseCallable {
     private final FilePath workspace;
@@ -104,7 +102,7 @@ abstract class GenericCmdTask extends BaseCallable {
     final TaskListener listener;
 
     private final String userName;
-    private final String passwd ;
+    private final String passwd;
     private final String database;
     private final String server;
 
@@ -116,15 +114,15 @@ abstract class GenericCmdTask extends BaseCallable {
     /**
      * Utility routine to look for an executable in the path.
      */
-     private File getExecutable(String exeName) {
+    private File getExecutable(String exeName) {
         // Get the path environment.
         return PathUtils.getExecutable(exeName);
-     }
+    }
 
     /**
      * Utility routine to create parameter file for dmcli.
      */
-     private File createParamFile() throws IOException {
+    private File createParamFile() throws IOException {
         PrintWriter fmtWriter = null;
         File tmpFile = null;
 

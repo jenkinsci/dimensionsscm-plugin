@@ -94,20 +94,31 @@ import java.util.List;
 
 /**
  * Represents a list of changes from the changelog.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public final class DimensionsChangeSetList extends ChangeLogSet<DimensionsChangeSet> {
     private final List<DimensionsChangeSet> changes;
 
-    DimensionsChangeSetList(Run build, RepositoryBrowser<?> browser, List<DimensionsChangeSet> changes) {
-        /* When move to 1.568+, call super((Run) build, browser) as Run may be something other than an AbstractBuild instance. */
-        super((AbstractBuild) build);
+    /**
+     * When move to 1.568+, modify the following constructor:
+     *
+     * <pre>
+     * DimensionsChangeSetList(Run run, RepositoryBrowser<?> browser, List<DimensionsChangeSet> changes) {
+     *     super(run, browser);
+     *     this.changes = incorporateChanges(changes, this);
+     * }
+     * </pre>
+     */
+    DimensionsChangeSetList(AbstractBuild build, RepositoryBrowser<?> browser, List<DimensionsChangeSet> changes) {
+        super(build);
+        this.changes = incorporateChanges(changes, this);
+    }
+
+    private static List<DimensionsChangeSet> incorporateChanges(List<DimensionsChangeSet> changes, DimensionsChangeSetList parent) {
         Collections.reverse(changes);
-        this.changes = Collections.unmodifiableList(changes);
         for (DimensionsChangeSet change : changes) {
-            change.setParent(this);
+            change.setParent(parent);
         }
+        return Collections.unmodifiableList(changes);
     }
 
     @Override

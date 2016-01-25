@@ -94,8 +94,6 @@ import java.io.PrintWriter;
 
 /**
  * Update local work area using dmcli command-line.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class CheckOutCmdTask extends GenericCmdTask {
     private final boolean bFreshBuild;
@@ -155,8 +153,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
                     cmd += "/CHANGE_DOC_IDS=(" + requests + ") ";
                 }
                 cmd += "/WORKSET=\"" + projectId + "\" ";
-            }
-            else if (baseline != null) {
+            } else if (baseline != null) {
                 cmd += "/BASELINE=\"" + baseline + "\"";
             } else {
                 cmd += "/WORKSET=\"" + projectId + "\" ";
@@ -215,7 +212,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
         this.isForce = isForce;
         this.isExpand = isExpand;
         this.isNoMetadata = isNoMetadata;
-	this.isNoTouch = isNoTouch;
+        this.isNoTouch = isNoTouch;
         this.folders = folders;
         this.requests = requestId;
         this.baseline = baselineId;
@@ -350,8 +347,8 @@ public class CheckOutCmdTask extends GenericCmdTask {
                     }
 
                     if (requests == null) {
-                        listener.getLogger().println("[DIMENSIONS] Checking out directory '" +
-                                (projDir != null ? projDir : "/") + "'...");
+                        listener.getLogger().println("[DIMENSIONS] Checking out directory '"
+                                + (projDir != null ? projDir : "/") + "'...");
                         listener.getLogger().flush();
                     }
 
@@ -410,7 +407,9 @@ public class CheckOutCmdTask extends GenericCmdTask {
             return bRet;
         } catch (Exception e) {
             param.delete();
-            listener.fatalError(Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again"));
+            String message = Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             return false;
         }
     }

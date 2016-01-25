@@ -92,8 +92,6 @@ import java.io.IOException;
 
 /**
  * Base class for Callables using Java API.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 abstract class GenericAPITask extends BaseCallable {
     private final FilePath workspace;

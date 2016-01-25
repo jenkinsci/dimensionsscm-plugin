@@ -99,8 +99,6 @@ import org.kohsuke.stapler.export.ExportedBean;
 
 /**
  * Represents an individual change in the changelog.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 @ExportedBean(defaultVisibility = 999)
 public class DimensionsChangeSet extends ChangeLogSet.Entry {
@@ -331,7 +329,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         }
     }
 
-    @ExportedBean(defaultVisibility=999)
+    @ExportedBean(defaultVisibility = 999)
     public static class DmRequests {
         private String identifier;
         private String url;

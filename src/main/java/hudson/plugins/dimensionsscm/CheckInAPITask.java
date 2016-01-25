@@ -97,8 +97,6 @@ import java.io.PrintWriter;
 
 /**
  * Deliver files to Dimensions CM repository using Java API.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class CheckInAPITask extends GenericAPITask {
     private final boolean isForceTip;
@@ -165,8 +163,8 @@ public class CheckInAPITask extends GenericAPITask {
             listener.getLogger().flush();
 
             if (validFiles.length > 0) {
-                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \"" + projectId +
-                        "\"...");
+                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \"" + projectId
+                        + "\"...");
                 listener.getLogger().flush();
 
                 PrintWriter fmtWriter = null;
@@ -180,7 +178,7 @@ public class CheckInAPITask extends GenericAPITask {
                     for (File f : validFiles) {
                         if (f.isDirectory()) {
                         } else {
-                            Logger.debug("Found file '"+ f.getAbsolutePath() + "'");
+                            Logger.debug("Found file '" + f.getAbsolutePath() + "'");
                             fmtWriter.println(f.getAbsolutePath());
                         }
                     }
@@ -236,7 +234,9 @@ public class CheckInAPITask extends GenericAPITask {
             }
             listener.getLogger().flush();
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to run checkin callout", e, "no message - try again"));
+            String message = Values.exceptionMessage("Unable to run checkin callout", e, "no message - try again");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             bRet = false;
         }
         return bRet;

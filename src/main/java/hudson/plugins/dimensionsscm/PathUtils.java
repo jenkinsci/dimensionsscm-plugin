@@ -88,8 +88,6 @@ import java.io.File;
 
 /**
  * Utility method for finding an executable on the system path.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 final class PathUtils {
     private PathUtils() {
@@ -114,6 +112,7 @@ final class PathUtils {
             path = System.getenv("Path");
         }
         if (path == null) {
+            Logger.debug("getExecutable file [" + exec + "] not found in null path");
             return null;
         }
 
@@ -129,6 +128,9 @@ final class PathUtils {
                 break;
             }
         }
+        if (exe == null) {
+            Logger.debug("getExecutable file [" + exec + "] not found in path [" + path + "]");
+        }
         return exe;
-     }
+    }
 }

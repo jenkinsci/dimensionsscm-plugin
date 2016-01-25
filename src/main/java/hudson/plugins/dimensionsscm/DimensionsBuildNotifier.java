@@ -104,8 +104,6 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * A Notifier that can create, deploy, build or action a baseline (from the SCM project) as a post-build step in a Jenkins build.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class DimensionsBuildNotifier extends Notifier implements Serializable {
     private DimensionsSCM scm;
@@ -306,8 +304,8 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 if (scm == null) {
                     scm = (DimensionsSCM) build.getProject().getScm();
                 }
-                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
-                        scm.getJobServer());
+                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is "
+                        + scm.getJobServer());
                 key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
                         scm.getJobServer(), build);
                 if (key > 0L) {
@@ -322,9 +320,9 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     }
 
                     if (blnScope != null && blnScope.length() > 0 && blnScope.equals("REVISED")) {
-                        if (requests == null || blnId == null ||
-                            requests.length() == 0 ||
-                            blnId.length() == 0) {
+                        if (requests == null || blnId == null
+                                || requests.length() == 0
+                                || blnId.length() == 0) {
                             listener.fatalError("[DIMENSIONS] A revised baseline is only valid if you have specified DM_TARGET_REQUEST and DM_BASELINE.");
                             build.setResult(Result.FAILURE);
                             return false;
@@ -406,7 +404,9 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 }
             }
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to tag build in Dimensions", e, "no message"));
+            String message = Values.exceptionMessage("Unable to tag build in Dimensions", e, "no message");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             build.setResult(Result.FAILURE);
             return false;
         } finally {

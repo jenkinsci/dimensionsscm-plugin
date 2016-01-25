@@ -95,8 +95,6 @@ import java.util.TimeZone;
  * Utility methods for converting Date objects to and from strings in a valid
  * date format, and also validating that strings are in a supported Oracle-like
  * date format. This class uses Locale.US at the moment - may need changing.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 final class DateUtils {
     private static final String DATE_PATTERN = "dd-MMM-yyyy";

@@ -93,8 +93,6 @@ import java.io.PrintWriter;
 
 /**
  * Deliver files to Dimensions CM repository using dmcli command-line.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class CheckInCmdTask extends GenericCmdTask {
     private final boolean forceCheckIn;
@@ -130,8 +128,8 @@ public class CheckInCmdTask extends GenericCmdTask {
             }
             ciCmd += " /USER_FILELIST=\"" + userFilelist.getAbsolutePath() + "\"";
             ciCmd += " /WORKSET=\"" + projectId + "\"";
-            ciCmd += " /COMMENT=\"Build artifacts delivered by Jenkins for job '" + jobId + "' - build " +
-                    buildNo + "\"";
+            ciCmd += " /COMMENT=\"Build artifacts delivered by Jenkins for job '" + jobId + "' - build "
+                    + buildNo + "\"";
             ciCmd += " /USER_DIRECTORY=\"" + area.getAbsolutePath() + "\"";
             if (requests != null && requests.length() > 0) {
                 if (requests.indexOf(',') == -1) {
@@ -197,7 +195,7 @@ public class CheckInCmdTask extends GenericCmdTask {
             listener.getLogger().flush();
 
             FilePath wd = new FilePath(area);
-            File dir = new File (wd.getRemote());
+            File dir = new File(wd.getRemote());
             File[] validFiles = new File[0];
 
             if (patternType.equals("regEx")) {
@@ -254,8 +252,8 @@ public class CheckInCmdTask extends GenericCmdTask {
                     return false;
                 }
 
-                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \"" +
-                        projectId + "\"...");
+                listener.getLogger().println("[DIMENSIONS] Loading files into Dimensions project \""
+                        + projectId + "\"...");
                 listener.getLogger().flush();
 
                 /* Execute a Dimensions command */
@@ -302,7 +300,9 @@ public class CheckInCmdTask extends GenericCmdTask {
             return bRet;
         } catch (Exception e) {
             param.delete();
-            listener.fatalError(Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again"));
+            String message = Values.exceptionMessage("Unable to run checkin callout", e, "no message - try again");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             bRet = false;
         }
         return bRet;

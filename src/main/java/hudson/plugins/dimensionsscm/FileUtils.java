@@ -92,8 +92,6 @@ import java.io.IOException;
 
 /**
  * Utility method to read a file into a byte array.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 final class FileUtils {
     private FileUtils() {

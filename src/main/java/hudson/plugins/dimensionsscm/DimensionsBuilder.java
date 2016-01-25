@@ -101,8 +101,6 @@ import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * A Builder to launch a Serena Build command on the SCM project as a step in a Jenkins build.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class DimensionsBuilder extends Builder {
     private DimensionsSCM scm;
@@ -238,8 +236,8 @@ public class DimensionsBuilder extends Builder {
                 if (scm == null) {
                     scm = (DimensionsSCM) build.getParent().getScm();
                 }
-                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " +
-                        scm.getJobServer());
+                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is "
+                        + scm.getJobServer());
                 Logger.debug("Running a project build step...");
                 key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
                         scm.getJobServer(), build);
@@ -280,7 +278,9 @@ public class DimensionsBuilder extends Builder {
                 }
             }
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to tag build in Dimensions", e, "no message"));
+            String message = Values.exceptionMessage("Unable to tag build in Dimensions", e, "no message");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             build.setResult(Result.FAILURE);
             return false;
         } finally {
@@ -379,4 +379,3 @@ public class DimensionsBuilder extends Builder {
         }
     }
 }
-

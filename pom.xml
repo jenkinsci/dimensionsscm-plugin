@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -16,15 +17,12 @@
 
     <developers>
         <developer>
-            <!-- David Conneely is the current plugin maintainer. -->
+            <!--
+            Tim Payne (tpayne) created the original Jenkins Dimensions Plugin and maintained it for many years.
+            Tim is now busy doing more interesting things, so the Plugin maintainer is currently:
+            -->
             <id>dconneely</id>
             <name>David Conneely</name>
-        </developer>
-        <developer>
-            <!-- Tim Payne created the plugin and maintained it for many years,
-                 but he is now doing more interesting things :). -->
-            <id>tpayne</id>
-            <name>Tim Payne</name>
         </developer>
     </developers>
 
@@ -53,6 +51,7 @@
             <url>http://repo.jenkins-ci.org/public/</url>
         </repository>
     </repositories>
+
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
@@ -61,16 +60,24 @@
     </pluginRepositories>
 
     <dependencies>
+        <!--
+        The Serena Dimensions CM dmclient.jar file must be installed into your local Maven repository.
+        Note the following does not mean that version 14.2 or later of the API is required:
+        Older JARs (back to 10.1.3) also work, because the plugin only calls older API classes and methods.
+        -->
         <dependency>
-            <!-- The Serena Dimensions CM dmclient.jar file must be installed into your local Maven repository. -->
-            <groupId>com.serena</groupId>
+            <groupId>com.serena.dimensions</groupId>
             <artifactId>dmclient</artifactId>
-            <version>12.2</version>
+            <version>14.2.0</version>
             <scope>provided</scope>
         </dependency>
+        <!--
+        SECURITY-144-compat is a compatibility layer to be removed when parent POM reaches version 1.587 or 1.580.1.
+        See https://wiki.jenkins-ci.org/display/JENKINS/Slave+To+Master+Access+Control
+        Intend to do this very soon, but sorting out a few issues first so that users who can't upgrade
+        to 1.580.1 / 1.587 or later can continue to use an older Jenkins Dimensions Plugin.
+        -->
         <dependency>
-            <!-- Compatibility layer to be removed when parent POM reaches version 1.587.
-                 See https://wiki.jenkins-ci.org/display/JENKINS/Slave+To+Master+Access+Control -->
             <groupId>org.jenkins-ci</groupId>
             <artifactId>SECURITY-144-compat</artifactId>
             <version>1.0</version>

@@ -98,7 +98,6 @@ import hudson.model.ModelObject;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
 import hudson.scm.PollingResult.Change;
@@ -119,7 +118,6 @@ import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.logging.Level;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -130,8 +128,6 @@ import org.kohsuke.stapler.StaplerResponse;
 
 /**
  * An SCM that can poll, browse and update from Dimensions CM.
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class DimensionsSCM extends SCM implements Serializable {
     private final String project;
@@ -185,11 +181,11 @@ public class DimensionsSCM extends SCM implements Serializable {
             final Jenkins jenkins = Jenkins.getInstance();
             final String path = jenkins != null ? new File(jenkins.getRootDir(),
                     "plugins/dimensionsscm/WEB-INF/lib").getAbsolutePath() : "$JENKINS_HOME/plugins/dimensionsscm/WEB-INF/lib";
-            throw (NoClassDefFoundError) new NoClassDefFoundError("\r\n\r\n#\r\n" +
-                    "# Check the required JAR files (darius.jar, dmclient.jar, dmfile.jar, dmnet.jar) were copied to\r\n#\r\n" +
-                    "#     '" + path + "'\r\n#\r\n" +
-                    "# directory as described in the 'Installation' section of the Dimensions Plugin wiki page:\r\n#\r\n" +
-                    "#     https://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin\r\n#\r\n").initCause(e);
+            throw (NoClassDefFoundError) new NoClassDefFoundError("\r\n\r\n#\r\n"
+                    + "# Check the required JAR files (darius.jar, dmclient.jar, dmfile.jar, dmnet.jar) were copied to\r\n#\r\n"
+                    + "#     '" + path + "'\r\n#\r\n"
+                    + "# directory as described in the 'Installation' section of the Dimensions Plugin wiki page:\r\n#\r\n"
+                    + "#     https://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin\r\n#\r\n").initCause(e);
         }
     }
 
@@ -209,6 +205,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
     /**
      * Gets the unexpanded project name for the connection.
+     *
      * @return the project spec
      */
     public String getProject() {
@@ -217,6 +214,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
     /**
      * Gets the expanded project name for the connection. Any variables in the project value will be expanded.
+     *
      * @return the project spec without a trailing version number (if there is one).
      */
     public String getProjectName(Run<?, ?> run, TaskListener log) {
@@ -228,6 +226,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     /**
      * Gets the expanded project name and version for the connection. Any variables in the project value will be
      * expanded.
+     *
      * @return the project spec including its trailing version (if there is one).
      */
     public String getProjectVersion(Run<?, ?> run, TaskListener log) {
@@ -427,8 +426,8 @@ public class DimensionsSCM extends SCM implements Serializable {
             String directory, String permissions, String eol, boolean canJobExpand, boolean canJobNoMetadata,
             boolean canJobNoTouch, boolean forceAsSlave) {
         // Check the folders specified have data specified.
-        this.folders = folders != null ? Values.notEmptyOrElse(Values.trimCopy(folders), DEFAULT_FOLDERS) :
-                (Values.hasText(directory) ? new String[] { directory } : DEFAULT_FOLDERS);
+        this.folders = folders != null ? Values.notEmptyOrElse(Values.trimCopy(folders), DEFAULT_FOLDERS)
+                : (Values.hasText(directory) ? new String[] { directory } : DEFAULT_FOLDERS);
         this.pathsToExclude = pathsToExclude != null ? Values.notEmptyOrElse(Values.trimCopy(pathsToExclude),
                 EMPTY_STRING_ARRAY) : EMPTY_STRING_ARRAY;
 
@@ -457,8 +456,8 @@ public class DimensionsSCM extends SCM implements Serializable {
         this.jobTimeZone = Values.textOrElse(jobTimeZone, getDescriptor().getTimeZone());
         this.jobWebUrl = Values.textOrElse(jobWebUrl, getDescriptor().getWebUrl());
 
-        Logger.debug("Starting job for project '" + this.project + "' ('" + this.folders.length + "')" +
-                ", connecting to " + this.jobServer + "-" + this.jobUserName + ":" + this.jobDatabase);
+        Logger.debug("Starting job for project '" + this.project + "' ('" + this.folders.length + "')"
+                + ", connecting to " + this.jobServer + "-" + this.jobUserName + ":" + this.jobDatabase);
     }
 
     /**
@@ -479,9 +478,9 @@ public class DimensionsSCM extends SCM implements Serializable {
         try {
             // Load other Dimensions plugins if set.
             DimensionsBuildWrapper.DescriptorImpl bwplugin = (DimensionsBuildWrapper.DescriptorImpl)
-                                Hudson.getInstance().getDescriptor(DimensionsBuildWrapper.class);
+                    Hudson.getInstance().getDescriptor(DimensionsBuildWrapper.class);
             DimensionsBuildNotifier.DescriptorImpl bnplugin = (DimensionsBuildNotifier.DescriptorImpl)
-                                Hudson.getInstance().getDescriptor(DimensionsBuildNotifier.class);
+                    Hudson.getInstance().getDescriptor(DimensionsBuildNotifier.class);
 
             String nodeName = build.getBuiltOn().getNodeName();
 
@@ -558,7 +557,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                 bRet = generateChangeSet(build, listener, changelogFile);
             }
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again"));
+            String message = Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             bRet = false;
         }
         return bRet;
@@ -581,14 +582,14 @@ public class DimensionsSCM extends SCM implements Serializable {
             //         build.getPreviousNotFailedBuild().getTimestamp() : null;
             Calendar nowDateCal = Calendar.getInstance();
 
-            TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0) ?
-                    TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
+            TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0)
+                    ? TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
             if (getJobTimeZone() != null && getJobTimeZone().length() > 0) {
                 Logger.debug("Job timezone setting is " + getJobTimeZone());
             }
-            Logger.debug("Log updates between " + (lastBuildCal != null ?
-                    DateUtils.getStrDate(lastBuildCal, tz) : "0") + " -> " + DateUtils.getStrDate(nowDateCal, tz) +
-                    " (" + tz.getID() + ")");
+            Logger.debug("Log updates between " + (lastBuildCal != null
+                    ? DateUtils.getStrDate(lastBuildCal, tz) : "0") + " -> " + DateUtils.getStrDate(nowDateCal, tz)
+                    + " (" + tz.getID() + ")");
 
             dmSCM.setLogger(listener.getLogger());
 
@@ -658,7 +659,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                 }
             }
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to run changelog callout", e, "no message - try again"));
+            String message = Values.exceptionMessage("Unable to run changelog callout", e, "no message - try again");
+            listener.fatalError(message);
+            Logger.debug(message, e);
             bRet = false;
         } finally {
             dmSCM.logout(key, build);
@@ -729,7 +732,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             return false;
         }
         if (project.getLastBuild() == null) {
-            LOGGER.log(Level.FINE, "There is no lastBuild, so returning true");
+            Logger.debug("There is no lastBuild, so returning true");
             return true;
         }
         DimensionsAPI dmSCM = getAPI();
@@ -737,14 +740,14 @@ public class DimensionsSCM extends SCM implements Serializable {
             Calendar lastBuildCal = project.getLastBuild().getTimestamp();
 
             Calendar nowDateCal = Calendar.getInstance();
-            TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0) ?
-                    TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
+            TimeZone tz = (getJobTimeZone() != null && getJobTimeZone().length() > 0)
+                    ? TimeZone.getTimeZone(getJobTimeZone()) : TimeZone.getDefault();
             if (getJobTimeZone() != null && getJobTimeZone().length() > 0) {
                 Logger.debug("Job timezone setting is " + getJobTimeZone());
             }
-            Logger.debug("Checking for any updates between " + (lastBuildCal != null ?
-                    DateUtils.getStrDate(lastBuildCal, tz) : "0") + " -> " + DateUtils.getStrDate(nowDateCal, tz) +
-                    " (" + tz.getID() + ")");
+            Logger.debug("Checking for any updates between " + (lastBuildCal != null
+                    ? DateUtils.getStrDate(lastBuildCal, tz) : "0") + " -> " + DateUtils.getStrDate(nowDateCal, tz)
+                    + " (" + tz.getID() + ")");
 
             dmSCM.setLogger(listener.getLogger());
 
@@ -765,21 +768,21 @@ public class DimensionsSCM extends SCM implements Serializable {
                     }
                     bChanged = dmSCM.hasRepositoryBeenUpdated(key, getProjectName(project.getLastBuild(), listener), dname,
                             lastBuildCal, nowDateCal, tz);
-                    if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.log(Level.FINE, "Polled folder '" + dname.getRemote() + "' between lastBuild="
+                    if (Logger.isDebugEnabled()) {
+                        Logger.debug("Polled folder '" + dname.getRemote() + "' between lastBuild="
                                 + Values.toString(lastBuildCal) + " and now=" + Values.toString(nowDateCal)
                                 + " where jobTimeZone=[" + getJobTimeZone() + "]. "
                                 + (bChanged ? "Found changes" : "No changes"));
                     }
                 }
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.log(Level.FINE, bChanged ? "Found changes in at least one of the folders, so returning true"
+                if (Logger.isDebugEnabled()) {
+                    Logger.debug(bChanged ? "Found changes in at least one of the folders, so returning true"
                             : "No changes in any of the folders, so returning false");
                 }
             }
         } catch (Exception e) {
             String message = Values.exceptionMessage("Unable to run pollChanges callout", e, "no message - try again");
-            LOGGER.log(Level.FINE, message, e);
+            Logger.debug(message, e);
             listener.fatalError(message);
             bChanged = false;
         } finally {
@@ -926,6 +929,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         /**
          * Gets the timezone for the connection.
+         *
          * @return the timezone
          */
         public String getTimeZone() {
@@ -934,6 +938,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         /**
          * Gets the web URL for the connection.
+         *
          * @return the web URL
          */
         public String getWebUrl() {
@@ -942,6 +947,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         /**
          * Gets the user ID for the connection.
+         *
          * @return the user ID of the user as whom to connect
          */
         public String getUserName() {
@@ -950,6 +956,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         /**
          * Gets the base database for the connection (as "NAME@CONNECTION").
+         *
          * @return the name of the base database to connect to
          */
         public String getDatabase() {
@@ -958,6 +965,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         /**
          * Gets the server for the connection.
+         *
          * @return the name of the server to connect to
          */
         public String getServer() {
@@ -966,6 +974,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         /**
          * Gets the password.
+         *
          * @return the password
          */
         public String getPasswd() {
@@ -974,6 +983,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         /**
          * Gets the update.
+         *
          * @return the update
          */
         public boolean isCanUpdate() {
@@ -1075,16 +1085,18 @@ public class DimensionsSCM extends SCM implements Serializable {
                 String xtz = (jobtimezone != null) ? jobtimezone : timezone;
                 Logger.debug("Invoking docheckTz - " + xtz);
                 TimeZone ctz = TimeZone.getTimeZone(xtz);
-                String  lmt = ctz.getID();
-                if (lmt.equalsIgnoreCase("GMT") && !(xtz.equalsIgnoreCase("GMT") ||
-                        xtz.equalsIgnoreCase("Greenwich Mean Time") || xtz.equalsIgnoreCase("UTC") ||
-                        xtz.equalsIgnoreCase("Coordinated Universal Time"))) {
+                String lmt = ctz.getID();
+                if (lmt.equalsIgnoreCase("GMT") && !(xtz.equalsIgnoreCase("GMT")
+                        || xtz.equalsIgnoreCase("Greenwich Mean Time") || xtz.equalsIgnoreCase("UTC")
+                        || xtz.equalsIgnoreCase("Coordinated Universal Time"))) {
                     return FormValidation.error("Timezone specified is not valid.");
                 } else {
                     return FormValidation.ok("Timezone test succeeded!");
                 }
             } catch (Exception e) {
-                return FormValidation.error(Values.exceptionMessage("Timezone check error", e, "no message"));
+                String message = Values.exceptionMessage("Timezone check error", e, "no message");
+                Logger.debug(message, e);
+                return FormValidation.error(message);
             }
         }
 
@@ -1107,10 +1119,10 @@ public class DimensionsSCM extends SCM implements Serializable {
                 String xuser = (jobuser != null) ? jobuser : user;
                 String xpasswd = (jobPasswd != null) ? jobPasswd : passwd;
                 String xdatabase = (jobDatabase != null) ? jobDatabase : database;
-                LOGGER.log(Level.FINE, "Server connection check to user [" + xuser +
-                        "], database [" + xdatabase + "], server [" + xserver + "]");
+                Logger.debug("Server connection check to user [" + xuser
+                        + "], database [" + xdatabase + "], server [" + xserver + "]");
                 long key = connectionCheck.login(xuser, xpasswd, xdatabase, xserver);
-                LOGGER.log(Level.FINE, "Server connection check returned key [" + key + "]");
+                Logger.debug("Server connection check returned key [" + key + "]");
                 if (key < 1L) {
                     return FormValidation.error("Connection test failed");
                 } else {
@@ -1119,7 +1131,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 }
             } catch (Exception e) {
                 String message = Values.exceptionMessage("Server connection check error", e, "no message");
-                LOGGER.log(Level.FINE, message, e);
+                Logger.debug(message, e);
                 return FormValidation.error(message);
             }
         }

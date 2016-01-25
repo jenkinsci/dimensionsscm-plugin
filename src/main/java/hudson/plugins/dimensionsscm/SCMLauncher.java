@@ -96,8 +96,6 @@ import java.io.Serializable;
 
 /**
  * Launch an executable (dmcli).
- * The Jenkins Dimensions Plugin provides support for Dimensions CM SCM repositories.
- * @author Tim Payne
  */
 public class SCMLauncher implements Serializable {
     private final String[] args;
