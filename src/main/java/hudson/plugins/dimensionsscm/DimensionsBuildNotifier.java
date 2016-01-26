@@ -280,34 +280,27 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
     }
 
     /**
-     * Run this one last.
-     * <p>
-     * {@inheritDoc}
+     * Changes the build result if baseline operation fails. (So cannot override {@linkplain #needsToRunAfterFinalized()}).
      */
     @Override
-    public boolean needsToRunAfterFinalized() {
-        return true;
-    }
-
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-            throws IOException, InterruptedException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
         Logger.debug("Invoking perform callout " + this.getClass().getName());
         long key = -1L;
         try {
             if (!(build.getProject().getScm() instanceof DimensionsSCM)) {
-                listener.fatalError("[DIMENSIONS] This plugin only works with the Dimensions SCM engine.");
+                final String message = "[DIMENSIONS] This plugin only works with the Dimensions SCM engine.";
+                listener.fatalError(message);
                 build.setResult(Result.FAILURE);
-                throw new IOException("[DIMENSIONS] This plugin only works with a Dimensions SCM engine");
+                throw new IOException(message);
             }
-            if (build.getResult() == Result.SUCCESS) {
+            // Create baseline if SUCCESS or UNSTABLE (could be just some Checkstyle violations).
+            Result result = build.getResult();
+            if (result != null && result.isBetterThan(Result.FAILURE)) {
                 if (scm == null) {
                     scm = (DimensionsSCM) build.getProject().getScm();
                 }
-                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is "
-                        + scm.getJobServer());
-                key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(),
-                        scm.getJobServer(), build);
+                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " + scm.getJobServer());
+                key = scm.getAPI().login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(), scm.getJobServer(), build);
                 if (key > 0L) {
                     VariableResolver<String> myResolver = build.getBuildVariableResolver();
                     String requests = myResolver.resolve("DM_TARGET_REQUEST");
@@ -320,9 +313,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     }
 
                     if (blnScope != null && blnScope.length() > 0 && blnScope.equals("REVISED")) {
-                        if (requests == null || blnId == null
-                                || requests.length() == 0
-                                || blnId.length() == 0) {
+                        if (requests == null || blnId == null || requests.length() == 0 || blnId.length() == 0) {
                             listener.fatalError("[DIMENSIONS] A revised baseline is only valid if you have specified DM_TARGET_REQUEST and DM_BASELINE.");
                             build.setResult(Result.FAILURE);
                             return false;
@@ -346,8 +337,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     if (canBaselineDeploy) {
                         listener.getLogger().println("[DIMENSIONS] Submitting a deployment job to Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().deployBaseline(key, scm.getProjectName(build, listener), build,
-                                deployState, cblId.toString());
+                        DimensionsResult res = scm.getAPI().deployBaseline(key, scm.getProjectName(build, listener), build, deployState, cblId.toString());
                         if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be deployed in Dimensions");
                             listener.getLogger().flush();
@@ -355,8 +345,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                             canBaselineDeploy = canBaselineAction = canBaselineBuild = false;
                         } else {
                             listener.getLogger().println("[DIMENSIONS] Build baseline was successfully deployed in Dimensions");
-                            listener.getLogger().println("[DIMENSIONS] (" + res.getMessage().replaceAll("\n",
-                                    "\n[DIMENSIONS] ") + ")");
+                            listener.getLogger().println("[DIMENSIONS] (" + res.getMessage().replaceAll("\n", "\n[DIMENSIONS] ") + ")");
                             listener.getLogger().flush();
                         }
                     }
@@ -366,8 +355,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                         listener.getLogger().println("[DIMENSIONS] Submitting a build job to Dimensions...");
                         listener.getLogger().flush();
                         DimensionsResult res = scm.getAPI().buildBaseline(key, area, scm.getProjectName(build, listener), batch,
-                                buildClean, buildConfig, buildOptions, capture, requests, buildTargets, build,
-                                cblId.toString());
+                                buildClean, buildConfig, buildOptions, capture, requests, buildTargets, build, cblId.toString());
                         if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be built in Dimensions");
                             listener.getLogger().flush();
@@ -375,8 +363,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                             canBaselineDeploy = canBaselineAction = canBaselineBuild = false;
                         } else {
                             listener.getLogger().println("[DIMENSIONS] Build baseline was successfully built in Dimensions");
-                            listener.getLogger().println("[DIMENSIONS] (" + res.getMessage().replaceAll("\n",
-                                    "\n[DIMENSIONS] ") + ")");
+                            listener.getLogger().println("[DIMENSIONS] (" + res.getMessage().replaceAll("\n", "\n[DIMENSIONS] ") + ")");
                             listener.getLogger().flush();
                         }
                     }
@@ -384,16 +371,14 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                     if (canBaselineAction) {
                         listener.getLogger().println("[DIMENSIONS] Actioning the build baseline in Dimensions...");
                         listener.getLogger().flush();
-                        DimensionsResult res = scm.getAPI().actionBaseline(key, scm.getProjectName(build, listener), build,
-                                actionState, cblId.toString());
+                        DimensionsResult res = scm.getAPI().actionBaseline(key, scm.getProjectName(build, listener), build, actionState, cblId.toString());
                         if (res == null) {
                             listener.getLogger().println("[DIMENSIONS] The build baseline failed to be actioned in Dimensions");
                             build.setResult(Result.FAILURE);
                             listener.getLogger().flush();
                         } else {
                             listener.getLogger().println("[DIMENSIONS] Build baseline was successfully actioned in Dimensions");
-                            listener.getLogger().println("[DIMENSIONS] (" + res.getMessage().replaceAll("\n",
-                                    "\n[DIMENSIONS] ") + ")");
+                            listener.getLogger().println("[DIMENSIONS] (" + res.getMessage().replaceAll("\n", "\n[DIMENSIONS] ") + ")");
                             listener.getLogger().flush();
                         }
                     }
@@ -428,7 +413,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
      */
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        /*
+        /**
          * Loads the descriptor
          */
         public DescriptorImpl() {
@@ -465,7 +450,6 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             DimensionsBuildNotifier notif = new DimensionsBuildNotifier(canDeploy, deploy, canAction, action, canBuild,
                     area, buildConfig, buildOptions, buildTargets, blnScope, blnTemplate, blnOwningPart, blnType,
                     blnName, batch, buildClean, capture);
-
             return notif;
         }
 
