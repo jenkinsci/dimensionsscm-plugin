@@ -39,12 +39,18 @@
     </issueManagement>
 
     <properties>
-        <!-- Manage maven-release-plugin version to 2.5.1 to work around Maven/Git issues.
-             See https://groups.google.com/forum/#!topic/jenkinsci-dev/qkmbl3HrYgk -->
-        <maven-release-plugin.version>2.5.1</maven-release-plugin.version>
+        <!--
+        Manage maven-release-plugin version to 2.5.3 to work around various Maven/Git issues.
+        * https://issues.apache.org/jira/browse/MRELEASE-812 - version 2.5
+        * https://issues.apache.org/jira/browse/MRELEASE-875 / 885 - version 2.5.1 (just in case)
+        * https://issues.apache.org/jira/browse/MRELEASE-902 - version 2.5.2
+        -->
+        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
     </properties>
 
-    <!-- Allows builds without custom Jenkins profile in ~/.m2/settings.xml. -->
+    <!--
+    Allows builds without custom Jenkins profile in ~/.m2/settings.xml.
+    -->
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
@@ -82,12 +88,14 @@
             <artifactId>SECURITY-144-compat</artifactId>
             <version>1.0</version>
         </dependency>
-        <!-- <dependency>
+        <!--
+        <dependency>
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>remoting</artifactId>
             <version>2.47</version>
             <scope>provided</scope>
-        </dependency> -->
+        </dependency>
+        -->
     </dependencies>
 
     <build>
