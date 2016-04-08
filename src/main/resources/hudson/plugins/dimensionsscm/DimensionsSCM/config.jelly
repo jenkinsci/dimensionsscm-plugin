@@ -53,8 +53,8 @@
     <f:advanced>
         <f:entry>
             <p>
-            The installation details provided below will override the default Dimensions SCM repository that may have
-            been configured. This installation will only be used with this job.
+            The installation details provided below is the Dimensions SCM repository for this job.
+            These details are used for this job regardless of the default Dimensions SCM repository.
             </p>
         </f:entry>
         <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
@@ -77,16 +77,8 @@
         <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
               with="dimensionsscm.jobUserName,dimensionsscm.jobPasswd,dimensionsscm.jobServer,dimensionsscm.jobDatabase"/>
 
-        <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use Update"
-                               checked="${scm.canJobUpdate}" default="true">
-            <f:entry>
-              <p>
-              If this option is checked, then the workspace will be automatically populated with the changed
-              code from Dimensions using the UPDATE or DOWNLOAD command. This option should only be used if
-              you intend this tool to populate the workspace for you.
-              </p>
-            </f:entry>
-
+        <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use update (note: overrides default setting)"
+                               checked="${scm.canJobUpdate}" default="true" help="/plugin/dimensionsscm/canupdate.html">
             <f:entry title="${%Expand file substitution variables}" help="/plugin/dimensionsscm/canexpand.html">
                <f:checkbox name="dimensionsscm.canJobExpand" default="false" checked="${scm.canJobExpand}"/>
             </f:entry>
