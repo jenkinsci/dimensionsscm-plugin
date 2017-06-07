@@ -91,6 +91,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.TimeZone;
@@ -115,6 +116,10 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         this("", "", "", "", "", "", null);
     }
 
+    /**
+     * `file`, `op`, `url` are the first changestep within the changeset.
+     * Note that `file` is a path name and revision, separated by a ';' character.
+     */
     public DimensionsChangeSet(String file, String developer, String op, String revision, String comment, String url,
             Calendar date) {
         this.identifier = file;
@@ -156,6 +161,11 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
     public Collection<DmRequests> getRequests() {
         return this.requests;
+    }
+
+    @Override
+    public Collection<DmFiles> getAffectedFiles() {
+        return Collections.unmodifiableCollection(items);
     }
 
     @Override
@@ -258,7 +268,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
      * List of changes made in the repository for this changeset.
      */
     @ExportedBean(defaultVisibility = 999)
-    public static class DmFiles {
+    public static class DmFiles implements ChangeLogSet.AffectedFile {
         private String fileName;
         private String operation;
         private String url;
@@ -268,6 +278,9 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
             this("", "", "");
         }
 
+        /**
+         * `fileName` is path name and revision separated by ';' character.
+         */
         public DmFiles(String fileName, String operation, String url) {
             this.fileName = fileName;
             this.url = url;
@@ -288,6 +301,9 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
             return this.operation;
         }
 
+        /**
+         * Returns the path name and revision (separated by ';') of the changed file.
+         */
         @Exported
         public String getFile() {
             if (this.fileName.length() == 0) {
@@ -301,6 +317,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
             return this.parent;
         }
 
+        @Override
         @Exported
         public EditType getEditType() {
             if (operation.equalsIgnoreCase("delete")) {
@@ -312,14 +329,38 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
             }
         }
 
-        public void setUrl(String url) {
-            this.url = url;
+        /**
+         * Returns just the path name of the changed file.
+         */
+        @Override
+        public String getPath() {
+            return strip(fileName);
         }
 
-        public void setOperation(String operation) {
-            this.operation = operation;
+        /**
+         * Removes leading '/'s and trailing ";revision" from `fileName`.
+         */
+        static String strip(String fileName) {
+            if (fileName == null) {
+                return "";
+            }
+            // Strip leading '/'.
+            int from = 0;
+            int to = fileName.length();
+            while (from < to && fileName.charAt(from) == '/') {
+                ++from;
+            }
+            // Strip ";revision".
+            int sc = fileName.lastIndexOf(';');
+            if (sc >= from) {
+                to = sc;
+            }
+            return fileName.substring(from, to);
         }
 
+        /**
+         * Set the `fileName`, which is the path name and revision, separated by ';'.
+         */
         public void setFile(String fileName) {
             this.fileName = fileName;
         }

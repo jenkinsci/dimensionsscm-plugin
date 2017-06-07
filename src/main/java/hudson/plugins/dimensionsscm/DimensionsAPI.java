@@ -1722,10 +1722,10 @@ public class DimensionsAPI implements Serializable {
      * @param projectName Name of the project
      * @return boolean
      */
-    private boolean isStream(DimensionsConnection connection, final String projectId) {
+    private boolean isStream(DimensionsConnection connection, final String projectName) {
         if (connection != null) {
             DimensionsObjectFactory fc = connection.getObjectFactory();
-            Project proj = fc.getProject(projectId.toUpperCase(Values.ROOT_LOCALE));
+            Project proj = fc.getProject(projectName.toUpperCase(Values.ROOT_LOCALE));
             if (proj != null) {
                 proj.queryAttribute(SystemAttributes.WSET_IS_STREAM);
                 Boolean isStream = (Boolean) proj.getAttribute(SystemAttributes.WSET_IS_STREAM);
@@ -1748,7 +1748,7 @@ public class DimensionsAPI implements Serializable {
      * @return List
      * @throws DimensionsRuntimeException
      */
-    public List getItemsInRequests(DimensionsConnection connection, final String projName, final String requests,
+    public List getItemsInRequests(DimensionsConnection connection, final String projectName, final String requests,
             final String dateAfter, final String dateBefore) throws DimensionsRuntimeException {
         List items = null;
         int[] attrs = getItemFileAttributes(true);
@@ -1775,7 +1775,7 @@ public class DimensionsAPI implements Serializable {
             filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
 
             if (dateAfter != null) {
-                if (!isStream(connection, projName)) {
+                if (!isStream(connection, projectName)) {
                     filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
                 } else {
                     filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
@@ -1783,7 +1783,7 @@ public class DimensionsAPI implements Serializable {
             }
 
             if (dateBefore != null) {
-                if (!isStream(connection, projName)) {
+                if (!isStream(connection, projectName)) {
                     filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
                 } else {
                     filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
@@ -1804,7 +1804,7 @@ public class DimensionsAPI implements Serializable {
                                 + "\" children in repository");
                     }
                     Logger.debug("Request has " + requestList.size() + " elements to process");
-                    Project projectObj = connection.getObjectFactory().getProject(projName);
+                    Project projectObj = connection.getObjectFactory().getProject(projectName);
                     for (int i = 0; i < requestList.size(); i++) {
                         Request req = (Request) requestList.get(i);
                         Logger.debug("Request " + i + " is \"" + req.getName() + "\"");
