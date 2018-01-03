@@ -1277,18 +1277,18 @@ public class DimensionsAPI implements Serializable {
                     Request req = (Request) obj.getObject();
 
                     // Which attributes do I want.
-                    req.queryAttribute(new int[] { SystemAttributes.TITLE, SystemAttributes.DESCRIPTION,
-                        SystemAttributes.OBJECT_SPEC /* , SBM_ID, SBM_LINK */ });
-
-                    //String requestUrl = (String) req.getAttribute(SBM_LINK);
-                    //String objectId = (String) req.getAttribute(SBM_ID);
+                    req.queryAttribute(new int[] {
+                        SystemAttributes.OBJECT_SPEC,
+                        SystemAttributes.TITLE
+                        /* JENKINS-48645: SystemAttributes.DESCRIPTION */
+                    });
 
                     String objectId = (String) req.getAttribute(SystemAttributes.OBJECT_SPEC);
                     String requestUrl = constructRequestURL(objectId, url, getSCMDsn(), getSCMBaseDb());
-                    String titlex = (String) req.getAttribute(SystemAttributes.TITLE);
+                    String title = (String) req.getAttribute(SystemAttributes.TITLE);
 
-                    cs.addRequest(objectId, requestUrl, titlex);
-                    Logger.debug("Child Request Details IRT -" + objectId + " " + requestUrl + " " + titlex);
+                    cs.addRequest(objectId, requestUrl, title);
+                    Logger.debug("Child Request Details IRT -" + objectId + " " + requestUrl + " " + title);
                 } else {
                     Logger.debug("Child Request Details Ignored");
                 }
