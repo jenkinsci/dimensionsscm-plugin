@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -14,6 +16,14 @@
     <name>Jenkins Dimensions Plugin</name>
     <description>This plugin integrates the Dimensions CM SCM with Jenkins.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
+
+    <licenses>
+        <license>
+            <name>The MIT license</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <developers>
         <!--
@@ -62,6 +72,15 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
+        <repository>
+            <id>lib</id>
+            <url>file://${basedir}/lib</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -74,16 +93,28 @@
     <dependencies>
         <dependency>
             <!--
-            The Dimensions CM dmclient.jar file must be installed into your local Maven repository.
-            Note the following does not mean that a particular version of the API is required:
-            Older JARs (back to 10.1.3) also work, because the plugin only calls older API classes and methods.
-            dmclient-stub.jar contains only stub APIs with no implementation solely to allow the code to compile.
+            This dependency refers to the stub Dimensions CM Java API interfaces.
+
+            These are a minimal set of interfaces (where each interface has minimal
+            content, and no implementation) to allow the Jenkins Dimensions Plugin
+            to compile successfully.
+
+            This stub is not intended to be functional, only to allow compilation.
+
+            At runtime, the Dimensions CM Java API from a Dimensions CM installation
+            must be made available in the Jenkins Dimensions Plugin's classpath.
+
+            This stub should not be included in the built Jenkins Plugin because it
+            will prevent the real Dimensions CM Java API (copied from a Dimensions
+            CM installation) from working correctly.
+
+            The 'Installation' steps on the wiki page still apply. You must still
+            copy the API JAR files from your Dimensions CM Server into the
+            appropriate subdirectory of your Jenkins installation.
             -->
             <groupId>com.serena.dimensions</groupId>
             <artifactId>dmclient</artifactId>
-            <version>14.4.0-SNAPSHOT</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/dmclient-stub.jar</systemPath>
+            <version>DUMMY-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

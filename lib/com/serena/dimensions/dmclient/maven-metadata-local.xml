@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.serena.dimensions</groupId>
+  <artifactId>dmclient</artifactId>
+  <versioning>
+    <versions>
+      <version>DUMMY-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20180131194826</lastUpdated>
+  </versioning>
+</metadata>
