@@ -114,7 +114,8 @@
             -->
             <groupId>com.serena.dimensions</groupId>
             <artifactId>dmclient</artifactId>
-            <version>DUMMY-SNAPSHOT</version>
+	    <version>DUMMY-SNAPSHOT</version>
+	    <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
