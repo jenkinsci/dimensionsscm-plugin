@@ -53,6 +53,7 @@
         <java.level>6</java.level>
         <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
+        <findbugs.skip>true</findbugs.skip>
     </properties>
 
     <profiles>
