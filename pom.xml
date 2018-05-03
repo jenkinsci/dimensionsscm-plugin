@@ -119,4 +119,29 @@
 	    <scope>provided</scope>
         </dependency>
     </dependencies>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>display-info</id>
+                        <configuration>
+                            <rules>
+                                <requireReleaseDeps>
+                                    <!-- Prevent unexpected failures -->
+                                    <onlyWhenRelease>false</onlyWhenRelease>
+                                    <!-- This is a provided API dependency, so SNAPSHOT not an issue -->
+                                    <excludes combine.children="append">
+                                        <exclude>com.serena.dimensions:dmclient</exclude>
+                                    </excludes>
+                                </requireReleaseDeps>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
