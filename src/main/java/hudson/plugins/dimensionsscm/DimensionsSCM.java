@@ -23,6 +23,7 @@ import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
 import hudson.util.FormValidation;
 import hudson.util.Scrambler;
+import hudson.util.Secret;
 import hudson.util.VariableResolver;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -52,7 +53,8 @@ public class DimensionsSCM extends SCM implements Serializable {
     private final String eol;
 
     private final String jobUserName;
-    private final String jobPasswd;
+    private transient String jobPasswd;
+    private Secret jobPasswdSecret;
     private final String jobServer;
     private final String jobDatabase;
 
@@ -208,10 +210,14 @@ public class DimensionsSCM extends SCM implements Serializable {
     }
 
     /**
-     * Gets the password for the connection.
+     * Gets the password for the connection as a Secret instance.
      */
-    public String getJobPasswd() {
-        return Scrambler.descramble(jobPasswd);
+    public Secret getJobPasswd() {
+        if (jobPasswdSecret == null && jobPasswd != null) {
+            jobPasswdSecret = Secret.fromString(Scrambler.descramble(jobPasswd));
+            jobPasswd = null;
+        }
+        return jobPasswdSecret;
     }
 
     /**
@@ -356,8 +362,8 @@ public class DimensionsSCM extends SCM implements Serializable {
         this.jobServer = Values.textOrElse(jobServer, getDescriptor().getServer());
         this.jobUserName = Values.textOrElse(jobUserName, getDescriptor().getUserName());
         this.jobDatabase = Values.textOrElse(jobDatabase, getDescriptor().getDatabase());
-        String passwd = Values.textOrElse(jobPasswd, getDescriptor().getPasswd());
-        this.jobPasswd = Scrambler.scramble(passwd);
+        this.jobPasswd = null; // no longer used in config.xml serialization
+        this.jobPasswdSecret = (jobPasswd != null && jobPasswd.length() != 0) ? Secret.fromString(jobPasswd) : getDescriptor().getPasswd();
 
         this.canJobUpdate = Values.hasText(jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();
 
@@ -744,7 +750,8 @@ public class DimensionsSCM extends SCM implements Serializable {
     public static class DescriptorImpl extends SCMDescriptor<DimensionsSCM> implements ModelObject {
         private String server;
         private String userName;
-        private String passwd;
+        private transient String passwd;
+        private Secret passwdSecret;
         private String database;
 
         private String timeZone;
@@ -775,7 +782,8 @@ public class DimensionsSCM extends SCM implements Serializable {
         public boolean configure(StaplerRequest req, JSONObject jobj) throws FormException {
             // Get the values and check them.
             userName = req.getParameter("dimensionsscm.userName");
-            passwd = req.getParameter("dimensionsscm.passwd");
+            passwd = null;
+            passwdSecret = Secret.fromString(req.getParameter("dimensionsscm.passwd"));
             server = req.getParameter("dimensionsscm.server");
             database = req.getParameter("dimensionsscm.database");
 
@@ -784,9 +792,6 @@ public class DimensionsSCM extends SCM implements Serializable {
 
             if (userName != null) {
                 userName = Util.fixNull(req.getParameter("dimensionsscm.userName").trim());
-            }
-            if (passwd != null) {
-                passwd = Util.fixNull(req.getParameter("dimensionsscm.passwd").trim());
             }
             if (server != null) {
                 server = Util.fixNull(req.getParameter("dimensionsscm.server").trim());
@@ -889,12 +894,16 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
 
         /**
-         * Gets the password.
+         * Gets the password as a Secret instance.
          *
-         * @return the password
+         * @return the password (as a Secret instance)
          */
-        public String getPasswd() {
-            return Scrambler.descramble(passwd);
+        public Secret getPasswd() {
+            if (passwdSecret == null && passwd != null) {
+                passwdSecret = Secret.fromString(Scrambler.descramble(passwd));
+                passwd = null;
+            }
+            return passwdSecret;
         }
 
         /**
@@ -938,7 +947,8 @@ public class DimensionsSCM extends SCM implements Serializable {
          * Sets the password.
          */
         public void setPasswd(String password) {
-            this.passwd = Scrambler.scramble(password);
+            this.passwdSecret = Secret.fromString(password);
+            this.passwd = null;
         }
 
         /**
@@ -1037,7 +1047,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 String xdatabase = (jobDatabase != null) ? jobDatabase : database;
                 Logger.debug("Server connection check to user [" + xuser
                         + "], database [" + xdatabase + "], server [" + xserver + "]");
-                long key = connectionCheck.login(xuser, xpasswd, xdatabase, xserver);
+                long key = connectionCheck.login(xuser, Secret.fromString(xpasswd), xdatabase, xserver);
                 Logger.debug("Server connection check returned key [" + key + "]");
                 if (key < 1L) {
                     return FormValidation.error("Connection test failed");

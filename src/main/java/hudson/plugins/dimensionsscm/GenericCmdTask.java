@@ -3,6 +3,7 @@ package hudson.plugins.dimensionsscm;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
+import hudson.util.Secret;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -18,7 +19,7 @@ abstract class GenericCmdTask extends BaseCallable {
     final TaskListener listener;
 
     private final String userName;
-    private final String passwd;
+    private final Secret passwd;
     private final String database;
     private final String server;
 
@@ -62,7 +63,7 @@ abstract class GenericCmdTask extends BaseCallable {
         return tmpFile;
     }
 
-    GenericCmdTask(String userName, String passwd, String database, String server, int version,
+    GenericCmdTask(String userName, Secret passwd, String database, String server, int version,
             FilePath workspace, TaskListener listener) {
         this.workspace = workspace;
         this.listener = listener;

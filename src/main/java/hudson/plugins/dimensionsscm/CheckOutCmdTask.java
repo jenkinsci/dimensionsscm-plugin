@@ -2,6 +2,7 @@ package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
 import hudson.model.TaskListener;
+import hudson.util.Secret;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -115,7 +116,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
         return tmpFile;
     }
 
-    public CheckOutCmdTask(String userName, String passwd, String database, String server, String projectId,
+    public CheckOutCmdTask(String userName, Secret passwd, String database, String server, String projectId,
             String baselineId, String requestId, boolean isDelete, boolean isRevert, boolean isForce, boolean isExpand,
             boolean isNoMetadata, boolean isNoTouch, boolean freshBuild, String[] folders, int version,
             String permissions, String eol, FilePath workspace, TaskListener listener) {

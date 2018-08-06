@@ -3,6 +3,7 @@ package hudson.plugins.dimensionsscm;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
+import hudson.util.Secret;
 import java.io.File;
 import java.io.IOException;
 
@@ -16,7 +17,7 @@ abstract class GenericAPITask extends BaseCallable {
     final TaskListener listener;
 
     private final String userName;
-    private final String passwd;
+    private final Secret passwd;
     private final String database;
     private final String server;
 

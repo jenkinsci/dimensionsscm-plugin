@@ -21,6 +21,7 @@ import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.Run;
+import hudson.util.Secret;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -64,7 +65,6 @@ public class DimensionsAPI implements Serializable {
 
     // Dimensions user details.
     private String dmUser;
-    private String dmPasswd;
 
     // Dimensions project details.
     private String dmProject;
@@ -216,19 +216,18 @@ public class DimensionsAPI implements Serializable {
      * @return A long key for the connection
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final long login(String userID, String password, String database, String server)
+    public final long login(String userID, Secret password, String database, String server)
             throws IllegalArgumentException, DimensionsRuntimeException {
         long key = sequence.getAndIncrement();
 
         dmServer = server;
         dmDb = database;
         dmUser = userID;
-        dmPasswd = password;
 
         Logger.debug("Checking Dimensions login parameters...");
 
         if (dmServer == null || dmServer.length() == 0 || dmDb == null || dmDb.length() == 0
-                || dmUser == null || dmUser.length() == 0 || dmPasswd == null || dmPasswd.length() == 0) {
+                || dmUser == null || dmUser.length() == 0 || password == null) {
             throw new IllegalArgumentException("Invalid or not parameters have been specified");
         }
         try {
@@ -240,7 +239,7 @@ public class DimensionsAPI implements Serializable {
 
             DimensionsConnectionDetails details = new DimensionsConnectionDetails();
             details.setUsername(dmUser);
-            details.setPassword(dmPasswd);
+            details.setPassword(Secret.toString(password));
             details.setDbName(dbName);
             details.setDbConn(dbConn);
             details.setServer(dmServer);
@@ -321,7 +320,7 @@ public class DimensionsAPI implements Serializable {
      * @return a long
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final long login(String userID, String password, String database, String server, Run build)
+    public final long login(String userID, Secret password, String database, String server, Run build)
             throws IllegalArgumentException, DimensionsRuntimeException {
         Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \""
                 + build.getParent().getName() + "\"");
