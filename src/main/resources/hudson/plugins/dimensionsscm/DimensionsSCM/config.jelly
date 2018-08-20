@@ -3,7 +3,7 @@
 
     <f:entry title="Project Name" help="/plugin/dimensionsscm/project.html">
         <f:textbox name="dimensionsscm.project" value="${h.defaulted(scm.project, 'Enter your projectId here')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
+         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
     <i>(the format used must be PRODUCT_ID:PROJECT_NAME even for streams)</i>
     </f:entry>
 

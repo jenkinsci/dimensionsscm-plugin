@@ -9,6 +9,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Hudson;
+import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.ModelObject;
 import hudson.model.Node;
@@ -38,10 +39,12 @@ import java.util.TimeZone;
 import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
  * An SCM that can poll, browse and update from Dimensions CM.
@@ -965,21 +968,6 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.webUrl = x;
         }
 
-        public FormValidation doCheck(StaplerRequest req, StaplerResponse rsp)
-                throws IOException, ServletException {
-            String value = Util.fixEmpty(req.getParameter("value"));
-            String nullText = null;
-            if (value == null) {
-                if (nullText == null) {
-                    return FormValidation.ok();
-                } else {
-                    return FormValidation.error(nullText);
-                }
-            } else {
-                return FormValidation.ok();
-            }
-        }
-
         public FormValidation domanadatoryFieldCheck(StaplerRequest req, StaplerResponse rsp)
                 throws IOException, ServletException {
             String value = Util.fixEmpty(req.getParameter("value"));
@@ -992,17 +980,10 @@ public class DimensionsSCM extends SCM implements Serializable {
             }
         }
 
-        public FormValidation domanadatoryJobFieldCheck(StaplerRequest req, StaplerResponse rsp)
-                throws IOException, ServletException {
-            String value = Util.fixEmpty(req.getParameter("value"));
-            String errorTxt = "This value is manadatory.";
-            // Some processing in the future.
-            return FormValidation.ok();
-        }
-
         /**
          * Check if the specified Dimensions server is valid.
          */
+        @RequirePOST
         public FormValidation docheckTz(StaplerRequest req, StaplerResponse rsp,
                 @QueryParameter("dimensionsscm.timeZone") final String timezone,
                 @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone)
@@ -1029,6 +1010,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         /**
          * Check if the specified Dimensions server is valid.
          */
+        @RequirePOST
         public FormValidation docheckServer(StaplerRequest req, StaplerResponse rsp,
                 @QueryParameter("dimensionsscm.userName") final String user,
                 @QueryParameter("dimensionsscm.passwd") final String passwd,
@@ -1037,8 +1019,14 @@ public class DimensionsSCM extends SCM implements Serializable {
                 @QueryParameter("dimensionsscm.jobUserName") final String jobuser,
                 @QueryParameter("dimensionsscm.jobPasswd") final String jobPasswd,
                 @QueryParameter("dimensionsscm.jobServer") final String jobServer,
-                @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase)
+                @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase,
+                @AncestorInPath final Item item)
                 throws IOException, ServletException {
+            if (item == null) {
+                Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                item.checkPermission(Item.CONFIGURE);
+            }
             DimensionsAPI connectionCheck = newDimensionsAPIWithCheck();
             try {
                 String xserver = (jobServer != null) ? jobServer : server;

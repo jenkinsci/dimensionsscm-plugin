@@ -4,23 +4,23 @@
   <f:section title="Dimensions">
     <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
     <f:textbox name="dimensionsscm.userName" value="${h.defaulted(descriptor.userName, 'Enter your Dimensions user here')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
+         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
     </f:entry>
 
     <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
     <input type="password" class="setting-input" name="dimensionsscm.passwd" value="${h.defaulted(descriptor.passwd, 'DMSYS')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
+         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
 
     </f:entry>
 
     <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
     <f:textbox name="dimensionsscm.server" value="${h.defaulted(descriptor.server, 'Enter your Dimensions server here')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
+         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
     </f:entry>
 
     <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
     <f:textbox name="dimensionsscm.database" value="${h.defaulted(descriptor.database, 'Enter your Dimensions database here')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?errorText='+escape('${%This value is mandatory.}')+'&amp;value='+escape(this.value)"/>
+         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
     <i>(the format used must be database@dsn)</i>
     </f:entry>
 
