@@ -167,10 +167,24 @@ final class DateUtils {
 
     /**
      * Gets "now" in verbose format.
+     *
+     * The verbose format is "yyyy.MMMMM.dd hh.mm.ss aaa z" unless the system
+     * property "hudson.plugins.dimensionsscm.preferColonInBaselineName" is set
+     * to "true", in which case the verbose format reverts to
+     * "yyyy.MMMMM.dd hh:mm:ss aaa z", which was its value in legacy versions of
+     * the Jenkins Dimensions Plugin, but is no longer a legal baseline name as
+     * of Dimensions CM 14.4 and later.
+     *
+     * Left the month as "MMMMM" and timezone as "z" because these are unlikely
+     * to be an issue unless they contain one of the "':;# characters. At some
+     * point, it would be good to allow customers to specify a date/time format
+     * to use (for example [CURRENT_DATE, "yyyy-MM-dd'T'hh-mm-ss"]).
+     *
      * @return  a String containing a date in verbose format
      */
     static String getNowStrDateVerbose() {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy.MMMMM.dd hh:mm:ss aaa z");
+        boolean preferColonInBaselineName = Boolean.getBoolean("hudson.plugins.dimensionsscm.preferColonInBaselineName");
+        SimpleDateFormat df = new SimpleDateFormat(preferColonInBaselineName ? "yyyy.MMMMM.dd hh:mm:ss aaa z" : "yyyy.MMMMM.dd hh.mm.ss aaa z");
         Calendar opDate = Calendar.getInstance();
         df.setTimeZone(DEFAULT_TIME_ZONE);
         return df.format(opDate.getTime());
