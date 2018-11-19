@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>dimensionsscm</artifactId>
-    <version>0.8.16</version>
+    <version>0.8.17-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Jenkins Dimensions Plugin</name>
     <description>This plugin integrates the Dimensions CM SCM with Jenkins.</description>
@@ -39,7 +39,7 @@
         <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-        <tag>dimensionsscm-0.8.16</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
