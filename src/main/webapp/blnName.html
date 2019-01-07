@@ -1,18 +1,25 @@
-This option allows you to specify a template that will be used as
-a basis for creating the name of the baseline used to tag this build.
-<BR><BR>
-The template supports the following variables which will be substituted
-when the baseline is created.
-<BR><BR>
-&nbsp;&nbsp;&nbsp;&nbsp;[PROJECTID]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is the name of the Dimensions project or stream being monitored.<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;[HUDSON_PROJECT]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is the name of the Hudson project<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;[DM_BASELINE]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is the name of the baseline variable<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;[BUILDNO]
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-is the build number<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;[CURRENT_DATE]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is the current date in
-"yyyy.MMMMM.dd hh.mm.ss aaa z" format, e.g. "2018.May.29 08.47.59 PM BST"<BR><BR>
-For example, the template "[PROJECTID]_P_[HUDSON_PROJECT]_B_[BUILDNO]_T_[CURRENT_DATE]" could create a baseline with an
-identifier like "QLARIUS:JAVADEV_P_JAVADEV_hudson_B_406_T_2018.May.29 08.47.59 PM BST"<BR><BR>
-If you specify a value that contains no variables in it, then only that value will be used as the baseline identifier.
+This option allows you to specify a pattern that will be used to determine the
+name of the baseline that will tag this build.
+<p>
+The pattern supports the following variables which will be substituted with
+appropriate values in the name when the baseline gets created.
+<dl>
+    <dt>[PROJECTID]</dt>
+    <dd>the name of the Dimensions stream or project being monitored.</dd>
+    <dt>[JENKINS_PROJECT]</dt>
+    <dd>the name of the Jenkins project (can also use [HUDSON_PROJECT])</dd>
+    <dt>[DM_BASELINE]</dt>
+    <dd>the value of the ${DM_BASELINE} build parameter</dd>
+    <dt>[BUILDNO]</dt>
+    <dd>the Jenkins build number</dd>
+    <dt>[CURRENT_DATE]</dt>
+    <dd>the current date in "yyyy.MMMMM.dd hh.mm.ss aaa z" format,
+        e.g. "2018.May.29 08.47.59 PM BST"</dd>
+</dl>
+For example, the pattern
+"[PROJECTID]_P_[JENKINS_PROJECT]_B_[BUILDNO]_T_[CURRENT_DATE]"
+might create a baseline with a name like
+"QLARIUS:JAVADEV_P_My Jenkins Job_B_406_T_2018.May.29 08.47.59 PM BST"
+<p>
+If you specify a pattern that contains no variables in it, then the pattern
+will be treated as a literal baseline name.
