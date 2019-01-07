@@ -8,7 +8,6 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.ModelObject;
@@ -390,6 +389,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
+    @Deprecated
     @Override
     public boolean checkout(final AbstractBuild build, final Launcher launcher, final FilePath workspace,
             final BuildListener listener, final File changelogFile) throws IOException, InterruptedException {
@@ -403,9 +403,9 @@ public class DimensionsSCM extends SCM implements Serializable {
         try {
             // Load other Dimensions plugins if set.
             DimensionsBuildWrapper.DescriptorImpl bwplugin = (DimensionsBuildWrapper.DescriptorImpl)
-                    Hudson.getInstance().getDescriptor(DimensionsBuildWrapper.class);
+                    Jenkins.getInstance().getDescriptor(DimensionsBuildWrapper.class);
             DimensionsBuildNotifier.DescriptorImpl bnplugin = (DimensionsBuildNotifier.DescriptorImpl)
-                    Hudson.getInstance().getDescriptor(DimensionsBuildNotifier.class);
+                    Jenkins.getInstance().getDescriptor(DimensionsBuildNotifier.class);
 
             String nodeName = build.getBuiltOn().getNodeName();
 
@@ -599,6 +599,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
+    @Deprecated
     @Override
     public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener)
             throws IOException, InterruptedException {
@@ -611,6 +612,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
+    @Deprecated
     @Override
     protected PollingResult compareRemoteRevisionWith(AbstractProject<?, ?> project, Launcher launcher,
             FilePath workspace, TaskListener listener, SCMRevisionState baseline)
@@ -633,6 +635,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
+    @Deprecated
     @Override
     public boolean processWorkspaceBeforeDeletion(AbstractProject<?, ?> project, FilePath workspace, Node node)
             throws IOException, InterruptedException {

@@ -937,7 +937,7 @@ public class DimensionsAPI implements Serializable {
     /**
      * Create a project tag.
      */
-    public DimensionsResult createBaseline(long key, String projectVersion, Run build, String blnScope,
+    public DimensionsResult createBaseline(long key, String dcmProjectVersion, Run build, String blnScope,
             String blnTemplate, String blnOwningPart, String blnType, String requestId, String blnId, String blnName,
             StringBuffer cblId) throws DimensionsRuntimeException {
         DimensionsConnection connection = getCon(key);
@@ -947,10 +947,9 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "CBL ";
 
-            if (projectVersion != null && build != null) {
+            if (dcmProjectVersion != null && build != null) {
                 boolean wsBln = true;
                 boolean revisedBln = false;
-                Integer buildNo = build.getNumber();
 
                 if (blnScope != null && blnScope.length() > 0) {
                     if (blnScope.equals("REVISED")) {
@@ -960,32 +959,35 @@ public class DimensionsAPI implements Serializable {
                 }
 
                 // Split "PRODUCT:PROJECT;VERSION".
-                int colon = projectVersion.indexOf(':');
-                int semicolon = projectVersion.lastIndexOf(';');
+                int colon = dcmProjectVersion.indexOf(':');
+                int semicolon = dcmProjectVersion.lastIndexOf(';');
                 if (semicolon <= colon) {
                     semicolon = -1;
                 }
-                String productName = projectVersion.substring(0, colon).trim();
-                String projectName = (semicolon >= 0) ? projectVersion.substring(colon + 1, semicolon).trim()
-                        : projectVersion.substring(colon + 1).trim();
+                final String dcmProductName = dcmProjectVersion.substring(0, colon).trim();
+                final String dcmProjectName = (semicolon >= 0) ? dcmProjectVersion.substring(colon + 1, semicolon).trim()
+                        : dcmProjectVersion.substring(colon + 1).trim();
+                final String jenkinsProjectName = build.getParent().getName().trim();
+                final Integer buildNo = build.getNumber();
 
                 if (blnName != null && blnName.length() > 0) {
                     String cId = blnName;
 
-                    cId = cId.replace("[PROJECTID]", projectName);
-                    cId = cId.replace("[HUDSON_PROJECT]", build.getParent().getName().trim());
+                    cId = cId.replace("[PROJECTID]", dcmProjectName);
+                    cId = cId.replace("[HUDSON_PROJECT]", jenkinsProjectName);
+                    cId = cId.replace("[JENKINS_PROJECT]", jenkinsProjectName);
                     cId = cId.replace("[BUILDNO]", buildNo.toString());
                     cId = cId.replace("[CURRENT_DATE]", DateUtils.getNowStrDateVerbose().trim());
                     if (blnId != null && blnId.length() > 0) {
                         cId = cId.replace("[DM_BASELINE]", blnId.substring(blnId.indexOf(':') + 1).trim());
                     }
-                    cblId.append('"').append(productName).append(':').append(cId).append('"');
+                    cblId.append('"').append(dcmProductName).append(':').append(cId).append('"');
                 } else {
-                    cblId.append('"').append(productName).append(':').append(projectName).append('_')
-                            .append(build.getParent().getName()).append('_').append(buildNo).append('"');
+                    cblId.append('"').append(dcmProductName).append(':').append(dcmProjectName).append('_')
+                            .append(jenkinsProjectName).append('_').append(buildNo.toString()).append('"');
                 }
 
-                cmd += cblId.toString() + " /WORKSET=\"" + projectVersion + "\"";
+                cmd += cblId.toString() + " /WORKSET=\"" + dcmProjectVersion + "\"";
                 if (!revisedBln) {
                     if (blnScope == null || blnScope.length() == 0) {
                         cmd += " /SCOPE=WORKSET ";
@@ -1019,7 +1021,7 @@ public class DimensionsAPI implements Serializable {
                 }
 
                 if (!revisedBln) {
-                    cmd += " /DESCRIPTION=\"Baseline created by Hudson/Jenkins for job '"
+                    cmd += " /DESCRIPTION=\"Baseline created by Jenkins Dimensions Plugin for job '"
                             + build.getParent().getName() + "' - build " + build.getNumber() + "\"";
                 }
 
@@ -1058,7 +1060,7 @@ public class DimensionsAPI implements Serializable {
                 if (state != null && state.length() > 0) {
                     cmd += " /STAGE=\"" + state + "\"";
                 }
-                cmd += " /COMMENT=\"Project Baseline deployed by Hudson/Jenkins for job '"
+                cmd += " /COMMENT=\"Project Baseline deployed by Jenkins Dimensions Plugin for job '"
                         + build.getParent().getName() + "' - build " + build.getNumber() + "\"";
                 DimensionsResult res = run(connection, cmd);
                 if (res != null) {
@@ -1095,7 +1097,7 @@ public class DimensionsAPI implements Serializable {
                 if (state != null && state.length() > 0) {
                     cmd += " /STATUS=\"" + state + "\"";
                 }
-                cmd += " /COMMENT=\"Project Baseline action by Hudson/Jenkins for job '"
+                cmd += " /COMMENT=\"Project Baseline action by Jenkins Dimensions Plugin for job '"
                         + build.getParent().getName() + "' - build " + build.getNumber() + "\"";
                 DimensionsResult res = run(connection, cmd);
                 if (res != null) {

@@ -25,11 +25,13 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
      * When move to 1.568+, deprecate the AbstractBuild method and add the following method signature:
      *
      * <pre>
-     * @Override
-     * public DimensionsChangeSetList parse(Run run, RepositoryBrowser<?> browser, File changelogFile) throws IOException, SAXException { return new
-     * DimensionsChangeSetList(run, browser, digest(changelogFile)); }
+     * \@Override
+     * public DimensionsChangeSetList parse(Run run, RepositoryBrowser<?> browser, File changelogFile) throws IOException, SAXException {
+     *     return new DimensionsChangeSetList(run, browser, digest(changelogFile));
+     * }
      * </pre>
      */
+    @Deprecated
     @Override
     public DimensionsChangeSetList parse(AbstractBuild build, File changelogFile) throws IOException, SAXException {
         RepositoryBrowser<?> browser = build.getProject().getScm().getEffectiveBrowser();

@@ -21,7 +21,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * A Notifier that can deliver built artifacts back to the SCM project/stream as a post-build step in a Jenkins build.
+ * A Notifier that can deliver built artifacts back to the SCM project/stream
+ * as a post-build step in a Jenkins build.
  */
 public class ArtifactUploader extends Notifier implements Serializable {
     private static final String[] DEFAULT_INCLUDES_REGEX = new String[] { ".*" };
