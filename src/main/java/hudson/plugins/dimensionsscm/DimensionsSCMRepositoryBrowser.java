@@ -17,12 +17,12 @@ public class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<Dimensions
     public DimensionsSCMRepositoryBrowser() {
     }
 
-    public URL getDiffLink(DimensionsChangeSet.DmFiles item) throws IOException {
+    public URL getDiffLink(DimensionsChangeSet.DmFiles item) throws java.net.MalformedURLException {
         return new URL("http://alink.com/link.html");
     }
 
     @Override
-    public URL getChangeSetLink(DimensionsChangeSet item) throws IOException {
+    public URL getChangeSetLink(DimensionsChangeSet item) {
         return null;
     }
 

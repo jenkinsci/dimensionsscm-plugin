@@ -11,65 +11,65 @@ public class ValuesTest {
 
     @Test
     public void testBooleanOrElse() {
-        Assert.assertEquals(false, Values.booleanOrElse(null, false));
-        Assert.assertEquals(true, Values.booleanOrElse(null, true));
-        Assert.assertEquals(false, Values.booleanOrElse("", false));
-        Assert.assertEquals(true, Values.booleanOrElse("", true));
-        Assert.assertEquals(false, Values.booleanOrElse("cake", false));
-        Assert.assertEquals(true, Values.booleanOrElse("cake", true));
-        Assert.assertEquals(true, Values.booleanOrElse("on", false));
-        Assert.assertEquals(true, Values.booleanOrElse("on", true));
-        Assert.assertEquals(true, Values.booleanOrElse("  on", false));
-        Assert.assertEquals(false, Values.booleanOrElse("off", false));
-        Assert.assertEquals(false, Values.booleanOrElse("off", true));
-        Assert.assertEquals(false, Values.booleanOrElse("  off", true));
-        Assert.assertEquals(true, Values.booleanOrElse("ON", false));
-        Assert.assertEquals(false, Values.booleanOrElse("OFF", true));
-        Assert.assertEquals(true, Values.booleanOrElse("yes", false));
-        Assert.assertEquals(true, Values.booleanOrElse("yes", true));
-        Assert.assertEquals(true, Values.booleanOrElse("yes  ", false));
-        Assert.assertEquals(false, Values.booleanOrElse("no", false));
-        Assert.assertEquals(false, Values.booleanOrElse("no", true));
-        Assert.assertEquals(false, Values.booleanOrElse("no  ", true));
-        Assert.assertEquals(true, Values.booleanOrElse("YES", false));
-        Assert.assertEquals(false, Values.booleanOrElse("NO", true));
-        Assert.assertEquals(true, Values.booleanOrElse("true", false));
-        Assert.assertEquals(true, Values.booleanOrElse("true", true));
-        Assert.assertEquals(false, Values.booleanOrElse("false", false));
-        Assert.assertEquals(false, Values.booleanOrElse("false", true));
-        Assert.assertEquals(true, Values.booleanOrElse("TRUE", false));
-        Assert.assertEquals(false, Values.booleanOrElse("FALSE", true));
-        Assert.assertEquals(true, Values.booleanOrElse(" TRUE ", false));
-        Assert.assertEquals(false, Values.booleanOrElse(" FALSE ", true));
-        Assert.assertEquals(false, Values.booleanOrElse(" CAKE ", false));
-        Assert.assertEquals(true, Values.booleanOrElse(" CAKE ", true));
+        Assert.assertFalse(Values.booleanOrElse(null, false));
+        Assert.assertTrue(Values.booleanOrElse(null, true));
+        Assert.assertFalse(Values.booleanOrElse("", false));
+        Assert.assertTrue(Values.booleanOrElse("", true));
+        Assert.assertFalse(Values.booleanOrElse("cake", false));
+        Assert.assertTrue(Values.booleanOrElse("cake", true));
+        Assert.assertTrue(Values.booleanOrElse("on", false));
+        Assert.assertTrue(Values.booleanOrElse("on", true));
+        Assert.assertTrue(Values.booleanOrElse("  on", false));
+        Assert.assertFalse(Values.booleanOrElse("off", false));
+        Assert.assertFalse(Values.booleanOrElse("off", true));
+        Assert.assertFalse(Values.booleanOrElse("  off", true));
+        Assert.assertTrue(Values.booleanOrElse("ON", false));
+        Assert.assertFalse(Values.booleanOrElse("OFF", true));
+        Assert.assertTrue(Values.booleanOrElse("yes", false));
+        Assert.assertTrue(Values.booleanOrElse("yes", true));
+        Assert.assertTrue(Values.booleanOrElse("yes  ", false));
+        Assert.assertFalse(Values.booleanOrElse("no", false));
+        Assert.assertFalse(Values.booleanOrElse("no", true));
+        Assert.assertFalse(Values.booleanOrElse("no  ", true));
+        Assert.assertTrue(Values.booleanOrElse("YES", false));
+        Assert.assertFalse(Values.booleanOrElse("NO", true));
+        Assert.assertTrue(Values.booleanOrElse("true", false));
+        Assert.assertTrue(Values.booleanOrElse("true", true));
+        Assert.assertFalse(Values.booleanOrElse("false", false));
+        Assert.assertFalse(Values.booleanOrElse("false", true));
+        Assert.assertTrue(Values.booleanOrElse("TRUE", false));
+        Assert.assertFalse(Values.booleanOrElse("FALSE", true));
+        Assert.assertTrue(Values.booleanOrElse(" TRUE ", false));
+        Assert.assertFalse(Values.booleanOrElse(" FALSE ", true));
+        Assert.assertFalse(Values.booleanOrElse(" CAKE ", false));
+        Assert.assertTrue(Values.booleanOrElse(" CAKE ", true));
         // (Maybe controversially?) don't accept "1" or "0" as true or false.
-        Assert.assertEquals(false, Values.booleanOrElse("1", false));
-        Assert.assertEquals(false, Values.booleanOrElse(" 1 ", false));
-        Assert.assertEquals(false, Values.booleanOrElse("001", false));
-        Assert.assertEquals(true, Values.booleanOrElse("0", true));
-        Assert.assertEquals(true, Values.booleanOrElse(" 0 ", true));
-        Assert.assertEquals(true, Values.booleanOrElse("000", true));
+        Assert.assertFalse(Values.booleanOrElse("1", false));
+        Assert.assertFalse(Values.booleanOrElse(" 1 ", false));
+        Assert.assertFalse(Values.booleanOrElse("001", false));
+        Assert.assertTrue(Values.booleanOrElse("0", true));
+        Assert.assertTrue(Values.booleanOrElse(" 0 ", true));
+        Assert.assertTrue(Values.booleanOrElse("000", true));
     }
 
     @Test
     public void testIsNullOrEmpty_String() {
-        Assert.assertEquals(true, Values.isNullOrEmpty((String) null));
-        Assert.assertEquals(true, Values.isNullOrEmpty(""));
-        Assert.assertEquals(false, Values.isNullOrEmpty("  "));
-        Assert.assertEquals(false, Values.isNullOrEmpty("\r\n"));
-        Assert.assertEquals(false, Values.isNullOrEmpty("A"));
+        Assert.assertTrue(Values.isNullOrEmpty((String) null));
+        Assert.assertTrue(Values.isNullOrEmpty(""));
+        Assert.assertFalse(Values.isNullOrEmpty("  "));
+        Assert.assertFalse(Values.isNullOrEmpty("\r\n"));
+        Assert.assertFalse(Values.isNullOrEmpty("A"));
     }
 
     @Test
     public void testIsNullOrEmpty_Array() {
-        Assert.assertEquals(true, Values.isNullOrEmpty((String[]) null));
-        Assert.assertEquals(true, Values.isNullOrEmpty(EMPTY_STRING_ARRAY));
-        Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { null }));
-        Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { "" }));
-        Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { " " }));
-        Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { "", "" }));
-        Assert.assertEquals(false, Values.isNullOrEmpty(new String[] { "A" }));
+        Assert.assertTrue(Values.isNullOrEmpty((String[]) null));
+        Assert.assertTrue(Values.isNullOrEmpty(EMPTY_STRING_ARRAY));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[] { null }));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[] { "" }));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[] { " " }));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[] { "", "" }));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[] { "A" }));
     }
 
     private static final String[][] STRING_ARRAY_INPUTS = { null, EMPTY_STRING_ARRAY,
@@ -110,17 +110,19 @@ public class ValuesTest {
         int arg1 = -1;
         String arg2 = "A";
         String arg3 = "THIS_VALUE_IS_TOO_LONG";
-        Assert.assertEquals((Integer) 1, Values.requireCondition(arg0, arg0 > 0, "arg0 must be positive"));
+        Assert.assertEquals(1, Values.requireCondition(arg0, arg0 > 0, "arg0 must be positive"));
         try {
             Values.requireCondition(arg1, arg1 > 0, "arg1 must be positive");
             Assert.fail();
         } catch (IllegalArgumentException e) {
+            /* test passes. */
         }
         Assert.assertEquals("A", Values.requireCondition(arg2, arg2.length() <= 10, "arg2 must be 10 or fewer chars"));
         try {
             Values.requireCondition(arg3, arg3.length() <= 10, "arg3 must be 10 or fewer chars");
             Assert.fail();
         } catch (IllegalArgumentException e) {
+            /* test passes. */
         }
     }
 
@@ -136,13 +138,14 @@ public class ValuesTest {
             Values.requireNotNull(arg1, "arg1 must be non-null");
             Assert.fail();
         } catch (NullPointerException e) {
+            /* test passes. */
         }
     }
 
     @Test
     public void testTextOrElse() {
-        Assert.assertEquals(null, Values.textOrElse(null, null));
-        Assert.assertEquals(null, Values.textOrElse("", null));
+        Assert.assertNull(Values.textOrElse(null, null));
+        Assert.assertNull(Values.textOrElse("", null));
         Assert.assertEquals("A", Values.textOrElse("A", null));
         Assert.assertEquals("", Values.textOrElse(null, ""));
         Assert.assertEquals("A", Values.textOrElse(null, "A"));

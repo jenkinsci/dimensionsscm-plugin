@@ -52,7 +52,7 @@ public class CheckInAPITask extends GenericAPITask {
     }
 
     @Override
-    public Boolean execute(File area, VirtualChannel channel) throws IOException {
+    public Boolean execute(File area, VirtualChannel channel) {
         boolean bRet = true;
 
         try {
@@ -87,22 +87,20 @@ public class CheckInAPITask extends GenericAPITask {
                 File tmpFile = null;
 
                 try {
-                    tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+                    tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
                     // 'DELIVER/USER_FILELIST=' user filelist in platform-default encoding.
                     fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 
                     for (File f : validFiles) {
-                        if (f.isDirectory()) {
-                        } else {
+                        if (!f.isDirectory()) {
                             Logger.debug("Found file '" + f.getAbsolutePath() + "'");
                             fmtWriter.println(f.getAbsolutePath());
                         }
                     }
                     fmtWriter.flush();
                 } catch (IOException e) {
-                    bRet = false;
-                    throw (IOException) new IOException(Values.exceptionMessage("Unable to write user filelist: " + tmpFile, e,
-                            "no message")).initCause(e);
+                    throw new IOException(Values.exceptionMessage("Unable to write user filelist: " + tmpFile, e,
+                            "no message"), e);
                 } finally {
                     if (fmtWriter != null) {
                         fmtWriter.close();
@@ -139,12 +137,7 @@ public class CheckInAPITask extends GenericAPITask {
                     }
                 }
 
-                if (tmpFile != null) {
-                    tmpFile.delete();
-                } else {
-                    listener.getLogger().println("[DIMENSIONS] No build artifacts were detected");
-                    listener.getLogger().flush();
-                }
+                tmpFile.delete();
             } else {
                 listener.getLogger().println("[DIMENSIONS] No build artifacts found for checking in");
             }

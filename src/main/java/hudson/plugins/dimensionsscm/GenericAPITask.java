@@ -60,8 +60,7 @@ abstract class GenericAPITask extends BaseCallable {
                 bRet = execute(area, channel);
             }
         } catch (Exception e) {
-            bRet = false;
-            throw (IOException) new IOException(Values.exceptionMessage("Exception during login", e, "no message")).initCause(e);
+            throw new IOException(Values.exceptionMessage("Exception during login", e, "no message"), e);
         } finally {
             dmSCM.logout(key);
         }
@@ -72,5 +71,5 @@ abstract class GenericAPITask extends BaseCallable {
     /**
      * Template method for subclasses to override.
      */
-    abstract Boolean execute(File area, VirtualChannel channel) throws IOException;
+    abstract Boolean execute(File area, VirtualChannel channel);
 }

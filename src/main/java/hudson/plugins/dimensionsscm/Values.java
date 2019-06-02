@@ -316,7 +316,7 @@ final class Values {
         if (value == null) {
             return "null";
         } else if (value instanceof String) {
-            return "'" + ((String) value) + "'";
+            return "'" + value + "'";
         } else {
             return value.toString();
         }

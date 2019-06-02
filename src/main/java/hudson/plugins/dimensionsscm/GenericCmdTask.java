@@ -44,7 +44,7 @@ abstract class GenericCmdTask extends BaseCallable {
         File tmpFile = null;
 
         try {
-            tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+            tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
             // dmcli parameter file in platform-default encoding.
             fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
             fmtWriter.println("-host " + server);
@@ -53,8 +53,8 @@ abstract class GenericCmdTask extends BaseCallable {
             fmtWriter.println("-dbname " + database);
             fmtWriter.flush();
         } catch (IOException e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Unable to write dmcli parameter file: " + tmpFile, e,
-                    "no message")).initCause(e);
+            throw new IOException(Values.exceptionMessage("Unable to write dmcli parameter file: " + tmpFile, e,
+                    "no message"), e);
         } finally {
             if (fmtWriter != null) {
                 fmtWriter.close();
@@ -77,7 +77,7 @@ abstract class GenericCmdTask extends BaseCallable {
     }
 
     @Override
-    public Boolean invoke(File area, VirtualChannel channel) throws IOException {
+    public Boolean invoke(File area, VirtualChannel channel) {
         boolean retStatus = false;
 
         // This here code is executed on the slave.
@@ -109,5 +109,5 @@ abstract class GenericCmdTask extends BaseCallable {
     /**
      * Process the task. Template method to override in subclasses.
      */
-    abstract Boolean execute(final File exe, final File param, final File area) throws IOException;
+    abstract Boolean execute(final File exe, final File param, final File area);
 }

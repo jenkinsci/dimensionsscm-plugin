@@ -13,7 +13,7 @@ import java.util.logging.Logger;
  * Set the System property <tt>hudson.plugins.dimensionsscm.log</tt> to the value <tt>stderr</tt> or a filename to
  * force log output other than to the standard Jenkins System Log.
  */
-class LogInitializer {
+final class LogInitializer {
     static final Logger LOGGER;
 
     static {
@@ -36,5 +36,9 @@ class LogInitializer {
             }
         }
         LOGGER = logger;
+    }
+
+    private LogInitializer() {
+        /* prevent instantiation. */
     }
 }

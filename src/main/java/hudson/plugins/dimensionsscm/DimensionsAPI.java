@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
@@ -216,8 +215,7 @@ public class DimensionsAPI implements Serializable {
      * @return A long key for the connection
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final long login(String userID, Secret password, String database, String server)
-            throws IllegalArgumentException, DimensionsRuntimeException {
+    public final long login(String userID, Secret password, String database, String server) {
         long key = sequence.getAndIncrement();
 
         dmServer = server;
@@ -320,12 +318,11 @@ public class DimensionsAPI implements Serializable {
      * @return a long
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final long login(String userID, Secret password, String database, String server, Run build)
-            throws IllegalArgumentException, DimensionsRuntimeException {
+    public final long login(String userID, Secret password, String database, String server, Run<?, ?> build) {
         Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \""
                 + build.getParent().getName() + "\"");
         if (build instanceof AbstractBuild) {
-            Node node = ((AbstractBuild) build).getBuiltOn();
+            Node node = ((AbstractBuild<?, ?>) build).getBuiltOn();
             String nodeName = node != null ? node.getNodeName() : null;
             Logger.debug("  build getBuiltOn().getNodeName(): " + (nodeName != null ? ("\"" + nodeName + "\"") : null));
         }
@@ -358,7 +355,7 @@ public class DimensionsAPI implements Serializable {
     /**
      * Disconnects from the Dimensions repository, with additional tracing from supplied build details.
      */
-    public final void logout(long key, Run build) {
+    public final void logout(long key, Run<?, ?> build) {
         Logger.debug("DimensionsAPI.logout - build number: \"" + build.getNumber() + "\", project: \""
                 + build.getParent().getName() + "\"");
         logout(key);
@@ -407,7 +404,7 @@ public class DimensionsAPI implements Serializable {
      * Has the repository had any changes made during a certain time?
      */
     public boolean hasRepositoryBeenUpdated(final long key, final String projectName, final FilePath workspace,
-            final Calendar fromDate, final Calendar toDate, final TimeZone tz) throws IOException, InterruptedException {
+            final Calendar fromDate, final Calendar toDate, final TimeZone tz) throws IOException {
         DimensionsConnection connection = getCon(key);
         if (fromDate == null) {
             return true;
@@ -416,7 +413,6 @@ public class DimensionsAPI implements Serializable {
             throw new IOException("Not connected to an SCM repository");
         }
         try {
-            @SuppressWarnings("unchecked")
             List<ItemRevision> items = calcRepositoryDiffs(key, projectName, null, null, workspace, fromDate, toDate, tz);
             if (items != null) {
                 PathMatcher pathMatcher = getPathMatcher();
@@ -435,7 +431,7 @@ public class DimensionsAPI implements Serializable {
         } catch (Exception e) {
             String message = Values.exceptionMessage("Unable to run hasRepositoryBeenUpdated", e, "no message");
             Logger.debug(message, e);
-            throw (IOException) new IOException(message).initCause(e);
+            throw new IOException(message, e);
         }
         return false;
     }
@@ -446,7 +442,7 @@ public class DimensionsAPI implements Serializable {
     public boolean checkout(final long key, final String projectName, final FilePath projectDir,
             final FilePath workspaceName, StringBuffer cmdOutput, final String baseline, final String requests,
             final boolean doRevert, final boolean doExpand, final boolean doNoMetadata, final boolean doNoTouch,
-            final String permissions, final String eol) throws IOException, InterruptedException {
+            final String permissions, final String eol) throws IOException {
         boolean bRet = false;
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
@@ -525,7 +521,7 @@ public class DimensionsAPI implements Serializable {
 
                 DimensionsResult res = run(connection, cmd);
                 if (res != null) {
-                    cmdOutput = cmdOutput.append(res.getMessage());
+                    cmdOutput.append(res.getMessage());
                     String outputStr = cmdOutput.toString();
                     Logger.debug(outputStr);
                     bRet = true;
@@ -538,7 +534,7 @@ public class DimensionsAPI implements Serializable {
                 }
             }
         } catch (Exception e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Exception during checkout", e, "no message")).initCause(e);
+            throw new IOException(Values.exceptionMessage("Exception during checkout", e, "no message"), e);
         }
         return bRet;
     }
@@ -546,15 +542,15 @@ public class DimensionsAPI implements Serializable {
     /**
      * Generate changelog file.
      */
-    public boolean createChangeSetLogs(final long key, final String projectName, final FilePath projectDir,
+    public void createChangeSetLogs(final long key, final String projectName, final FilePath projectDir,
             final Calendar fromDate, final Calendar toDate, final File changelogFile, final TimeZone tz,
-            final String url, final String baseline, final String requests) throws IOException, InterruptedException {
+            final String url, final String baseline, final String requests) throws IOException {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new IOException("Not connected to an SCM repository");
         }
         try {
-            List items = calcRepositoryDiffs(key, projectName, baseline, requests, projectDir, fromDate, toDate, tz);
+            List<ItemRevision> items = calcRepositoryDiffs(key, projectName, baseline, requests, projectDir, fromDate, toDate, tz);
 
             Logger.debug("CM Url : " + (url != null ? url : "(null)"));
             if (requests != null) {
@@ -567,7 +563,7 @@ public class DimensionsAPI implements Serializable {
 
             if (items != null) {
                 // Write the list of changes into a changelog file.
-                List changes = createChangeList(items, tz, url);
+                List<DimensionsChangeSet> changes = createChangeList(items, tz, url);
                 Logger.debug("Writing " + changes.size() + " changes to changelog file '" + changelogFile.getPath() + "'");
                 DimensionsChangeLogWriter.writeLog(changes, changelogFile);
             } else {
@@ -576,18 +572,17 @@ public class DimensionsAPI implements Serializable {
                 DimensionsChangeLogWriter.writeLog(null, changelogFile);
             }
         } catch (Exception e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Exception calculating changes", e,
-                    "no message")).initCause(e);
+            throw new IOException(Values.exceptionMessage("Exception calculating changes", e,
+                    "no message"), e);
         }
-        return true;
     }
 
     /**
      * Calculate any repository changes made during a certain time.
      */
-    private List calcRepositoryDiffs(final long key, final String projectName, final String baselineName,
+    private List<ItemRevision> calcRepositoryDiffs(final long key, final String projectName, final String baselineName,
             final String requests, final FilePath workspace, final Calendar fromDate, final Calendar toDate,
-            final TimeZone tz) throws IOException, InterruptedException {
+            final TimeZone tz) throws IOException {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new IOException("Not connected to an SCM repository");
@@ -602,17 +597,19 @@ public class DimensionsAPI implements Serializable {
             String dateBefore = (toDate != null) ? formatDatabaseDate(toDate.getTime(), tz) : formatDatabaseDate(Calendar.getInstance().getTime(), tz);
 
             Filter filter = new Filter();
+            List<Filter.Criterion> criteria = filter.criteria();
+            List<Filter.Order> orders = filter.orders();
             if (baselineName != null || !isStream(connection, projectName)) {
-                filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
-                filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+                criteria.add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                criteria.add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
             } else {
-                filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
-                filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+                criteria.add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                criteria.add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
             }
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
-            filter.orders().add(new Filter.Order(SystemAttributes.REVISION_COMMENT, Filter.ORDER_ASCENDING));
-            filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
-            filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
+            criteria.add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
+            orders.add(new Filter.Order(SystemAttributes.REVISION_COMMENT, Filter.ORDER_ASCENDING));
+            orders.add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
+            orders.add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
 
             Logger.debug("Looking between " + dateAfter + " -> " + dateBefore);
             String projName;
@@ -623,7 +620,7 @@ public class DimensionsAPI implements Serializable {
                 projName = projectName.toUpperCase(Values.ROOT_LOCALE);
             }
 
-            List items = null;
+            List<ItemRevision> items;
 
             if (requests != null) {
                 //
@@ -632,13 +629,14 @@ public class DimensionsAPI implements Serializable {
                 try {
                     items = getItemsInRequests(connection, projName, requests, dateAfter, dateBefore);
                 } catch (Exception e) {
-                    throw (IOException) new IOException(Values.exceptionMessage("Exception getting items in requests", e,
-                            "no message")).initCause(e);
+                    throw new IOException(Values.exceptionMessage("Exception getting items in requests", e,
+                            "no message"), e);
                 }
             } else if (baselineName != null) {
                 // setup filter for baseline Name
                 Filter baselineFilter = new Filter();
-                baselineFilter.criteria().add(new Filter.Criterion(SystemAttributes.OBJECT_SPEC,
+                List<Filter.Criterion> baselineCriteria = baselineFilter.criteria();
+                baselineCriteria.add(new Filter.Criterion(SystemAttributes.OBJECT_SPEC,
                         baselineName.toUpperCase(Values.ROOT_LOCALE), Filter.Criterion.EQUALS));
 
                 List<Baseline> baselineObjects = connection.getObjectFactory().getBaselines(baselineFilter);
@@ -661,15 +659,16 @@ public class DimensionsAPI implements Serializable {
             }
             return items;
         } catch (Exception e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Unable to run calcRepositoryDiffs", e,
-                    "no message")).initCause(e);
+            throw new IOException(Values.exceptionMessage("Unable to run calcRepositoryDiffs", e,
+                    "no message"), e);
         }
     }
 
     /**
      * Lock a project.
+     * @throws DimensionsRuntimeException
      */
-    public DimensionsResult lockProject(long key, String projectId) throws DimensionsRuntimeException {
+    public DimensionsResult lockProject(long key, String projectId) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -693,8 +692,9 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Unlock a project.
+     * @throws DimensionsRuntimeException
      */
-    public DimensionsResult unlockProject(long key, String projectId) throws DimensionsRuntimeException {
+    public DimensionsResult unlockProject(long key, String projectId) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -718,10 +718,11 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Build a baseline.
+     * @throws DimensionsRuntimeException
      */
     public DimensionsResult buildBaseline(long key, String area, String projectId, boolean batch, boolean buildClean,
-            String buildConfig, String options, boolean capture, String requests, String targets, Run build,
-            String blnName) throws DimensionsRuntimeException {
+            String buildConfig, String options, boolean capture, String requests, String targets, Run<?, ?> build,
+            String blnName) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -729,7 +730,7 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "BLDB ";
             if (projectId != null && build != null) {
-                Integer buildNo = build.getNumber();
+                int buildNo = build.getNumber();
                 if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
@@ -790,11 +791,11 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Build a project.
+     * @throws DimensionsRuntimeException
      */
     public DimensionsResult buildProject(long key, String area, String projectId, boolean batch, boolean buildClean,
             String buildConfig, String options, boolean capture, String requests, String targets, String stage,
-            String type, boolean audit, boolean populate, boolean touch, Run build)
-            throws DimensionsRuntimeException {
+            String type, boolean audit, boolean populate, boolean touch, Run<?, ?> build) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -879,10 +880,10 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Upload files.
+     * @throws DimensionsRuntimeException
      */
     public DimensionsResult UploadFiles(long key, FilePath rootDir, String projectId, File cmdFile, String projectName,
-            int buildNo, String requests, boolean forceCheckIn, boolean forceTip, String owningPart)
-            throws DimensionsRuntimeException {
+            int buildNo, String requests, boolean forceCheckIn, boolean forceTip, String owningPart) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -936,10 +937,11 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Create a project tag.
+     * @throws DimensionsRuntimeException
      */
-    public DimensionsResult createBaseline(long key, String dcmProjectVersion, Run build, String blnScope,
+    public DimensionsResult createBaseline(long key, String dcmProjectVersion, Run<?, ?> build, String blnScope,
             String blnTemplate, String blnOwningPart, String blnType, String requestId, String blnId, String blnName,
-            StringBuffer cblId) throws DimensionsRuntimeException {
+            StringBuffer cblId) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -968,7 +970,7 @@ public class DimensionsAPI implements Serializable {
                 final String dcmProjectName = (semicolon >= 0) ? dcmProjectVersion.substring(colon + 1, semicolon).trim()
                         : dcmProjectVersion.substring(colon + 1).trim();
                 final String jenkinsProjectName = build.getParent().getName().trim();
-                final Integer buildNo = build.getNumber();
+                final int buildNo = build.getNumber();
 
                 if (blnName != null && blnName.length() > 0) {
                     String cId = blnName;
@@ -976,7 +978,7 @@ public class DimensionsAPI implements Serializable {
                     cId = cId.replace("[PROJECTID]", dcmProjectName);
                     cId = cId.replace("[HUDSON_PROJECT]", jenkinsProjectName);
                     cId = cId.replace("[JENKINS_PROJECT]", jenkinsProjectName);
-                    cId = cId.replace("[BUILDNO]", buildNo.toString());
+                    cId = cId.replace("[BUILDNO]", Integer.toString(buildNo));
                     cId = cId.replace("[CURRENT_DATE]", DateUtils.getNowStrDateVerbose().trim());
                     if (blnId != null && blnId.length() > 0) {
                         cId = cId.replace("[DM_BASELINE]", blnId.substring(blnId.indexOf(':') + 1).trim());
@@ -984,7 +986,7 @@ public class DimensionsAPI implements Serializable {
                     cblId.append('"').append(dcmProductName).append(':').append(cId).append('"');
                 } else {
                     cblId.append('"').append(dcmProductName).append(':').append(dcmProjectName).append('_')
-                            .append(jenkinsProjectName).append('_').append(buildNo.toString()).append('"');
+                            .append(jenkinsProjectName).append('_').append(buildNo).append('"');
                 }
 
                 cmd += cblId.toString() + " /WORKSET=\"" + dcmProjectVersion + "\"";
@@ -1040,9 +1042,10 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Deploy a baseline.
+     * @throws DimensionsRuntimeException
      */
-    public DimensionsResult deployBaseline(long key, String projectId, Run build, String state,
-            String blnName) throws DimensionsRuntimeException {
+    public DimensionsResult deployBaseline(long key, String projectId, Run<?, ?> build, String state,
+            String blnName) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -1050,7 +1053,7 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "DPB ";
             if (projectId != null && build != null) {
-                Integer buildNo = build.getNumber();
+                int buildNo = build.getNumber();
                 if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
@@ -1077,9 +1080,10 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Action a baseline.
+     * @throws DimensionsRuntimeException
      */
-    public DimensionsResult actionBaseline(long key, String projectId, Run build, String state,
-            String blnName) throws DimensionsRuntimeException {
+    public DimensionsResult actionBaseline(long key, String projectId, Run<?, ?> build, String state,
+            String blnName) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -1087,7 +1091,7 @@ public class DimensionsAPI implements Serializable {
         try {
             String cmd = "ABL ";
             if (projectId != null && build != null) {
-                Integer buildNo = build.getNumber();
+                int buildNo = build.getNumber();
                 if (blnName != null && blnName.length() > 0) {
                     cmd += blnName;
                 } else {
@@ -1114,10 +1118,11 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Construct the change list.
+     * @throws DimensionsRuntimeException
      */
-    private List createChangeList(List items, TimeZone tz, String url) throws DimensionsRuntimeException {
+    private List<DimensionsChangeSet> createChangeList(List<ItemRevision> items, TimeZone tz, String url) {
         items = getSortedItemList(items);
-        List changeSet = new ArrayList(items.size());
+        List<DimensionsChangeSet> changeSet = new ArrayList<DimensionsChangeSet>(items.size());
         String key = null;
         DimensionsChangeSet cs = null;
 
@@ -1127,7 +1132,7 @@ public class DimensionsAPI implements Serializable {
 
         for (int i = 0; i < items.size(); ++i) {
             Logger.debug("Processing change " + i + "/" + items.size());
-            ItemRevision item = (ItemRevision) items.get(i);
+            ItemRevision item = items.get(i);
             int x = 0;
 
             if (item.getAttribute(SystemAttributes.FULL_PATH_NAME) == null) {
@@ -1147,7 +1152,7 @@ public class DimensionsAPI implements Serializable {
             }
             String spec = (String) item.getAttribute(SystemAttributes.OBJECT_SPEC);
             String revision = (String) item.getAttribute(SystemAttributes.REVISION);
-            String fileName = ((String) item.getAttribute(SystemAttributes.FULL_PATH_NAME)) + ";" + revision;
+            String fileName = item.getAttribute(SystemAttributes.FULL_PATH_NAME) + ";" + revision;
             String author = (String) item.getAttribute(SystemAttributes.LAST_UPDATED_USER);
             String comment = (String) item.getAttribute(SystemAttributes.REVISION_COMMENT);
             String date = (String) item.getAttribute(getDateTypeAttribute(operation));
@@ -1185,19 +1190,18 @@ public class DimensionsAPI implements Serializable {
 
             // at this point we have a valid DimensionsChangeSet (cs) that has already been added
             // to the list (changeSet).  So now we will add all requests to the DimensionsChangeSet.
-            List itemRequests = item.getChildRequests(null);
+            List<DimensionsRelatedObject> itemRequests = item.getChildRequests(null);
 
-            for (int j = 0; j < itemRequests.size(); ++j) {
-                DimensionsRelatedObject obj = (DimensionsRelatedObject) itemRequests.get(j);
+            for (DimensionsRelatedObject obj : itemRequests) {
                 DimensionsObject relType = obj.getRelationship();
                 if (SystemRelationship.IN_RESPONSE.equals(relType)) {
                     Request req = (Request) obj.getObject();
 
                     // Which attributes do I want.
-                    req.queryAttribute(new int[] {
-                        SystemAttributes.OBJECT_SPEC,
-                        SystemAttributes.TITLE
-                        /* JENKINS-48645: SystemAttributes.DESCRIPTION */
+                    req.queryAttribute(new int[]{
+                            SystemAttributes.OBJECT_SPEC,
+                            SystemAttributes.TITLE
+                            /* JENKINS-48645: SystemAttributes.DESCRIPTION */
                     });
 
                     String objectId = (String) req.getAttribute(SystemAttributes.OBJECT_SPEC);
@@ -1216,16 +1220,14 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Sort the item list.
+     * @throws DimensionsRuntimeException
      */
-    private static List getSortedItemList(List items) throws DimensionsRuntimeException {
-        Collections.sort(items, new Comparator() {
+    private static List<ItemRevision> getSortedItemList(List<ItemRevision> items) {
+        Collections.sort(items, new Comparator<ItemRevision>() {
             @Override
-            public int compare(Object oa1, Object oa2) {
-                int result = 0;
+            public int compare(ItemRevision o1, ItemRevision o2) {
+                int result;
                 try {
-                    ItemRevision o1 = (ItemRevision) oa1;
-                    ItemRevision o2 = (ItemRevision) oa2;
-
                     String a1 = (String) o1.getAttribute(SystemAttributes.REVISION_COMMENT);
                     String a2 = (String) o2.getAttribute(SystemAttributes.REVISION_COMMENT);
 
@@ -1298,10 +1300,10 @@ public class DimensionsAPI implements Serializable {
             if (host.endsWith("/")) {
                 host = host.substring(0, host.length() - 1);
             }
-            if (host.startsWith("http:")) {
-                host = host.substring(7, host.length());
-            } else if (host.startsWith("https:")) {
-                host = host.substring(8, host.length());
+            if (host.startsWith("http://")) {
+                host = host.substring(7);
+            } else if (host.startsWith("https://")) {
+                host = host.substring(8);
             }
             String page = "/dimensions/";
             String urlQuery = "jsp=api&command=openi&object_id=";
@@ -1331,10 +1333,10 @@ public class DimensionsAPI implements Serializable {
             if (host.endsWith("/")) {
                 host = host.substring(0, host.length() - 1);
             }
-            if (host.startsWith("http:")) {
-                host = host.substring(7, host.length());
-            } else if (host.startsWith("https:")) {
-                host = host.substring(8, host.length());
+            if (host.startsWith("http://")) {
+                host = host.substring(7);
+            } else if (host.startsWith("https://")) {
+                host = host.substring(8);
             }
             String page = "/dimensions/";
             String urlQuery = "jsp=api&command=opencd&object_id=";
@@ -1359,8 +1361,7 @@ public class DimensionsAPI implements Serializable {
     /**
      * Encode a URL correctly - handles spaces as %20.
      */
-    private static String encodeUrl(String host, String page, String query)
-            throws MalformedURLException, URISyntaxException {
+    private static String encodeUrl(String host, String page, String query) throws URISyntaxException {
         String urlStr = "";
         if (page != null && page.length() > 0 && host != null && host.length() > 0
                 && query != null && query.length() > 0) {
@@ -1373,7 +1374,7 @@ public class DimensionsAPI implements Serializable {
     /**
      * Find items given a directory spec.
      */
-    static List queryItems(DimensionsConnection connection, Project srcProject, String srcPath, Filter filter,
+    static List<ItemRevision> queryItems(DimensionsConnection connection, Project srcProject, String srcPath, Filter filter,
             int[] attrs, boolean isRecursive, boolean isLatest) {
         // Check srcPath validity check srcPath trailing slash do query.
         if (srcPath == null) {
@@ -1384,13 +1385,14 @@ public class DimensionsAPI implements Serializable {
         }
 
         String path = preProcessSrcPath(srcPath);
+        List<Filter.Criterion> criteria = filter.criteria();
         if (!(isRecursive && path.equals(""))) {
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
+            criteria.add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
                     (isRecursive ? path + '%' : path), 0));
         }
 
         if (isLatest) {
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_LATEST_REV,
+            criteria.add(new Filter.Criterion(SystemAttributes.IS_LATEST_REV,
                     Boolean.TRUE, 0));
         }
 
@@ -1398,7 +1400,7 @@ public class DimensionsAPI implements Serializable {
         // Going forward it would be good to trap all the possible exception types and do something about them.
         try {
             long time0 = System.currentTimeMillis();
-            List rels = srcProject.getChildItems(filter);
+            List<DimensionsRelatedObject> rels = srcProject.getChildItems(filter);
             long time1 = System.currentTimeMillis();
             if (Logger.isDebugEnabled()) {
                 Logger.debug("queryItems() - Project(" + srcProject.getName() + ").getChildItems("
@@ -1407,10 +1409,9 @@ public class DimensionsAPI implements Serializable {
             if (rels.size() == 0) {
                 return Collections.emptyList();
             }
-            List items = new ArrayList(rels.size());
-            for (int i = 0; i < rels.size(); ++i) {
-                DimensionsRelatedObject rel = (DimensionsRelatedObject) rels.get(i);
-                items.add(rel.getObject());
+            List<ItemRevision> items = new ArrayList<ItemRevision>(rels.size());
+            for (DimensionsRelatedObject rel : rels) {
+                items.add((ItemRevision) rel.getObject());
             }
             BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
             bo.queryAttribute(attrs);
@@ -1424,7 +1425,7 @@ public class DimensionsAPI implements Serializable {
     /**
      * Find items given a baseline/directory spec.
      */
-    static List queryItems(DimensionsConnection connection, Baseline srcBaseline, String srcPath, Filter filter,
+    static List<ItemRevision> queryItems(DimensionsConnection connection, Baseline srcBaseline, String srcPath, Filter filter,
             int[] attrs, boolean isRecursive, boolean isLatest) {
         // Check srcPath validity check srcPath trailing slash do query.
         if (srcPath == null) {
@@ -1435,13 +1436,14 @@ public class DimensionsAPI implements Serializable {
         }
 
         String path = preProcessSrcPath(srcPath);
+        List<Filter.Criterion> criteria = filter.criteria();
         if (!(isRecursive && path.equals(""))) {
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
+            criteria.add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
                     (isRecursive ? path + '%' : path), 0));
         }
 
         if (isLatest) {
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_LATEST_REV,
+            criteria.add(new Filter.Criterion(SystemAttributes.IS_LATEST_REV,
                     Boolean.TRUE, 0));
         }
 
@@ -1449,15 +1451,14 @@ public class DimensionsAPI implements Serializable {
         // Going forward it would be good to trap all the possible exception types and do something about them.
         try {
             Logger.debug("Looking for changed files in '" + path + "' in project: " + srcBaseline.getName());
-            List rels = srcBaseline.getChildItems(filter);
+            List<DimensionsRelatedObject> rels = srcBaseline.getChildItems(filter);
             Logger.debug("Found " + rels.size());
             if (rels.size() == 0) {
                 return null;
             }
-            List items = new ArrayList(rels.size());
-            for (int i = 0; i < rels.size(); ++i) {
-                DimensionsRelatedObject rel = (DimensionsRelatedObject) rels.get(i);
-                items.add(rel.getObject());
+            List<ItemRevision> items = new ArrayList<ItemRevision>(rels.size());
+            for (DimensionsRelatedObject rel : rels) {
+                items.add((ItemRevision) rel.getObject());
             }
             BulkOperator bo = connection.getObjectFactory().getBulkOperator(items);
             bo.queryAttribute(attrs);
@@ -1472,7 +1473,7 @@ public class DimensionsAPI implements Serializable {
     /**
      * Find items given a request/directory spec.
      */
-    static boolean queryItems(DimensionsConnection connection, Request request, String srcPath, List items,
+    static boolean queryItems(DimensionsConnection connection, Request request, String srcPath, List<? super ItemRevision> items,
             Filter filter, Project srcProject, boolean isRecursive, boolean isLatest) {
         // Check srcPath validity check srcPath trailing slash do query.
         if (srcPath == null) {
@@ -1485,13 +1486,14 @@ public class DimensionsAPI implements Serializable {
         Logger.debug("Looking for items against request " + request.getName());
 
         String path = preProcessSrcPath((srcPath.equals("") ? "/" : srcPath));
+        List<Filter.Criterion> criteria = filter.criteria();
         if (!(isRecursive && path.equals(""))) {
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
+            criteria.add(new Filter.Criterion(SystemAttributes.ITEMFILE_DIR,
                     (isRecursive ? path + '%' : path), 0));
         }
 
         if (isLatest) {
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_LATEST_REV,
+            criteria.add(new Filter.Criterion(SystemAttributes.IS_LATEST_REV,
                     Boolean.TRUE, 0));
         }
 
@@ -1500,19 +1502,19 @@ public class DimensionsAPI implements Serializable {
         try {
             Logger.debug("Looking for changed files in '" + path + "' in request: " + request.getName());
             request.queryChildItems(filter, srcProject);
-            List rels = request.getChildItems(filter);
+            List<DimensionsRelatedObject> rels = request.getChildItems(filter);
             Logger.debug("Found " + rels.size());
             if (rels.size() == 0) {
                 return true;
             }
             for (int i = 0; i < rels.size(); ++i) {
                 Logger.debug("Processing " + i + "/" + rels.size());
-                DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
+                DimensionsRelatedObject child = rels.get(i);
                 if (child != null && child.getObject() instanceof ItemRevision) {
                     Logger.debug("Found an item");
                     DimensionsObject relType = child.getRelationship();
                     if (SystemRelationship.IN_RESPONSE.equals(relType)) {
-                        items.add(child.getObject());
+                        items.add((ItemRevision) child.getObject());
                     }
                 }
             }
@@ -1526,34 +1528,32 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Flatten the list of related requests.
+     * @throws DimensionsRuntimeException
      */
-    private boolean getDmChildRequests(Request request, List requestList) throws DimensionsRuntimeException {
+    private void addDmChildRequests(Request request, List<? super Request> requestList) {
         try {
             request.flushRelatedObjects(Request.class, true);
             request.queryChildRequests(null);
-            List rels = request.getChildRequests(null);
+            List<DimensionsRelatedObject> rels = request.getChildRequests(null);
             Logger.debug("Found " + rels.size());
             if (rels.size() == 0) {
-                return true;
+                return;
             }
             for (int i = 0; i < rels.size(); i++) {
                 Logger.debug("Processing " + i + "/" + rels.size());
-                DimensionsRelatedObject child = (DimensionsRelatedObject) rels.get(i);
+                DimensionsRelatedObject child = rels.get(i);
                 if (child != null && child.getObject() instanceof Request) {
                     Logger.debug("Found a request");
                     DimensionsObject relType = child.getRelationship();
                     if (SystemRelationship.DEPENDENT.equals(relType)) {
                         Logger.debug("Found a dependent request");
-                        requestList.add(child.getObject());
-                        if (!getDmChildRequests((Request) child.getObject(), requestList)) {
-                            return false;
-                        }
+                        requestList.add((Request) child.getObject());
+                        addDmChildRequests((Request) child.getObject(), requestList);
                     }
                 } else {
                     Logger.debug("Related object was null or not a request " + (child != null));
                 }
             }
-            return true;
         } catch (Exception e) {
             String message = Values.exceptionMessage("Exception from the Java API querying child requests", e, "no message");
             Logger.debug(message);
@@ -1564,21 +1564,19 @@ public class DimensionsAPI implements Serializable {
     /**
      * Runs a Dimensions command.
      *
-     * @param connection the connection for which to run the command
-     * @param cmd the command line to run
-     * @throws Exception if the command failed
-     * @throws IllegalArgumentException if the command string was null or an empty string
+     * @param connection the connection for which to run the command.
+     * @param cmd the command line to run.
+     * @throws DimensionsRuntimeException if the command failed.
+     * @throws IllegalArgumentException if the command string was null or an empty string.
      */
-    static DimensionsResult run(DimensionsConnection connection, String cmd)
-            throws IllegalArgumentException, DimensionsRuntimeException {
+    static DimensionsResult run(DimensionsConnection connection, String cmd) {
         if (cmd == null || cmd.equals("")) {
             throw new IllegalArgumentException(NO_COMMAND_LINE);
         }
         Logger.debug("Running the command '" + cmd + "'...");
         try {
             DimensionsObjectFactory dof = connection.getObjectFactory();
-            DimensionsResult res = dof.runCommand(cmd);
-            return res;
+            return dof.runCommand(cmd);
         } catch (Exception e) {
             String message = Values.exceptionMessage("Dimensions command '" + cmd + "' failed", e, "no message");
             Logger.debug(message);
@@ -1624,7 +1622,7 @@ public class DimensionsAPI implements Serializable {
         return (timeZone == null) ? DateUtils.parse(date) : DateUtils.parse(date, timeZone);
     }
 
-    public boolean isStream(long key, String projectId) throws DimensionsRuntimeException {
+    public boolean isStream(long key, String projectId) {
         DimensionsConnection connection = getCon(key);
         if (connection == null) {
             throw new DimensionsRuntimeException("Not connected to an SCM repository");
@@ -1665,9 +1663,9 @@ public class DimensionsAPI implements Serializable {
      * @return List
      * @throws DimensionsRuntimeException
      */
-    public List getItemsInRequests(DimensionsConnection connection, final String projectName, final String requests,
-            final String dateAfter, final String dateBefore) throws DimensionsRuntimeException {
-        List items = null;
+    public List<ItemRevision> getItemsInRequests(DimensionsConnection connection, final String projectName, final String requests,
+            final String dateAfter, final String dateBefore) {
+        List<ItemRevision> items = null;
         int[] attrs = getItemFileAttributes(true);
 
         if (requests != null && connection != null) {
@@ -1681,29 +1679,31 @@ public class DimensionsAPI implements Serializable {
             }
 
             // Set up filter for requests Name.
-            List requestList = new ArrayList(1);
-            items = new ArrayList(1);
+            List<Request> requestList = new ArrayList<Request>(1);
+            items = new ArrayList<ItemRevision>(1);
 
             Filter filter = new Filter();
+            List<Filter.Criterion> criteria = filter.criteria();
+            List<Filter.Order> orders = filter.orders();
 
-            filter.criteria().add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
-            filter.orders().add(new Filter.Order(SystemAttributes.REVISION_COMMENT, Filter.ORDER_ASCENDING));
-            filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
-            filter.orders().add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
+            criteria.add(new Filter.Criterion(SystemAttributes.IS_EXTRACTED, "Y", Filter.Criterion.NOT)); //$NON-NLS-1$
+            orders.add(new Filter.Order(SystemAttributes.REVISION_COMMENT, Filter.ORDER_ASCENDING));
+            orders.add(new Filter.Order(SystemAttributes.ITEMFILE_DIR, Filter.ORDER_ASCENDING));
+            orders.add(new Filter.Order(SystemAttributes.ITEMFILE_FILENAME, Filter.ORDER_ASCENDING));
 
             if (dateAfter != null) {
                 if (!isStream(connection, projectName)) {
-                    filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                    criteria.add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
                 } else {
-                    filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
+                    criteria.add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateAfter, Filter.Criterion.GREATER_EQUAL));
                 }
             }
 
             if (dateBefore != null) {
                 if (!isStream(connection, projectName)) {
-                    filter.criteria().add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+                    criteria.add(new Filter.Criterion(SystemAttributes.LAST_UPDATED_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
                 } else {
-                    filter.criteria().add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
+                    criteria.add(new Filter.Criterion(SystemAttributes.CREATION_DATE, dateBefore, Filter.Criterion.LESS_EQUAL));
                 }
             }
 
@@ -1716,14 +1716,11 @@ public class DimensionsAPI implements Serializable {
                     Logger.debug("Request to process is \"" + requestObj.getName() + "\"");
                     requestList.add(requestObj);
                     // Get all the children for this request
-                    if (!getDmChildRequests(requestObj, requestList)) {
-                        throw new DimensionsRuntimeException("Could not process request \"" + requestObj.getName()
-                                + "\" children in repository");
-                    }
+                    addDmChildRequests(requestObj, requestList);
                     Logger.debug("Request has " + requestList.size() + " elements to process");
                     Project projectObj = connection.getObjectFactory().getProject(projectName);
                     for (int i = 0; i < requestList.size(); i++) {
-                        Request req = (Request) requestList.get(i);
+                        Request req = requestList.get(i);
                         Logger.debug("Request " + i + " is \"" + req.getName() + "\"");
                         if (!queryItems(connection, req, "/", items, filter, projectObj, true, allRevisions)) {
                             throw new DimensionsRuntimeException("Could not process items for request \""

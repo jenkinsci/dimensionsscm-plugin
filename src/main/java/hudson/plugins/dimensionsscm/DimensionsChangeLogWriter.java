@@ -11,12 +11,15 @@ import java.util.List;
 /**
  * Write an XML changelog (or append to it if it exists), without a closing tag.
  */
-class DimensionsChangeLogWriter {
+final class DimensionsChangeLogWriter {
+    private DimensionsChangeLogWriter() {
+        /* prevent instantiation. */
+    }
+
     /**
      * Save the list of changes to the changelogFile.
      */
-    static boolean writeLog(List<DimensionsChangeSet> changeSets, File changelogFile) throws IOException {
-        boolean bRet = false;
+    static void writeLog(List<? extends DimensionsChangeSet> changeSets, File changelogFile) throws IOException {
         boolean appendFile = false;
         if (changelogFile.exists()) {
             if (changelogFile.length() > 0) {
@@ -28,23 +31,21 @@ class DimensionsChangeLogWriter {
             writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(changelogFile, appendFile), "UTF-8"));
             write(changeSets, writer, appendFile);
             writer.flush();
-            bRet = true;
         } catch (IOException e) {
             String message = Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message");
             Logger.debug(message, e);
-            throw (IOException) new IOException(message).initCause(e);
+            throw new IOException(message, e);
         } finally {
             if (writer != null) {
                 writer.close();
             }
         }
-        return bRet;
     }
 
     /**
      * Write the list of changes to the PrintWriter.
      */
-    private static void write(List<DimensionsChangeSet> changeSets, PrintWriter pw, boolean appendFile) {
+    private static void write(List<? extends DimensionsChangeSet> changeSets, PrintWriter pw, boolean appendFile) {
         Logger.debug("Writing logfile in append mode = " + appendFile);
         String logStr = "";
         if (!appendFile) {

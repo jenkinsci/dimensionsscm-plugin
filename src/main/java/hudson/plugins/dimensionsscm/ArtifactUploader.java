@@ -6,7 +6,6 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Descriptor.FormException;
 import hudson.model.Result;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -138,11 +137,10 @@ public class ArtifactUploader extends Notifier implements Serializable {
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-            throws IOException, InterruptedException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         Logger.debug("Invoking perform callout " + this.getClass().getName());
         FilePath workspace = build.getWorkspace();
-        boolean bRet = false;
+        boolean bRet;
         boolean isStream = false;
 
         try {
@@ -274,7 +272,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
         }
 
         @Override
-        public Notifier newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        public Notifier newInstance(StaplerRequest req, JSONObject formData) {
             // Get variables and then construct a new object.
             String[] pregEx = req.getParameterValues("artifactuploader.patternsRegEx");
             String[] pAnt = req.getParameterValues("artifactuploader.patternsAnt");
@@ -293,15 +291,13 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 pType = "regEx";
             }
 
-            Boolean fTip = Values.booleanOrElse(req.getParameter("artifactuploader.forceCheckIn"), false);
-            Boolean fMerge = Values.booleanOrElse(req.getParameter("artifactuploader.forceTip"), false);
+            boolean fTip = Values.booleanOrElse(req.getParameter("artifactuploader.forceCheckIn"), false);
+            boolean fMerge = Values.booleanOrElse(req.getParameter("artifactuploader.forceTip"), false);
 
             String oPart = Values.textOrElse(req.getParameter("artifactuploader.owningPart"), null);
-            Boolean fAsSlave = Values.booleanOrElse(req.getParameter("artifactuploader.forceAsSlave"), false);
+            boolean fAsSlave = Values.booleanOrElse(req.getParameter("artifactuploader.forceAsSlave"), false);
 
-            ArtifactUploader artifactor = new ArtifactUploader(pregEx, fTip, fMerge, oPart, fAsSlave, pType, pAnt,
-                    pregExExc, pAntExc);
-            return artifactor;
+            return new ArtifactUploader(pregEx, fTip, fMerge, oPart, fAsSlave, pType, pAnt, pregExExc, pAntExc);
         }
     }
 }

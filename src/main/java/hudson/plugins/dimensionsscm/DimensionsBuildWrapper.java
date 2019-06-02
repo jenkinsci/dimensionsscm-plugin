@@ -7,10 +7,8 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
-import hudson.model.Descriptor.FormException;
 import hudson.model.Result;
 import hudson.tasks.BuildWrapper;
-import hudson.tasks.BuildWrapper.Environment;
 import hudson.tasks.BuildWrapperDescriptor;
 import java.io.IOException;
 import java.util.Map;
@@ -48,7 +46,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
      */
     @Override
     public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener)
-            throws IOException, InterruptedException {
+            throws IOException {
         long key = -1L;
         if (build.getProject().getScm() instanceof DimensionsSCM) {
             Logger.debug("Invoking build setup callout " + this.getClass().getName());
@@ -121,7 +119,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          * {@inheritDoc}
          */
         @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        public boolean configure(StaplerRequest req, JSONObject formData) {
             req.bindParameters(this, "DimensionsBuildWrapper");
             save();
             return true;
@@ -142,7 +140,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
      * Implementation class for Dimensions environment plugin.
      */
     class EnvironmentImpl extends Environment {
-        AbstractBuild<?, ?> elbuild;
+        final AbstractBuild<?, ?> elbuild;
 
         EnvironmentImpl(AbstractBuild<?, ?> build) {
             this.elbuild = build;
@@ -163,7 +161,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          * {@inheritDoc}
          */
         @Override
-        public boolean tearDown(AbstractBuild build, BuildListener listener) throws IOException {
+        public boolean tearDown(AbstractBuild build, BuildListener listener) {
             long key = -1L;
             if (scm != null) {
                 Logger.debug("Invoking build tearDown callout " + this.getClass().getName());
