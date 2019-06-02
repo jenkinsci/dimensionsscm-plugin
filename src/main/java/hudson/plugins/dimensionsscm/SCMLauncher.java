@@ -36,11 +36,11 @@ public class SCMLauncher implements Serializable {
      * Execute the process.
      */
     public Boolean execute() throws IOException, InterruptedException {
-        boolean bRet = false;
+        boolean bRet;
         TaskListener listener = launcher.getListener();
 
         // Need to capture output into a file so I can parse it.
-        File tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+        File tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
 
         FileOutputStream fos = new FileOutputStream(tmpFile);
         StreamBuildListener os = new StreamBuildListener(fos);
@@ -74,11 +74,9 @@ public class SCMLauncher implements Serializable {
             fos.close();
         }
 
-        if (tmpFile != null) {
-            // Get the log file into a string for processing...
-            results = new String(FileUtils.readAllBytes(tmpFile));
-            tmpFile.delete();
-        }
+        // Get the log file into a string for processing...
+        results = new String(FileUtils.readAllBytes(tmpFile));
+        tmpFile.delete();
 
         return bRet;
     }

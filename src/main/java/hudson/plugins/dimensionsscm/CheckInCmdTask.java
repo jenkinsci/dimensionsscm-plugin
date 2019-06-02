@@ -35,7 +35,7 @@ public class CheckInCmdTask extends GenericCmdTask {
         File tmpFile = null;
 
         try {
-            tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+            tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
             // 'DELIVER' command file in platform-default encoding.
             fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 
@@ -70,8 +70,8 @@ public class CheckInCmdTask extends GenericCmdTask {
             fmtWriter.println(ciCmd);
             fmtWriter.flush();
         } catch (IOException e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Unable to write DELIVER command file: " + tmpFile, e,
-                    "no message")).initCause(e);
+            throw new IOException(Values.exceptionMessage("Unable to write DELIVER command file: " + tmpFile, e,
+                    "no message"), e);
         } finally {
             if (fmtWriter != null) {
                 fmtWriter.close();
@@ -104,7 +104,7 @@ public class CheckInCmdTask extends GenericCmdTask {
      * Process the checkin.
      */
     @Override
-    public Boolean execute(final File exe, final File param, final File area) throws IOException {
+    public Boolean execute(final File exe, final File param, final File area) {
         FilePath wa = new FilePath(area);
         boolean bRet = true;
         try {
@@ -141,20 +141,19 @@ public class CheckInCmdTask extends GenericCmdTask {
                 PrintWriter fmtWriter = null;
 
                 try {
-                    tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+                    tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
                     // 'DELIVER/USER_FILELIST=' user filelist in platform-default encoding.
                     fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 
                     for (File f : validFiles) {
-                        if (f.isDirectory()) {
-                        } else {
+                        if (!f.isDirectory()) {
                             fmtWriter.println(f.getAbsolutePath());
                         }
                     }
                     fmtWriter.flush();
                 } catch (IOException e) {
-                    throw (IOException) new IOException(Values.exceptionMessage("Unable to write user filelist: " + tmpFile, e,
-                            "no message")).initCause(e);
+                    throw new IOException(Values.exceptionMessage("Unable to write user filelist: " + tmpFile, e,
+                            "no message"), e);
                 } finally {
                     if (fmtWriter != null) {
                         fmtWriter.close();

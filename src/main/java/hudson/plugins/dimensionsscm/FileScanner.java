@@ -66,9 +66,7 @@ public class FileScanner implements Serializable {
         if (folder.isDirectory()) {
             String name = folder.getName();
             // Dimensions CM work area metadata folders (old or new format).
-            if (".metadata".equals(name) || ".dm".equals(name)) {
-                return true;
-            }
+            return ".metadata".equals(name) || ".dm".equals(name);
         }
         return false;
     }

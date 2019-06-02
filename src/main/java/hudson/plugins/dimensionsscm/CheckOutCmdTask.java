@@ -37,7 +37,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
         File tmpFile = null;
 
         try {
-            tmpFile = File.createTempFile("dmCm" + Long.toString(System.currentTimeMillis()), null, null);
+            tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
             // 'UPDATE' command file in platform-default encoding.
             fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 
@@ -106,8 +106,8 @@ public class CheckOutCmdTask extends GenericCmdTask {
             fmtWriter.println(cmd);
             fmtWriter.flush();
         } catch (IOException e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Unable to write UPDATE command file: " + tmpFile, e,
-                    "no message")).initCause(e);
+            throw new IOException(Values.exceptionMessage("Unable to write UPDATE command file: " + tmpFile, e,
+                    "no message"), e);
         } finally {
             if (fmtWriter != null) {
                 fmtWriter.close();
@@ -144,7 +144,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
      * Process the checkout.
      */
     @Override
-    public Boolean execute(final File exe, final File param, final File area) throws IOException {
+    public Boolean execute(final File exe, final File param, final File area) {
         FilePath wa = new FilePath(area);
         boolean bRet = true;
 
@@ -195,7 +195,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
             if (version == 10 && requests != null) {
                 String[] requestsProcess = requests.split(",");
                 if (requestsProcess.length == 0) {
-                    requestsProcess[0] = requests;
+                    requestsProcess = new String[] { requests };
                 }
 
                 listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");

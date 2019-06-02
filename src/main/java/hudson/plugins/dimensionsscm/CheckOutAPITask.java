@@ -6,7 +6,6 @@ import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.util.VariableResolver;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 
 /**
@@ -57,7 +56,7 @@ public class CheckOutAPITask extends GenericAPITask {
     }
 
     @Override
-    public Boolean execute(File area, VirtualChannel channel) throws IOException {
+    public Boolean execute(File area, VirtualChannel channel) {
         boolean bRet = true;
         try {
             StringBuffer cmdOutput = new StringBuffer();
@@ -114,7 +113,7 @@ public class CheckOutAPITask extends GenericAPITask {
             if (version == 10 && requests != null) {
                 String[] requestsProcess = requests.split(",");
                 if (requestsProcess.length == 0) {
-                    requestsProcess[0] = requests;
+                    requestsProcess = new String[] { requests };
                 }
 
                 listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");

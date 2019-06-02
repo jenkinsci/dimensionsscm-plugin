@@ -6,7 +6,6 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Descriptor.FormException;
 import hudson.model.Result;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -199,7 +198,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
      * Changes the build result if baseline operation fails. (So cannot override {@linkplain #needsToRunAfterFinalized()}).
      */
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         Logger.debug("Invoking perform callout " + this.getClass().getName());
         long key = -1L;
         try {
@@ -344,7 +343,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
         }
 
         @Override
-        public Notifier newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        public Notifier newInstance(StaplerRequest req, JSONObject formData) {
             // Get variables and then construct a new object.
             boolean canDeploy = Values.booleanOrElse(req.getParameter("dimensionsbuildnotifier.canBaselineDeploy"), false);
             boolean canBuild = Values.booleanOrElse(req.getParameter("dimensionsbuildnotifier.canBaselineBuild"), false);
@@ -363,10 +362,9 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
             String blnOwningPart = Values.textOrElse(req.getParameter("dimensionsbuildnotifier.blnOwningPart"), null);
             String blnType = Values.textOrElse(req.getParameter("dimensionsbuildnotifier.blnType"), null);
             String blnName = Values.textOrElse(req.getParameter("dimensionsbuildnotifier.blnName"), null);
-            DimensionsBuildNotifier notif = new DimensionsBuildNotifier(canDeploy, deploy, canAction, action, canBuild,
+            return new DimensionsBuildNotifier(canDeploy, deploy, canAction, action, canBuild,
                     area, buildConfig, buildOptions, buildTargets, blnScope, blnTemplate, blnOwningPart, blnType,
                     blnName, batch, buildClean, capture);
-            return notif;
         }
 
         /**

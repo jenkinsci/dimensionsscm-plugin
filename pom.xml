@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <version>2.29</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <artifactId>dimensionsscm</artifactId>
@@ -25,10 +26,7 @@
     </licenses>
 
     <developers>
-        <!--
-        Tim Payne (`tpayne`) created the original Jenkins Dimensions Plugin and maintained it for many years.
-        Tim is now busy doing more interesting things, so the Plugin maintainer is currently `dconneely`.
-        -->
+        <!-- Tim Payne (`tpayne`) created the original Jenkins Dimensions Plugin -->
         <developer>
             <id>dconneely</id>
             <name>David Conneely</name>
@@ -93,32 +91,27 @@
     <dependencies>
         <dependency>
             <!--
-            This dependency refers to the stub Dimensions CM Java API interfaces.
+            This dependency refers to the Dimensions CM Java API.
 
-            These are a minimal set of interfaces (where each interface has minimal
-            content, and no implementation) to allow the Jenkins Dimensions Plugin
-            to compile successfully.
+            However, the JAR file in the lib/ subdirectory of this repository
+            is a non-functional stub (with source code) solely to allow anyone
+            (even without access to the CM Java API) to compile this plugin.
 
-            This stub is not intended to be functional, only to allow compilation.
+            So the plugin works at runtime (in a Jenkins installation), please
+            follow the 'Installation' steps described in the plugin wiki page:
+            https://wiki.jenkins.io/display/JENKINS/Dimensions+Plugin#DimensionsPlugin-Installation
 
-            At runtime, the Dimensions CM Java API from a Dimensions CM installation
-            must be made available in the Jenkins Dimensions Plugin's classpath.
-
-            This stub should not be included in the built Jenkins Plugin because it
-            will prevent the real Dimensions CM Java API (copied from a Dimensions
-            CM installation) from working correctly.
-
-            The 'Installation' steps on the wiki page still apply. You must still
-            copy the API JAR files from your Dimensions CM Server into the
-            appropriate subdirectory of your Jenkins installation.
+            One way to debug the plugin is to change <version> to be a non-
+            stub version (which is installed in the local Maven repository)
+            and change <scope> to 'compile', then use 'mvn hpi:run'.
             -->
             <groupId>com.serena.dimensions</groupId>
             <artifactId>dmclient</artifactId>
-	    <version>DUMMY-SNAPSHOT</version>
-	    <scope>provided</scope>
+            <version>DUMMY-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -133,7 +126,8 @@
                                     <onlyWhenRelease>false</onlyWhenRelease>
                                     <!-- This is a provided API dependency, so SNAPSHOT not an issue -->
                                     <excludes combine.children="append">
-                                        <exclude>com.serena.dimensions:dmclient</exclude>
+                                        <exclude>com.serena.dimensions:*</exclude>
+                                        <exclude>com.microfocus.adm.dimensions:*</exclude>
                                     </excludes>
                                 </requireReleaseDeps>
                             </rules>

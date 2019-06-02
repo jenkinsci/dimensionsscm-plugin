@@ -7,7 +7,6 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
-import hudson.model.Descriptor.FormException;
 import hudson.model.Result;
 import hudson.tasks.Builder;
 import hudson.util.VariableResolver;
@@ -235,15 +234,15 @@ public class DimensionsBuilder extends Builder {
         }
 
         @Override
-        public Builder newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+        public Builder newInstance(StaplerRequest req, JSONObject formData) {
             // Get variables and then construct a new object.
-            Boolean batch = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectBatch"));
-            Boolean buildClean = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectClean"));
-            Boolean capture = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectCapture"));
+            boolean batch = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectBatch"));
+            boolean buildClean = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectClean"));
+            boolean capture = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectCapture"));
 
-            Boolean audit = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectAudit"));
-            Boolean populate = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectPopulate"));
-            Boolean touch = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectTouch"));
+            boolean audit = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectAudit"));
+            boolean populate = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectPopulate"));
+            boolean touch = "on".equalsIgnoreCase(req.getParameter("dimensionsbuilder.projectTouch"));
 
             String area = req.getParameter("dimensionsbuilder.projectArea");
             String buildConfig = req.getParameter("dimensionsbuilder.projectConfig");
@@ -271,10 +270,8 @@ public class DimensionsBuilder extends Builder {
                 buildStage = Util.fixNull(req.getParameter("dimensionsbuilder.projectStage").trim());
             }
 
-            DimensionsBuilder notif = new DimensionsBuilder(area, buildConfig, buildOptions, buildTargets, buildType,
+            return new DimensionsBuilder(area, buildConfig, buildOptions, buildTargets, buildType,
                     buildStage, batch, buildClean, capture, audit, populate, touch);
-
-            return notif;
         }
 
         /**

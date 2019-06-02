@@ -3,7 +3,6 @@ package hudson.plugins.dimensionsscm;
 import hudson.model.User;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.EditType;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -65,7 +64,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         return this.message;
     }
 
-    public void setDateString(String dateString) throws ParseException {
+    public void setDateString(String dateString) {
         date = Calendar.getInstance();
         TimeZone tz = TimeZone.getTimeZone("UTC");
         date.setTime(DateUtils.parse(dateString, tz));
@@ -186,8 +185,8 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
     @ExportedBean(defaultVisibility = 999)
     public static class DmFiles implements ChangeLogSet.AffectedFile {
         private String fileName;
-        private String operation;
-        private String url;
+        final private String operation;
+        final private String url;
         private DimensionsChangeSet parent;
 
         public DmFiles() {

@@ -35,7 +35,6 @@ import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
-import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.AncestorInPath;
@@ -391,8 +390,8 @@ public class DimensionsSCM extends SCM implements Serializable {
      */
     @Deprecated
     @Override
-    public boolean checkout(final AbstractBuild build, final Launcher launcher, final FilePath workspace,
-            final BuildListener listener, final File changelogFile) throws IOException, InterruptedException {
+    public boolean checkout(final AbstractBuild<?, ?> build, final Launcher launcher, final FilePath workspace,
+            final BuildListener listener, final File changelogFile) {
         if (!isCanJobUpdate()) {
             Logger.debug("Skipping checkout - " + this.getClass().getName());
         }
@@ -478,9 +477,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 bRet = true;
             }
 
-            if (bRet) {
-                bRet = generateChangeSet(build, listener, changelogFile);
-            }
+            generateChangeSet(build, listener, changelogFile);
         } catch (Exception e) {
             String message = Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again");
             listener.fatalError(message);
@@ -493,10 +490,8 @@ public class DimensionsSCM extends SCM implements Serializable {
     /**
      * Generate the changeset.
      */
-    private boolean generateChangeSet(final AbstractBuild build, final TaskListener listener, final File changelogFile)
-            throws IOException, InterruptedException {
+    private void generateChangeSet(final AbstractBuild<?, ?> build, final TaskListener listener, final File changelogFile) {
         long key = -1L;
-        boolean bRet = false;
         DimensionsAPI dmSCM = newDimensionsAPIWithCheck();
 
         try {
@@ -546,20 +541,16 @@ public class DimensionsSCM extends SCM implements Serializable {
                 if (requests != null && requests.length() == 0) {
                     requests = null;
                 }
-                bRet = true;
 
                 // Iterate through the project folders and process them in Dimensions.
                 for (String folderN : folders) {
-                    if (!bRet) {
-                        break;
-                    }
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
                     Logger.debug("Looking for changes in '" + folderN + "'...");
 
                     // Check out the folder.
-                    bRet = dmSCM.createChangeSetLogs(key, getProjectName(build, listener), dname, lastBuildCal, nowDateCal,
+                    dmSCM.createChangeSetLogs(key, getProjectName(build, listener), dname, lastBuildCal, nowDateCal,
                             changelogFile, tz, jobWebUrl, baseline, requests);
                     if (requests != null) {
                         break;
@@ -573,9 +564,8 @@ public class DimensionsSCM extends SCM implements Serializable {
                         pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(changelogFile, true), "UTF-8"));
                         pw.println("</changelog>");
                         pw.flush();
-                        bRet = true;
                     } catch (IOException e) {
-                        throw (IOException) new IOException(Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message")).initCause(e);
+                        throw new IOException(Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message"), e);
                     } finally {
                         if (pw != null) {
                             pw.close();
@@ -587,11 +577,9 @@ public class DimensionsSCM extends SCM implements Serializable {
             String message = Values.exceptionMessage("Unable to run changelog callout", e, "no message - try again");
             listener.fatalError(message);
             Logger.debug(message, e);
-            bRet = false;
         } finally {
             dmSCM.logout(key, build);
         }
-        return bRet;
     }
 
     /**
@@ -601,8 +589,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      */
     @Deprecated
     @Override
-    public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener)
-            throws IOException, InterruptedException {
+    public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) {
         // Stub function for now
         return null;
     }
@@ -615,8 +602,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     @Deprecated
     @Override
     protected PollingResult compareRemoteRevisionWith(AbstractProject<?, ?> project, Launcher launcher,
-            FilePath workspace, TaskListener listener, SCMRevisionState baseline)
-            throws IOException, InterruptedException {
+            FilePath workspace, TaskListener listener, SCMRevisionState baseline) {
         // New polling function - to use old polling function for the moment.
         Change change = Change.NONE;
 
@@ -637,8 +623,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      */
     @Deprecated
     @Override
-    public boolean processWorkspaceBeforeDeletion(AbstractProject<?, ?> project, FilePath workspace, Node node)
-            throws IOException, InterruptedException {
+    public boolean processWorkspaceBeforeDeletion(AbstractProject<?, ?> project, FilePath workspace, Node node) {
         // Not used at the moment, so we have a stub...
         return true;
     }
@@ -648,8 +633,8 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
-    private boolean pollCMChanges(final Job project, final Launcher launcher, final FilePath workspace,
-            final TaskListener listener) throws IOException, InterruptedException {
+    private boolean pollCMChanges(final Job<?, ?> project, final Launcher launcher, final FilePath workspace,
+            final TaskListener listener) {
         boolean bChanged = false;
 
         Logger.debug("Invoking pollChanges - " + this.getClass().getName());
@@ -828,14 +813,14 @@ public class DimensionsSCM extends SCM implements Serializable {
             String permissions = req.getParameter("dimensionsscm.permissions");
             String eol = req.getParameter("dimensionsscm.eol");
 
-            Boolean canJobDelete = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete"));
-            Boolean canJobForce = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce"));
-            Boolean canJobRevert = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert"));
-            Boolean canJobUpdate = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobUpdate"));
-            Boolean canJobExpand = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobExpand"));
-            Boolean canJobNoMetadata = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoMetadata"));
-            Boolean canJobNoTouch = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoTouch"));
-            Boolean forceAsSlave = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.forceAsSlave"));
+            boolean canJobDelete = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete"));
+            boolean canJobForce = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce"));
+            boolean canJobRevert = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert"));
+            boolean canJobUpdate = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobUpdate"));
+            boolean canJobExpand = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobExpand"));
+            boolean canJobNoMetadata = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoMetadata"));
+            boolean canJobNoTouch = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoTouch"));
+            boolean forceAsSlave = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.forceAsSlave"));
 
             String jobUserName = req.getParameter("dimensionsscm.jobUserName");
             String jobPasswd = req.getParameter("dimensionsscm.jobPasswd");
@@ -971,8 +956,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.webUrl = x;
         }
 
-        public FormValidation domanadatoryFieldCheck(StaplerRequest req, StaplerResponse rsp)
-                throws IOException, ServletException {
+        public FormValidation domanadatoryFieldCheck(StaplerRequest req, StaplerResponse rsp) {
             String value = Util.fixEmpty(req.getParameter("value"));
             String errorTxt = "This value is manadatory.";
             if (value == null) {
@@ -989,8 +973,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         @RequirePOST
         public FormValidation docheckTz(StaplerRequest req, StaplerResponse rsp,
                 @QueryParameter("dimensionsscm.timeZone") final String timezone,
-                @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone)
-                throws IOException, ServletException {
+                @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone) {
             try {
                 String xtz = (jobtimezone != null) ? jobtimezone : timezone;
                 Logger.debug("Invoking docheckTz - " + xtz);
@@ -1023,8 +1006,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 @QueryParameter("dimensionsscm.jobPasswd") final String jobPasswd,
                 @QueryParameter("dimensionsscm.jobServer") final String jobServer,
                 @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase,
-                @AncestorInPath final Item item)
-                throws IOException, ServletException {
+                @AncestorInPath final Item item) {
             if (item == null) {
                 Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             } else {

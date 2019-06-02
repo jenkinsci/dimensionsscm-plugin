@@ -17,7 +17,7 @@ final class FileUtils {
     /**
      * Utility routine to read file into memory.
      */
-    static final byte[] readAllBytes(final File file) throws IOException {
+    static byte[] readAllBytes(final File file) throws IOException {
         long len = file.length();
         if (len > (long) Integer.MAX_VALUE) {
             throw new IOException("File is too long to read entirely");

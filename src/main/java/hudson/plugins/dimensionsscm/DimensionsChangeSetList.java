@@ -23,12 +23,12 @@ public final class DimensionsChangeSetList extends ChangeLogSet<DimensionsChange
      * }
      * </pre>
      */
-    DimensionsChangeSetList(AbstractBuild build, RepositoryBrowser<?> browser, List<DimensionsChangeSet> changes) {
+    DimensionsChangeSetList(AbstractBuild<?, ?> build, RepositoryBrowser<?> browser, List<DimensionsChangeSet> changes) {
         super(build);
         this.changes = incorporateChanges(changes, this);
     }
 
-    private static List<DimensionsChangeSet> incorporateChanges(List<DimensionsChangeSet> changes, DimensionsChangeSetList parent) {
+    private static List<DimensionsChangeSet> incorporateChanges(List<? extends DimensionsChangeSet> changes, DimensionsChangeSetList parent) {
         Collections.reverse(changes);
         for (DimensionsChangeSet change : changes) {
             change.setParent(parent);
