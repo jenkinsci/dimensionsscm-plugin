@@ -19,7 +19,7 @@ final class DimensionsChangeLogWriter {
     /**
      * Save the list of changes to the changelogFile.
      */
-    static void writeLog(List<? extends DimensionsChangeSet> changeSets, File changelogFile) throws IOException {
+    static void writeLog(List<? extends DimensionsChangeLogEntry> entries, File changelogFile) throws IOException {
         boolean appendFile = false;
         if (changelogFile.exists()) {
             if (changelogFile.length() > 0) {
@@ -29,7 +29,7 @@ final class DimensionsChangeLogWriter {
         PrintWriter writer = null;
         try {
             writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(changelogFile, appendFile), "UTF-8"));
-            write(changeSets, writer, appendFile);
+            write(entries, writer, appendFile);
             writer.flush();
         } catch (IOException e) {
             String message = Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message");
@@ -45,27 +45,27 @@ final class DimensionsChangeLogWriter {
     /**
      * Write the list of changes to the PrintWriter.
      */
-    private static void write(List<? extends DimensionsChangeSet> changeSets, PrintWriter pw, boolean appendFile) {
+    private static void write(List<? extends DimensionsChangeLogEntry> entries, PrintWriter pw, boolean appendFile) {
         Logger.debug("Writing logfile in append mode = " + appendFile);
         String logStr = "";
         if (!appendFile) {
             pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
             pw.println("<changelog>");
         }
-        if (changeSets != null) {
-            for (DimensionsChangeSet changeSet : changeSets) {
-                logStr += String.format("\t<changeset version=\"%s\">\n", escapeXML(changeSet.getVersion()));
-                logStr += String.format("\t\t<date>%s</date>\n", Util.XS_DATETIME_FORMATTER.format(changeSet.getDate()));
-                logStr += String.format("\t\t<user>%s</user>\n", escapeXML(changeSet.getDeveloper()));
-                logStr += String.format("\t\t<comment>%s</comment>\n", escapeXML(changeSet.getSCMComment()));
+        if (entries != null) {
+            for (DimensionsChangeLogEntry entry : entries) {
+                logStr += String.format("\t<changeset version=\"%s\">\n", escapeXML(entry.getVersion()));
+                logStr += String.format("\t\t<date>%s</date>\n", Util.XS_DATETIME_FORMATTER.format(entry.getDate()));
+                logStr += String.format("\t\t<user>%s</user>\n", escapeXML(entry.getDeveloper()));
+                logStr += String.format("\t\t<comment>%s</comment>\n", escapeXML(entry.getSCMComment()));
                 logStr += "\t\t<items>\n";
-                for (DimensionsChangeSet.DmFiles item : changeSet.getFiles()) {
+                for (DimensionsChangeLogEntry.FileChange item : entry.getFiles()) {
                     logStr += String.format("\t\t\t<item operation=\"%s\" url=\"%s\">%s</item>\n", item.getOperation(),
                             escapeXML(item.getUrl()), escapeXML(item.getFile()));
                 }
                 logStr += "\t\t</items>\n";
                 logStr += "\t\t<requests>\n";
-                for (DimensionsChangeSet.DmRequests req : changeSet.getRequests()) {
+                for (DimensionsChangeLogEntry.IRTRequest req : entry.getRequests()) {
                     logStr += String.format("\t\t\t<request url=\"%s\" title=\"%s\">%s</request>\n",
                             escapeXML(req.getUrl()), escapeXML(req.getTitle()), escapeXML(req.getIdentifier()));
                 }

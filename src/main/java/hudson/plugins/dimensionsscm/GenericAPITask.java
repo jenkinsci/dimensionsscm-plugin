@@ -11,8 +11,6 @@ import java.io.IOException;
  * Base class for Callables using Java API.
  */
 abstract class GenericAPITask extends BaseCallable {
-    private final FilePath workspace;
-
     /** listener is used by CheckInAPITask and CheckOutAPITask subclasses. */
     final TaskListener listener;
 
@@ -29,8 +27,6 @@ abstract class GenericAPITask extends BaseCallable {
 
     GenericAPITask(DimensionsSCM parent, FilePath workspace, TaskListener listener) {
         Logger.debug("Creating task - " + this.getClass().getName());
-
-        this.workspace = workspace;
         this.listener = listener;
 
         // Server details.

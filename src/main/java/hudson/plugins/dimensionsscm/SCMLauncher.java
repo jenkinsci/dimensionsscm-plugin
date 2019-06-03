@@ -13,13 +13,13 @@ import java.io.Serializable;
 /**
  * Launch an executable (dmcli).
  */
-public class SCMLauncher implements Serializable {
+class SCMLauncher implements Serializable {
     private final String[] args;
     private final Launcher launcher;
     private final FilePath workArea;
     private String results;
 
-    public SCMLauncher(final String[] args, final TaskListener listener, final FilePath area) {
+    SCMLauncher(final String[] args, final TaskListener listener, final FilePath area) {
         this.args = args;
         this.launcher = new LocalLauncher(listener);
         this.workArea = area;
@@ -28,14 +28,14 @@ public class SCMLauncher implements Serializable {
     /**
      * Get the command results.
      */
-    public String getResults() {
+    String getResults() {
         return this.results;
     }
 
     /**
      * Execute the process.
      */
-    public Boolean execute() throws IOException, InterruptedException {
+    Boolean execute() throws IOException, InterruptedException {
         boolean bRet;
         TaskListener listener = launcher.getListener();
 

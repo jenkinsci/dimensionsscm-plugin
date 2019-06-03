@@ -560,9 +560,9 @@ public class DimensionsAPI implements Serializable {
 
             if (items != null) {
                 // Write the list of changes into a changelog file.
-                List<DimensionsChangeSet> changes = createChangeList(items, tz, url);
-                Logger.debug("Writing " + changes.size() + " changes to changelog file '" + changelogFile.getPath() + "'");
-                DimensionsChangeLogWriter.writeLog(changes, changelogFile);
+                List<DimensionsChangeLogEntry> entries = createChangeList(items, tz, url);
+                Logger.debug("Writing " + entries.size() + " changes to changelog file '" + changelogFile.getPath() + "'");
+                DimensionsChangeLogWriter.writeLog(entries, changelogFile);
             } else {
                 // No changes, so create an empty changelog file.
                 Logger.debug("Writing null changes to changelog file '" + changelogFile.getPath() + "'");
@@ -1117,11 +1117,11 @@ public class DimensionsAPI implements Serializable {
      * Construct the change list.
      * @throws DimensionsRuntimeException
      */
-    private List<DimensionsChangeSet> createChangeList(List<ItemRevision> items, TimeZone tz, String url) {
+    private List<DimensionsChangeLogEntry> createChangeList(List<ItemRevision> items, TimeZone tz, String url) {
         items = getSortedItemList(items);
-        List<DimensionsChangeSet> changeSet = new ArrayList<DimensionsChangeSet>(items.size());
+        List<DimensionsChangeLogEntry> entries = new ArrayList<DimensionsChangeLogEntry>(items.size());
         String key = null;
-        DimensionsChangeSet cs = null;
+        DimensionsChangeLogEntry entry = null;
 
         // Internal
         //int SBM_ID   = 49;
@@ -1171,22 +1171,22 @@ public class DimensionsAPI implements Serializable {
             opDate.setTime(DateUtils.parse(date, tz));
 
             if (key == null) {
-                cs = new DimensionsChangeSet(fileName, author, operation, revision, comment, urlString, opDate);
+                entry = new DimensionsChangeLogEntry(fileName, author, operation, revision, comment, urlString, opDate);
                 key = comment + author;
-                changeSet.add(cs);
+                entries.add(entry);
             } else {
                 String key1 = comment + author;
                 if (key.equals(key1)) {
-                    cs.add(fileName, operation, urlString);
+                    entry.add(fileName, operation, urlString);
                 } else {
-                    cs = new DimensionsChangeSet(fileName, author, operation, revision, comment, urlString, opDate);
+                    entry = new DimensionsChangeLogEntry(fileName, author, operation, revision, comment, urlString, opDate);
                     key = comment + author;
-                    changeSet.add(cs);
+                    entries.add(entry);
                 }
             }
 
-            // at this point we have a valid DimensionsChangeSet (cs) that has already been added
-            // to the list (changeSet).  So now we will add all requests to the DimensionsChangeSet.
+            // at this point we have a valid DimensionsChangeLogEntry (entry) that has already been added
+            // to the list (entries).  So now we will add all requests to the DimensionsChangeLogEntry.
             List<DimensionsRelatedObject> itemRequests = item.getChildRequests(null);
 
             for (DimensionsRelatedObject obj : itemRequests) {
@@ -1201,18 +1201,18 @@ public class DimensionsAPI implements Serializable {
                             /* JENKINS-48645: SystemAttributes.DESCRIPTION */
                     });
 
-                    String objectId = (String) req.getAttribute(SystemAttributes.OBJECT_SPEC);
-                    String requestUrl = constructRequestURL(objectId, url, getSCMDsn(), getSCMBaseDb());
-                    String title = (String) req.getAttribute(SystemAttributes.TITLE);
+                    String requestId = (String) req.getAttribute(SystemAttributes.OBJECT_SPEC);
+                    String requestUrl = constructRequestURL(requestId, url, getSCMDsn(), getSCMBaseDb());
+                    String requestTitle = (String) req.getAttribute(SystemAttributes.TITLE);
 
-                    cs.addRequest(objectId, requestUrl, title);
-                    Logger.debug("Child Request Details IRT -" + objectId + " " + requestUrl + " " + title);
+                    entry.addRequest(requestId, requestUrl, requestTitle);
+                    Logger.debug("Child Request Details IRT -" + requestId + " " + requestUrl + " " + requestTitle);
                 } else {
                     Logger.debug("Child Request Details Ignored");
                 }
             }
         }
-        return changeSet;
+        return entries;
     }
 
     /**
@@ -1243,20 +1243,17 @@ public class DimensionsAPI implements Serializable {
     }
 
     static int[] getItemFileAttributes(boolean isDirectory) {
-        if (isDirectory) {
-            final int[] attrs = { SystemAttributes.OBJECT_SPEC, SystemAttributes.PRODUCT_NAME,
-                SystemAttributes.OBJECT_ID, SystemAttributes.VARIANT, SystemAttributes.TYPE_NAME,
-                SystemAttributes.REVISION, SystemAttributes.FULL_PATH_NAME, SystemAttributes.ITEMFILE_FILENAME,
-                SystemAttributes.LAST_UPDATED_USER, SystemAttributes.FILE_VERSION,
-                SystemAttributes.REVISION_COMMENT, SystemAttributes.LAST_UPDATED_DATE,
-                SystemAttributes.CREATION_DATE };
-            return attrs;
-        }
-        final int[] attrs = { SystemAttributes.PRODUCT_NAME, SystemAttributes.OBJECT_ID, SystemAttributes.VARIANT,
-            SystemAttributes.TYPE_NAME, SystemAttributes.REVISION, SystemAttributes.ITEMFILE_FILENAME,
-            SystemAttributes.LAST_UPDATED_USER, SystemAttributes.FILE_VERSION, SystemAttributes.LAST_UPDATED_DATE,
-            SystemAttributes.CREATION_DATE };
-        return attrs;
+        return isDirectory ?
+                new int[] { SystemAttributes.OBJECT_SPEC, SystemAttributes.PRODUCT_NAME,
+                        SystemAttributes.OBJECT_ID, SystemAttributes.VARIANT, SystemAttributes.TYPE_NAME,
+                        SystemAttributes.REVISION, SystemAttributes.FULL_PATH_NAME, SystemAttributes.ITEMFILE_FILENAME,
+                        SystemAttributes.LAST_UPDATED_USER, SystemAttributes.FILE_VERSION,
+                        SystemAttributes.REVISION_COMMENT, SystemAttributes.LAST_UPDATED_DATE,
+                        SystemAttributes.CREATION_DATE } :
+                new int[] { SystemAttributes.PRODUCT_NAME, SystemAttributes.OBJECT_ID, SystemAttributes.VARIANT,
+                        SystemAttributes.TYPE_NAME, SystemAttributes.REVISION, SystemAttributes.ITEMFILE_FILENAME,
+                        SystemAttributes.LAST_UPDATED_USER, SystemAttributes.FILE_VERSION, SystemAttributes.LAST_UPDATED_DATE,
+                        SystemAttributes.CREATION_DATE };
     }
 
     private static String preProcessSrcPath(String srcPath) {

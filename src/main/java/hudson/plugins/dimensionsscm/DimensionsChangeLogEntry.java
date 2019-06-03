@@ -17,34 +17,34 @@ import org.kohsuke.stapler.export.ExportedBean;
  * Represents an individual change in the changelog.
  */
 @ExportedBean(defaultVisibility = 999)
-public class DimensionsChangeSet extends ChangeLogSet.Entry {
+public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
     private String developer;
     private String message;
     private final String identifier;
     private Calendar date;
     private String version;
-    private final Collection<DmFiles> items;
-    private final Collection<DmRequests> requests;
+    private final Collection<FileChange> fileChanges;
+    private final Collection<IRTRequest> irtRequests;
 
     // Digester class seems to need a no-parameter constructor else it crashes
-    public DimensionsChangeSet() {
+    public DimensionsChangeLogEntry() {
         this("", "", "", "", "", "", null);
     }
 
     /**
-     * `file`, `op`, `url` are the first changestep within the changeset.
+     * `file`, `op`, `url` are the first file-change within the entry.
      * Note that `file` is a path name and revision, separated by a ';' character.
      */
-    public DimensionsChangeSet(String file, String developer, String op, String revision, String comment, String url,
-            Calendar date) {
+    public DimensionsChangeLogEntry(String file, String developer, String op, String revision, String comment, String url,
+                                    Calendar date) {
         this.identifier = file;
         this.developer = developer;
         this.message = comment;
         this.date = date;
         this.version = revision;
-        this.items = new HashSet<DmFiles>();
-        this.items.add(new DmFiles(file, op, url));
-        this.requests = new HashSet<DmRequests>();
+        this.fileChanges = new HashSet<FileChange>();
+        this.fileChanges.add(new FileChange(file, op, url));
+        this.irtRequests = new HashSet<IRTRequest>();
     }
 
     @Override
@@ -70,24 +70,24 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         date.setTime(DateUtils.parse(dateString, tz));
     }
 
-    public Collection<DmFiles> getFiles() {
-        return this.items;
+    public Collection<FileChange> getFiles() {
+        return this.fileChanges;
     }
 
-    public Collection<DmRequests> getRequests() {
-        return this.requests;
+    public Collection<IRTRequest> getRequests() {
+        return this.irtRequests;
     }
 
     @Override
-    public Collection<DmFiles> getAffectedFiles() {
-        return Collections.unmodifiableCollection(items);
+    public Collection<FileChange> getAffectedFiles() {
+        return Collections.unmodifiableCollection(fileChanges);
     }
 
     @Override
     public Collection<String> getAffectedPaths() {
-        Collection<String> paths = new ArrayList<String>(items.size());
-        for (DmFiles item : items) {
-            paths.add(item.getFile());
+        Collection<String> paths = new ArrayList<String>(fileChanges.size());
+        for (FileChange fileChange : fileChanges) {
+            paths.add(fileChange.getFile());
         }
         return paths;
     }
@@ -95,7 +95,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
     @Override
     public User getAuthor() {
         if (this.developer == null) {
-            throw new RuntimeException("Unable to determine changeset developer");
+            throw new RuntimeException("Unable to determine change's developer");
         }
         return User.get(this.developer);
     }
@@ -109,88 +109,85 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         return this.identifier;
     }
 
-    public void setVersion(String x) {
-        this.version = x;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public String getVersion() {
         return this.version;
     }
 
-    public void setUser(String x) {
-        this.developer = x;
+    public void setUser(String developer) {
+        this.developer = developer;
     }
 
     public String getUser() {
         return this.developer;
     }
 
-    public void setComment(String x) {
-        this.message = x;
+    public void setComment(String message) {
+        this.message = message;
     }
 
     public String getComment() {
         return getSCMComment();
     }
 
-    public void add(DimensionsChangeSet.DmFiles file) {
-        items.add(file);
+    public void add(FileChange fileChange) {
+        fileChanges.add(fileChange);
     }
 
     public void add(String file, String operation, String url) {
-        DimensionsChangeSet.DmFiles x = new DmFiles(file, operation, url);
-        items.add(x);
+        FileChange fileChange = new FileChange(file, operation, url);
+        fileChanges.add(fileChange);
     }
 
-    public void addRequest(DimensionsChangeSet.DmRequests newreq) {
-        for (DmRequests req : requests) {
-            if (req.getIdentifier().equals(newreq.getIdentifier())) {
+    public void addRequest(final IRTRequest newRequest) {
+        for (IRTRequest irtRequest : irtRequests) {
+            if (irtRequest.getIdentifier().equals(newRequest.getIdentifier())) {
                 return;
             }
         }
-
-        requests.add(newreq);
+        irtRequests.add(newRequest);
     }
 
-    public void addRequest(String objectId, String url) {
-        for (DmRequests req : requests) {
-            if (req.getIdentifier().equals(objectId)) {
+    public void addRequest(final String requestId, final String requestUrl) {
+        for (IRTRequest irtRequest : irtRequests) {
+            if (irtRequest.getIdentifier().equals(requestId)) {
                 return;
             }
         }
-
-        DimensionsChangeSet.DmRequests x = new DmRequests(objectId, url);
-        requests.add(x);
+        final IRTRequest newRequest = new IRTRequest(requestId, requestUrl);
+        irtRequests.add(newRequest);
     }
 
-    public void addRequest(String objectId, String url, String title) {
-        for (DmRequests req : requests) {
-            if (req.getIdentifier().equals(objectId)) {
+    public void addRequest(final String requestId, final String requestUrl, final String requestTitle) {
+        for (IRTRequest irtRequest : irtRequests) {
+            if (irtRequest.getIdentifier().equals(requestId)) {
                 return;
             }
         }
-
-        DimensionsChangeSet.DmRequests x = new DmRequests(objectId, url, title);
-        requests.add(x);
+        final IRTRequest newRequest = new IRTRequest(requestId, requestUrl, requestTitle);
+        irtRequests.add(newRequest);
     }
 
     /**
-     * List of changes made in the repository for this changeset.
+     * An individual file-change made in the repository for this entry.
      */
     @ExportedBean(defaultVisibility = 999)
-    public static class DmFiles implements ChangeLogSet.AffectedFile {
+    public static class FileChange implements ChangeLogSet.AffectedFile {
         private String fileName;
         final private String operation;
         final private String url;
 
-        public DmFiles() {
+        public FileChange() {
             this("", "", "");
         }
 
         /**
          * `fileName` is path name and revision separated by ';' character.
          */
-        public DmFiles(String fileName, String operation, String url) {
+        public FileChange(String fileName, String operation, String url) {
             this.fileName = fileName;
             this.url = url;
             this.operation = operation;
@@ -198,11 +195,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
         @Exported
         public String getUrl() {
-            if (this.url.length() == 0) {
-                return null;
-            } else {
-                return this.url;
-            }
+            return this.url == null || this.url.length() == 0 ? null : this.url;
         }
 
         @Exported
@@ -215,11 +208,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
          */
         @Exported
         public String getFile() {
-            if (this.fileName.length() == 0) {
-                return null;
-            } else {
-                return this.fileName;
-            }
+            return this.fileName == null || this.fileName.length() == 0 ? null : this.fileName;
         }
 
         @Override
@@ -272,22 +261,22 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
     }
 
     @ExportedBean(defaultVisibility = 999)
-    public static class DmRequests {
+    public static class IRTRequest {
         private String identifier;
         private String url;
         private String title;
 
-        public DmRequests() {
+        public IRTRequest() {
             this("", "", "");
         }
 
-        public DmRequests(String objectID, String url) {
+        public IRTRequest(String objectID, String url) {
             this.identifier = objectID;
             this.url = url;
             this.title = "";
         }
 
-        public DmRequests(String objectID, String url, String title) {
+        public IRTRequest(String objectID, String url, String title) {
             this.identifier = objectID;
             this.url = url;
             this.title = title;
@@ -295,11 +284,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
         @Exported
         public String getUrl() {
-            if (this.url == null || this.url.length() == 0) {
-                return null;
-            } else {
-                return this.url;
-            }
+            return this.url == null || this.url.length() == 0 ? null : this.url;
         }
 
         public void setUrl(String url) {
@@ -308,28 +293,20 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
         @Exported
         public String getIdentifier() {
-            if (this.identifier == null || this.identifier.length() == 0) {
-                return null;
-            } else {
-                return this.identifier;
-            }
+            return this.identifier == null || this.identifier.length() == 0 ? null : this.identifier;
         }
 
-        public void setIdentifier(String id) {
-            this.identifier = id;
+        public void setIdentifier(String identifier) {
+            this.identifier = identifier;
         }
 
         @Exported
         public String getTitle() {
-            if (this.title == null || this.title.length() == 0) {
-                return null;
-            } else {
-                return this.title;
-            }
+            return this.title == null || this.title.length() == 0 ? null : this.title;
         }
 
-        public void setTitle(String id) {
-            this.title = id;
+        public void setTitle(String title) {
+            this.title = title;
         }
     }
 }

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * Scan for files to deliver using regular expression patterns.
  */
-public class FileScanner implements Serializable {
+class FileScanner implements Serializable {
     private final Collection<File> xfiles;
 
     /**
@@ -49,12 +49,12 @@ public class FileScanner implements Serializable {
         }
     }
 
-    public FileScanner(File basedir, String[] patterns, String[] patternsExc, int depth) {
+    FileScanner(File basedir, String[] patterns, String[] patternsExc, int depth) {
         ScannerFilter filter = new ScannerFilter(patterns, patternsExc);
         xfiles = scanFiles(basedir, basedir, filter, depth);
     }
 
-    public File[] toArray() {
+    File[] toArray() {
         File[] xarr = new File[xfiles.size()];
         return xfiles.toArray(xarr);
     }

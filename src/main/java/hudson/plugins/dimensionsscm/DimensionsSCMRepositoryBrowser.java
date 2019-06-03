@@ -11,17 +11,17 @@ import org.kohsuke.stapler.export.ExportedBean;
  * Dummy repository browser.
  */
 @ExportedBean(defaultVisibility = 999)
-public class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeSet> {
+public class DimensionsSCMRepositoryBrowser extends RepositoryBrowser<DimensionsChangeLogEntry> {
     @DataBoundConstructor
     public DimensionsSCMRepositoryBrowser() {
     }
 
-    public URL getDiffLink(DimensionsChangeSet.DmFiles item) throws java.net.MalformedURLException {
+    public URL getDiffLink(DimensionsChangeLogEntry.FileChange fileChange) throws java.net.MalformedURLException {
         return new URL("http://alink.com/link.html");
     }
 
     @Override
-    public URL getChangeSetLink(DimensionsChangeSet item) {
+    public URL getChangeSetLink(DimensionsChangeLogEntry entry) {
         return null;
     }
 

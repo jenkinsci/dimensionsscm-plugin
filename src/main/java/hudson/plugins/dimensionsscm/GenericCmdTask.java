@@ -13,8 +13,6 @@ import java.io.PrintWriter;
  * Base class for Callables using dmcli command-line.
  */
 abstract class GenericCmdTask extends BaseCallable {
-    private final FilePath workspace;
-
     /** listener is used by CheckInCmdTask and CheckOutCmdTask subclasses. */
     final TaskListener listener;
 
@@ -65,7 +63,6 @@ abstract class GenericCmdTask extends BaseCallable {
 
     GenericCmdTask(String userName, Secret passwd, String database, String server, int version,
             FilePath workspace, TaskListener listener) {
-        this.workspace = workspace;
         this.listener = listener;
 
         // Server details.

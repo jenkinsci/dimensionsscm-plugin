@@ -11,7 +11,7 @@ import org.apache.tools.ant.types.FileSet;
 /**
  * Scan for files to deliver using Ant-style patterns.
  */
-public class FileAntScanner implements Serializable {
+class FileAntScanner implements Serializable {
     private static final String[] DEFAULT_EXCLUDES = new String[] {
             "**/.dm", "**/.dm/*", "**/.metadata", "**/.metadata/*" };
 
@@ -44,12 +44,12 @@ public class FileAntScanner implements Serializable {
         }
     }
 
-    public FileAntScanner(File dirName, String[] patterns, String[] patternsExc, int depth) {
+    FileAntScanner(File dirName, String[] patterns, String[] patternsExc, int depth) {
         ScannerFilter filter = new ScannerFilter(patterns, patternsExc, dirName);
         xfiles = scanFiles(dirName, filter, depth);
     }
 
-    public File[] toArray() {
+    File[] toArray() {
         File[] arr = new File[xfiles.size()];
         return xfiles.toArray(arr);
     }
