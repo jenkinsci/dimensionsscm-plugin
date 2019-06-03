@@ -1,6 +1,7 @@
 package hudson.plugins.dimensionsscm;
 
 import static hudson.plugins.dimensionsscm.LogInitializer.LOGGER;
+
 import java.util.logging.Level;
 
 final class Logger {

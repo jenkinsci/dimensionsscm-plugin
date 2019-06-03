@@ -3,7 +3,6 @@ package hudson.plugins.dimensionsscm;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.scm.RepositoryBrowser;
-import java.io.IOException;
 import java.net.URL;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.export.ExportedBean;

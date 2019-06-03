@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
@@ -430,10 +429,6 @@ public class DimensionsSCM extends SCM implements Serializable {
                     }
                     dmSCM.logout(key, build);
                 }
-
-                // Get the details of the master.
-                InetAddress netAddr = InetAddress.getLocalHost();
-                String hostname = netAddr.getHostName();
 
                 boolean master = true;
                 if (isForceAsSlave()) {

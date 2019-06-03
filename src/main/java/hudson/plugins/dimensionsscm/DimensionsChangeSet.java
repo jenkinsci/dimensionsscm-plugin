@@ -48,7 +48,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
     }
 
     @Override
-    public void setParent(ChangeLogSet parent) {
+    public void setParent(@SuppressWarnings("rawtypes") ChangeLogSet parent) {
         super.setParent(parent);
     }
 
@@ -97,7 +97,7 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         if (this.developer == null) {
             throw new RuntimeException("Unable to determine changeset developer");
         }
-        return User.get(this.developer, true);
+        return User.get(this.developer);
     }
 
     @Override
@@ -135,13 +135,11 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
     public void add(DimensionsChangeSet.DmFiles file) {
         items.add(file);
-        file.setParent(this);
     }
 
     public void add(String file, String operation, String url) {
         DimensionsChangeSet.DmFiles x = new DmFiles(file, operation, url);
         items.add(x);
-        x.setParent(this);
     }
 
     public void addRequest(DimensionsChangeSet.DmRequests newreq) {
@@ -152,7 +150,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         }
 
         requests.add(newreq);
-        newreq.setParent(this);
     }
 
     public void addRequest(String objectId, String url) {
@@ -164,7 +161,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
         DimensionsChangeSet.DmRequests x = new DmRequests(objectId, url);
         requests.add(x);
-        x.setParent(this);
     }
 
     public void addRequest(String objectId, String url, String title) {
@@ -176,7 +172,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
         DimensionsChangeSet.DmRequests x = new DmRequests(objectId, url, title);
         requests.add(x);
-        x.setParent(this);
     }
 
     /**
@@ -187,7 +182,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         private String fileName;
         final private String operation;
         final private String url;
-        private DimensionsChangeSet parent;
 
         public DmFiles() {
             this("", "", "");
@@ -226,10 +220,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
             } else {
                 return this.fileName;
             }
-        }
-
-        public DimensionsChangeSet getParent() {
-            return this.parent;
         }
 
         @Override
@@ -279,10 +269,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         public void setFile(String fileName) {
             this.fileName = fileName;
         }
-
-        public void setParent(DimensionsChangeSet parent) {
-            this.parent = parent;
-        }
     }
 
     @ExportedBean(defaultVisibility = 999)
@@ -290,7 +276,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
         private String identifier;
         private String url;
         private String title;
-        private DimensionsChangeSet parent;
 
         public DmRequests() {
             this("", "", "");
@@ -345,10 +330,6 @@ public class DimensionsChangeSet extends ChangeLogSet.Entry {
 
         public void setTitle(String id) {
             this.title = id;
-        }
-
-        public void setParent(DimensionsChangeSet parent) {
-            this.parent = parent;
         }
     }
 }

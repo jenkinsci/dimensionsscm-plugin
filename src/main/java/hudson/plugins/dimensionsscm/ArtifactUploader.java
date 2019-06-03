@@ -14,7 +14,6 @@ import hudson.tasks.Publisher;
 import hudson.util.VariableResolver;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetAddress;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -174,10 +173,6 @@ public class ArtifactUploader extends Notifier implements Serializable {
                     dmSCM.logout(key, build);
                 }
 
-                // Get the details of the master.
-                InetAddress netAddr = InetAddress.getLocalHost();
-                String hostname = netAddr.getHostName();
-
                 String projectName = build.getProject().getName();
                 int buildNo = build.getNumber();
 
@@ -258,7 +253,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
          * This builder can be used with all project types.
          */
         @Override
-        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
+        public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
             return true;
         }
 

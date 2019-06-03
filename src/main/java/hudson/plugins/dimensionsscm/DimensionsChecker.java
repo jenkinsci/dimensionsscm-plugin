@@ -15,9 +15,9 @@ final class DimensionsChecker {
     /**
      * Checks if all the plugins that need to be loaded are loaded.
      */
-    static boolean isValidPluginCombination(Run build, TaskListener listener) {
+    static boolean isValidPluginCombination(Run<?, ?> build, TaskListener listener) {
         if (build.getParent() instanceof Project) {
-            Project buildProject = (Project) build.getParent();
+            Project<?, ?> buildProject = (Project<?, ?>) build.getParent();
             if (!(buildProject.getScm() instanceof DimensionsSCM)) {
                 Logger.debug("Not using a DimensionsSCM engine - bye");
                 return false;
@@ -25,9 +25,9 @@ final class DimensionsChecker {
 
             DimensionsBuildWrapper bwplugin = (DimensionsBuildWrapper) buildProject.getBuildWrappers().get(
                     DimensionsBuildWrapper.DMWBLD_DESCRIPTOR);
-            DimensionsBuildNotifier bnplugin = (DimensionsBuildNotifier) buildProject.getPublishersList().get(
+            DimensionsBuildNotifier bnplugin = buildProject.getPublishersList().get(
                     DimensionsBuildNotifier.class);
-            ArtifactUploader anplugin = (ArtifactUploader) buildProject.getPublishersList().get(
+            ArtifactUploader anplugin = buildProject.getPublishersList().get(
                     ArtifactUploader.class);
 
             if (bwplugin != null) {

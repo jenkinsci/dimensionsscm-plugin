@@ -50,7 +50,6 @@ public class DimensionsAPI implements Serializable {
     private static final String MISSING_REQUEST = "The nested element needs a valid request to work on"; //$NON-NLS-1$
     private static final String BAD_BASE_DATABASE_SPEC = "The <dimensions> task needs a valid 'database' attribute, in the format 'dbname@dbconn'"; //$NON-NLS-1$
     private static final String NO_COMMAND_LINE = "The <run> nested element need a valid 'cmd' attribute"; //$NON-NLS-1$
-    private static final String SRCITEM_SRCPATH_CONFLICT = "The <getcopy> nested element needs exactly one of the 'srcpath' or 'srcitem' attributes"; //$NON-NLS-1$
 
     // Thread safe key (sequence) generator.
     private static final AtomicLong sequence = new AtomicLong(1);
@@ -67,8 +66,6 @@ public class DimensionsAPI implements Serializable {
 
     // Dimensions project details.
     private String dmProject;
-    private String dmDirectory;
-    private String dmRequest;
     private String projectPath;
 
     private static final String DATE_TYPE = "edit";
@@ -1243,21 +1240,6 @@ public class DimensionsAPI implements Serializable {
             }
         });
         return items;
-    }
-
-    /**
-     * Sets the current project for the current user, which is deduced from the current thread.
-     *
-     * @param connection the connection for which to set the current project.
-     * @param projectName the project to switch to, in the form PRODUCT NAME:PROJECT NAME.
-     * @throws DimensionsRuntimeException
-     */
-    private static void setCurrentProject(DimensionsConnection connection, String projectName) {
-        connection.getObjectFactory().setCurrentProject(projectName, false, "", "", null, true);
-    }
-
-    private static Project getCurrentProject(DimensionsConnection connection) {
-        return connection.getObjectFactory().getCurrentUser().getCurrentProject();
     }
 
     static int[] getItemFileAttributes(boolean isDirectory) {

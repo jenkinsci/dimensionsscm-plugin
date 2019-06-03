@@ -16,7 +16,6 @@ final class DateUtils {
     private static final String DATE_PATTERN = "dd-MMM-yyyy";
     private static final String DATETIME_PATTERN = "dd-MMM-yyyy HH:mm:ss";
     private static final String RFCDATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-    private static final TimeZone UTC_TIME_ZONE = TimeZone.getTimeZone("UTC");
     private static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getDefault();
 
     /**
@@ -50,9 +49,9 @@ final class DateUtils {
     static Date parse(String dateStr, TimeZone tz) {
         Date date = null;
         dateStr = dateStr.trim();
-        for (int i = 0; i < PATTERNS.length; ++i) {
+        for (String pattern : PATTERNS) {
             try {
-                SimpleDateFormat df = new SimpleDateFormat(PATTERNS[i], Locale.US);
+                SimpleDateFormat df = new SimpleDateFormat(pattern, Locale.US);
                 df.setTimeZone(tz);
                 date = df.parse(dateStr);
                 if (date != null) {
@@ -74,9 +73,9 @@ final class DateUtils {
     private static boolean validate(String dateStr) {
         boolean ret = false;
         dateStr = dateStr.trim();
-        for (int i = 0; i < PATTERNS.length; ++i) {
+        for (String pattern : PATTERNS) {
             try {
-                SimpleDateFormat df = new SimpleDateFormat(PATTERNS[i], Locale.US);
+                SimpleDateFormat df = new SimpleDateFormat(pattern, Locale.US);
                 Date date = df.parse(dateStr);
                 if (date != null && df.format(date).equalsIgnoreCase(dateStr)) {
                     ret = true;

@@ -33,7 +33,8 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
      */
     @Deprecated
     @Override
-    public DimensionsChangeSetList parse(AbstractBuild build, File changelogFile) throws IOException, SAXException {
+    public DimensionsChangeSetList parse(@SuppressWarnings("rawtypes") AbstractBuild build, File changelogFile)
+            throws IOException, SAXException {
         RepositoryBrowser<?> browser = build.getProject().getScm().getEffectiveBrowser();
         return new DimensionsChangeSetList(build, browser, digest(changelogFile));
     }

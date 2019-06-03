@@ -24,8 +24,8 @@ public class GetHostDetailsTask extends BaseCallable {
             // Get hostname and compare.
             return netAddr.getHostName().equals(masteripaddr);
         } catch (UnknownHostException e) {
-            throw (IOException) new IOException(Values.exceptionMessage("Exception getting hostname", e,
-                    "no message")).initCause(e);
+            throw new IOException(Values.exceptionMessage("Exception getting hostname", e,
+                    "no message"), e);
         }
     }
 }

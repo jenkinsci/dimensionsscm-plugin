@@ -45,7 +45,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
      * {@inheritDoc}
      */
     @Override
-    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener)
+    public Environment setUp(@SuppressWarnings("rawtypes") final AbstractBuild build, Launcher launcher, final BuildListener listener)
             throws IOException {
         long key = -1L;
         if (build.getProject().getScm() instanceof DimensionsSCM) {
@@ -161,7 +161,7 @@ public class DimensionsBuildWrapper extends BuildWrapper {
          * {@inheritDoc}
          */
         @Override
-        public boolean tearDown(AbstractBuild build, BuildListener listener) {
+        public boolean tearDown(@SuppressWarnings("rawtypes") AbstractBuild build, BuildListener listener) {
             long key = -1L;
             if (scm != null) {
                 Logger.debug("Invoking build tearDown callout " + this.getClass().getName());
