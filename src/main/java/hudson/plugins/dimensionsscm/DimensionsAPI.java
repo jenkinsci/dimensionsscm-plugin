@@ -33,7 +33,6 @@ import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -402,22 +401,15 @@ public class DimensionsAPI implements Serializable {
         return dbCompts;
     }
 
-
-    private Date convertStrToDateWithTimeZone(final Calendar dateWithTz, TimeZone tz) throws ParseException {
-        String dateStr = formatDatabaseDate(dateWithTz.getTime(), tz);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
-        return dateFormat.parse(dateStr);
-    }
-
     @SuppressWarnings("unchecked")
-    private List<DimensionsChangeStep> checkRepositoryDiffs(DimensionsConnection connection, final String projectName,
-                                                            final Calendar fromDate, final Calendar toDate, final TimeZone tz) throws ParseException {
+    List<DimensionsChangeStep> calcRepoDiffsWithChangesets(DimensionsConnection connection, final String projectName,
+                                                           final Calendar fromDate, final Calendar toDate, final TimeZone tz) {
 
         Project project = connection.getObjectFactory().getProject(projectName);
         ChangeSetsQuery changeSetsQuery = connection.getObjectFactory().getChangeSetsQuery();
 
-        Date dateAfter = convertStrToDateWithTimeZone(fromDate, tz);
-        Date dateBefore = (toDate != null) ? convertStrToDateWithTimeZone(toDate, tz) : convertStrToDateWithTimeZone(Calendar.getInstance(), tz);
+        Date dateAfter = DateUtils.parse(formatDatabaseDate(fromDate.getTime(), tz));
+        Date dateBefore = (toDate != null) ? DateUtils.parse(formatDatabaseDate(toDate.getTime(), tz)) : DateUtils.parse(formatDatabaseDate(Calendar.getInstance().getTime(), tz));
 
         Filter filter = new Filter();
         filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_FROM_DATE, dateAfter, Filter.Criterion.EQUALS));
@@ -452,29 +444,9 @@ public class DimensionsAPI implements Serializable {
             throw new IOException("Not connected to an SCM repository");
         }
 
-        try {
-            List<DimensionsChangeStep> changeSteps = checkRepositoryDiffs(connection, projectName, fromDate, toDate, tz);
-            if (changeSteps != null) {
-                PathMatcher pathMatcher = getPathMatcher();
-                for (DimensionsChangeStep changeStep : changeSteps) {
-                    String fullPathName = changeStep.getProjectPath();
-                    // Match when fullPathName is not ignored, false otherwise.
-                    if (pathMatcher.match(fullPathName)) {
-                        Logger.debug("Found " + changeSteps.size() + " changed item(s), "
-                                + "and at least one ('" + fullPathName + "') passed the " + pathMatcher);
-                        return true;
-                    }
-                }
-            }
-            Logger.debug("Found " + (changeSteps == null ? "nil" : changeSteps.size()) + " changed item(s), "
-                    + ((changeSteps == null || changeSteps.isEmpty()) ? "so" : "but") + " none passed the " + getPathMatcher());
-        } catch (Exception e) {
-            String message = Values.exceptionMessage("Unable to run hasRepositoryBeenUpdated", e, "no message");
-            Logger.debug(message, e);
-            throw new IOException(message, e);
-        }
+        DimensionsAPICallback dimensionsAPICallback = CallbackInstance.getInstance(connection);
 
-        return false;
+        return dimensionsAPICallback.hasRepositoryBeenUpdated(this, connection, projectName, fromDate, toDate, tz, workspace);
     }
 
     /**
@@ -591,7 +563,7 @@ public class DimensionsAPI implements Serializable {
             throw new IOException("Not connected to an SCM repository");
         }
         try {
-            List<ItemRevision> items = calcRepositoryDiffs(key, projectName, baseline, requests, projectDir, fromDate, toDate, tz);
+            List<ItemRevision> items = calcRepoDiffsWithRevisions(connection, projectName, baseline, requests, projectDir, fromDate, toDate, tz);
 
             Logger.debug("CM Url : " + (url != null ? url : "(null)"));
             if (requests != null) {
@@ -621,13 +593,10 @@ public class DimensionsAPI implements Serializable {
     /**
      * Calculate any repository changes made during a certain time.
      */
-    private List<ItemRevision> calcRepositoryDiffs(final long key, final String projectName, final String baselineName,
-                                                   final String requests, final FilePath workspace, final Calendar fromDate, final Calendar toDate,
-                                                   final TimeZone tz) throws IOException {
-        DimensionsConnection connection = getCon(key);
-        if (connection == null) {
-            throw new IOException("Not connected to an SCM repository");
-        }
+    List<ItemRevision> calcRepoDiffsWithRevisions(DimensionsConnection connection, final String projectName, final String baselineName,
+                                                  final String requests, final FilePath workspace, final Calendar fromDate, final Calendar toDate,
+                                                  final TimeZone tz) throws IOException {
+
         if (fromDate == null && baselineName == null && requests == null) {
             return null;
         }
@@ -700,7 +669,7 @@ public class DimensionsAPI implements Serializable {
             }
             return items;
         } catch (Exception e) {
-            throw new IOException(Values.exceptionMessage("Unable to run calcRepositoryDiffs", e,
+            throw new IOException(Values.exceptionMessage("Unable to run calcRepoDiffsWithRevisions", e,
                     "no message"), e);
         }
     }
