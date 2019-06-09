@@ -1,87 +1,3 @@
-/*
- * ===========================================================================
- *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
- *
- *  Use of the Sample Code provided by Serena is governed by the following
- *  terms and conditions. By using the Sample Code, you agree to be bound by
- *  the terms contained herein. If you do not agree to the terms herein, do
- *  not install, copy, or use the Sample Code.
- *
- *  1.  GRANT OF LICENSE.  Subject to the terms and conditions herein, you
- *  shall have the nonexclusive, nontransferable right to use the Sample Code
- *  for the sole purpose of developing applications for use solely with the
- *  Serena software product(s) that you have licensed separately from Serena.
- *  Such applications shall be for your internal use only.  You further agree
- *  that you will not: (a) sell, market, or distribute any copies of the
- *  Sample Code or any derivatives or components thereof; (b) use the Sample
- *  Code or any derivatives thereof for any commercial purpose; or (c) assign
- *  or transfer rights to the Sample Code or any derivatives thereof.
- *
- *  2.  DISCLAIMER OF WARRANTIES.  TO THE MAXIMUM EXTENT PERMITTED BY
- *  APPLICABLE LAW, SERENA PROVIDES THE SAMPLE CODE AS IS AND WITH ALL
- *  FAULTS, AND HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS, EITHER
- *  EXPRESSED, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, ANY
- *  IMPLIED WARRANTIES OR CONDITIONS OF MERCHANTABILITY, OF FITNESS FOR A
- *  PARTICULAR PURPOSE, OF LACK OF VIRUSES, OF RESULTS, AND OF LACK OF
- *  NEGLIGENCE OR LACK OF WORKMANLIKE EFFORT, CONDITION OF TITLE, QUIET
- *  ENJOYMENT, OR NON-INFRINGEMENT.  THE ENTIRE RISK AS TO THE QUALITY OF
- *  OR ARISING OUT OF USE OR PERFORMANCE OF THE SAMPLE CODE, IF ANY,
- *  REMAINS WITH YOU.
- *
- *  3.  EXCLUSION OF DAMAGES.  TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE
- *  LAW, YOU AGREE THAT IN CONSIDERATION FOR RECEIVING THE SAMPLE CODE AT NO
- *  CHARGE TO YOU, SERENA SHALL NOT BE LIABLE FOR ANY DAMAGES WHATSOEVER,
- *  INCLUDING BUT NOT LIMITED TO DIRECT, SPECIAL, INCIDENTAL, INDIRECT, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, DAMAGES FOR LOSS OF
- *  PROFITS OR CONFIDENTIAL OR OTHER INFORMATION, FOR BUSINESS INTERRUPTION,
- *  FOR PERSONAL INJURY, FOR LOSS OF PRIVACY, FOR NEGLIGENCE, AND FOR ANY
- *  OTHER LOSS WHATSOEVER) ARISING OUT OF OR IN ANY WAY RELATED TO THE USE
- *  OF OR INABILITY TO USE THE SAMPLE CODE, EVEN IN THE EVENT OF THE FAULT,
- *  TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, OR BREACH OF CONTRACT,
- *  EVEN IF SERENA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  THE
- *  FOREGOING LIMITATIONS, EXCLUSIONS AND DISCLAIMERS SHALL APPLY TO THE
- *  MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.  NOTWITHSTANDING THE ABOVE,
- *  IN NO EVENT SHALL SERENA'S LIABILITY UNDER THIS AGREEMENT OR WITH RESPECT
- *  TO YOUR USE OF THE SAMPLE CODE AND DERIVATIVES THEREOF EXCEED US$10.00.
- *
- *  4.  INDEMNIFICATION. You hereby agree to defend, indemnify and hold
- *  harmless Serena from and against any and all liability, loss or claim
- *  arising from this agreement or from (i) your license of, use of or
- *  reliance upon the Sample Code or any related documentation or materials,
- *  or (ii) your development, use or reliance upon any application or
- *  derivative work created from the Sample Code.
- *
- *  5.  TERMINATION OF THE LICENSE.  This agreement and the underlying
- *  license granted hereby shall terminate if and when your license to the
- *  applicable Serena software product terminates or if you breach any terms
- *  and conditions of this agreement.
- *
- *  6.  CONFIDENTIALITY.  The Sample Code and all information relating to the
- *  Sample Code (collectively "Confidential Information") are the
- *  confidential information of Serena.  You agree to maintain the
- *  Confidential Information in strict confidence for Serena.  You agree not
- *  to disclose or duplicate, nor allow to be disclosed or duplicated, any
- *  Confidential Information, in whole or in part, except as permitted in
- *  this Agreement.  You shall take all reasonable steps necessary to ensure
- *  that the Confidential Information is not made available or disclosed by
- *  you or by your employees to any other person, firm, or corporation.  You
- *  agree that all authorized persons having access to the Confidential
- *  Information shall observe and perform under this nondisclosure covenant.
- *  You agree to immediately notify Serena of any unauthorized access to or
- *  possession of the Confidential Information.
- *
- *  7.  AFFILIATES.  Serena as used herein shall refer to Serena Software,
- *  Inc. and its affiliates.  An entity shall be considered to be an
- *  affiliate of Serena if it is an entity that controls, is controlled by,
- *  or is under common control with Serena.
- *
- *  8.  GENERAL.  Title and full ownership rights to the Sample Code,
- *  including any derivative works shall remain with Serena.  If a court of
- *  competent jurisdiction holds any provision of this agreement illegal or
- *  otherwise unenforceable, that provision shall be severed and the
- *  remainder of the agreement shall remain in full force and effect.
- * ===========================================================================
- */
 package hudson.plugins.dimensionsscm;
 
 import java.text.ParseException;
@@ -100,7 +16,6 @@ final class DateUtils {
     private static final String DATE_PATTERN = "dd-MMM-yyyy";
     private static final String DATETIME_PATTERN = "dd-MMM-yyyy HH:mm:ss";
     private static final String RFCDATETIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-    private static final TimeZone UTC_TIME_ZONE = TimeZone.getTimeZone("UTC");
     private static final TimeZone DEFAULT_TIME_ZONE = TimeZone.getDefault();
 
     /**
@@ -134,9 +49,9 @@ final class DateUtils {
     static Date parse(String dateStr, TimeZone tz) {
         Date date = null;
         dateStr = dateStr.trim();
-        for (int i = 0; i < PATTERNS.length; ++i) {
+        for (String pattern : PATTERNS) {
             try {
-                SimpleDateFormat df = new SimpleDateFormat(PATTERNS[i], Locale.US);
+                SimpleDateFormat df = new SimpleDateFormat(pattern, Locale.US);
                 df.setTimeZone(tz);
                 date = df.parse(dateStr);
                 if (date != null) {
@@ -155,12 +70,12 @@ final class DateUtils {
      * @param  dateStr  the String containing the date to be validated
      * @return  true if the string is in a valid format, false otherwise
      */
-    static boolean validate(String dateStr) {
+    private static boolean validate(String dateStr) {
         boolean ret = false;
         dateStr = dateStr.trim();
-        for (int i = 0; i < PATTERNS.length; ++i) {
+        for (String pattern : PATTERNS) {
             try {
-                SimpleDateFormat df = new SimpleDateFormat(PATTERNS[i], Locale.US);
+                SimpleDateFormat df = new SimpleDateFormat(pattern, Locale.US);
                 Date date = df.parse(dateStr);
                 if (date != null && df.format(date).equalsIgnoreCase(dateStr)) {
                     ret = true;
@@ -184,7 +99,7 @@ final class DateUtils {
      * @return 0 if the two dates are within toleranceMillis milliseconds of
      *        each other, negative if d1 < d2, positive if d1 > d2
      */
-    static int compare(Date d1, Date d2, long toleranceMillis) {
+    private static int compare(Date d1, Date d2, long toleranceMillis) {
         int ret;
         long diff = d1.getTime() - d2.getTime();
         if (Math.abs(diff) <= Math.abs(toleranceMillis)) {
@@ -230,7 +145,7 @@ final class DateUtils {
      * Gets "now" in RFC format.
      * @return  a String containing a date in known RFC
      */
-    static String getNowStrDate() {
+    private static String getNowStrDate() {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Calendar opDate = Calendar.getInstance();
         df.setTimeZone(DEFAULT_TIME_ZONE);
@@ -242,7 +157,7 @@ final class DateUtils {
      * @param tz timezone
      * @return  a String containing a date in known RFC
      */
-    static String getNowStrDate(TimeZone tz) {
+    private static String getNowStrDate(TimeZone tz) {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         Calendar opDate = Calendar.getInstance();
         df.setTimeZone(tz);
@@ -251,10 +166,24 @@ final class DateUtils {
 
     /**
      * Gets "now" in verbose format.
+     *
+     * The verbose format is "yyyy.MMMMM.dd hh.mm.ss aaa z" unless the system
+     * property "hudson.plugins.dimensionsscm.preferColonInBaselineName" is set
+     * to "true", in which case the verbose format reverts to
+     * "yyyy.MMMMM.dd hh:mm:ss aaa z", which was its value in legacy versions of
+     * the Jenkins Dimensions Plugin, but is no longer a legal baseline name as
+     * of Dimensions CM 14.4 and later.
+     *
+     * Left the month as "MMMMM" and timezone as "z" because these are unlikely
+     * to be an issue unless they contain one of the "':;# characters. At some
+     * point, it would be good to allow customers to specify a date/time format
+     * to use (for example [CURRENT_DATE, "yyyy-MM-dd'T'hh-mm-ss"]).
+     *
      * @return  a String containing a date in verbose format
      */
     static String getNowStrDateVerbose() {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy.MMMMM.dd hh:mm:ss aaa z");
+        boolean preferColonInBaselineName = Boolean.getBoolean("hudson.plugins.dimensionsscm.preferColonInBaselineName");
+        SimpleDateFormat df = new SimpleDateFormat(preferColonInBaselineName ? "yyyy.MMMMM.dd hh:mm:ss aaa z" : "yyyy.MMMMM.dd hh.mm.ss aaa z");
         Calendar opDate = Calendar.getInstance();
         df.setTimeZone(DEFAULT_TIME_ZONE);
         return df.format(opDate.getTime());
@@ -265,14 +194,14 @@ final class DateUtils {
      * @param opDate calendar date
      * @return  a String containing a date in known RFC
      */
-    static String getStrDate(Calendar opDate) {
+    private static String getStrDate(Calendar opDate) {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         df.setTimeZone(DEFAULT_TIME_ZONE);
         return df.format(opDate.getTime());
     }
 
     /**
-     * Gets a date in RFC format.
+     * Gets a date in RFC format. Used by logging code.
      * @param opDate calendar date
      * @param tz timezone
      * @return  a String containing a date in known RFC

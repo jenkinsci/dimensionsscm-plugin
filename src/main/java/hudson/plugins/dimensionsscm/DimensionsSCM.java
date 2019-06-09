@@ -1,87 +1,3 @@
-/*
- * ===========================================================================
- *  Copyright (c) 2007, 2014 Serena Software. All rights reserved.
- *
- *  Use of the Sample Code provided by Serena is governed by the following
- *  terms and conditions. By using the Sample Code, you agree to be bound by
- *  the terms contained herein. If you do not agree to the terms herein, do
- *  not install, copy, or use the Sample Code.
- *
- *  1.  GRANT OF LICENSE.  Subject to the terms and conditions herein, you
- *  shall have the nonexclusive, nontransferable right to use the Sample Code
- *  for the sole purpose of developing applications for use solely with the
- *  Serena software product(s) that you have licensed separately from Serena.
- *  Such applications shall be for your internal use only.  You further agree
- *  that you will not: (a) sell, market, or distribute any copies of the
- *  Sample Code or any derivatives or components thereof; (b) use the Sample
- *  Code or any derivatives thereof for any commercial purpose; or (c) assign
- *  or transfer rights to the Sample Code or any derivatives thereof.
- *
- *  2.  DISCLAIMER OF WARRANTIES.  TO THE MAXIMUM EXTENT PERMITTED BY
- *  APPLICABLE LAW, SERENA PROVIDES THE SAMPLE CODE AS IS AND WITH ALL
- *  FAULTS, AND HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS, EITHER
- *  EXPRESSED, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, ANY
- *  IMPLIED WARRANTIES OR CONDITIONS OF MERCHANTABILITY, OF FITNESS FOR A
- *  PARTICULAR PURPOSE, OF LACK OF VIRUSES, OF RESULTS, AND OF LACK OF
- *  NEGLIGENCE OR LACK OF WORKMANLIKE EFFORT, CONDITION OF TITLE, QUIET
- *  ENJOYMENT, OR NON-INFRINGEMENT.  THE ENTIRE RISK AS TO THE QUALITY OF
- *  OR ARISING OUT OF USE OR PERFORMANCE OF THE SAMPLE CODE, IF ANY,
- *  REMAINS WITH YOU.
- *
- *  3.  EXCLUSION OF DAMAGES.  TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE
- *  LAW, YOU AGREE THAT IN CONSIDERATION FOR RECEIVING THE SAMPLE CODE AT NO
- *  CHARGE TO YOU, SERENA SHALL NOT BE LIABLE FOR ANY DAMAGES WHATSOEVER,
- *  INCLUDING BUT NOT LIMITED TO DIRECT, SPECIAL, INCIDENTAL, INDIRECT, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, DAMAGES FOR LOSS OF
- *  PROFITS OR CONFIDENTIAL OR OTHER INFORMATION, FOR BUSINESS INTERRUPTION,
- *  FOR PERSONAL INJURY, FOR LOSS OF PRIVACY, FOR NEGLIGENCE, AND FOR ANY
- *  OTHER LOSS WHATSOEVER) ARISING OUT OF OR IN ANY WAY RELATED TO THE USE
- *  OF OR INABILITY TO USE THE SAMPLE CODE, EVEN IN THE EVENT OF THE FAULT,
- *  TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, OR BREACH OF CONTRACT,
- *  EVEN IF SERENA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  THE
- *  FOREGOING LIMITATIONS, EXCLUSIONS AND DISCLAIMERS SHALL APPLY TO THE
- *  MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.  NOTWITHSTANDING THE ABOVE,
- *  IN NO EVENT SHALL SERENA'S LIABILITY UNDER THIS AGREEMENT OR WITH RESPECT
- *  TO YOUR USE OF THE SAMPLE CODE AND DERIVATIVES THEREOF EXCEED US$10.00.
- *
- *  4.  INDEMNIFICATION. You hereby agree to defend, indemnify and hold
- *  harmless Serena from and against any and all liability, loss or claim
- *  arising from this agreement or from (i) your license of, use of or
- *  reliance upon the Sample Code or any related documentation or materials,
- *  or (ii) your development, use or reliance upon any application or
- *  derivative work created from the Sample Code.
- *
- *  5.  TERMINATION OF THE LICENSE.  This agreement and the underlying
- *  license granted hereby shall terminate if and when your license to the
- *  applicable Serena software product terminates or if you breach any terms
- *  and conditions of this agreement.
- *
- *  6.  CONFIDENTIALITY.  The Sample Code and all information relating to the
- *  Sample Code (collectively "Confidential Information") are the
- *  confidential information of Serena.  You agree to maintain the
- *  Confidential Information in strict confidence for Serena.  You agree not
- *  to disclose or duplicate, nor allow to be disclosed or duplicated, any
- *  Confidential Information, in whole or in part, except as permitted in
- *  this Agreement.  You shall take all reasonable steps necessary to ensure
- *  that the Confidential Information is not made available or disclosed by
- *  you or by your employees to any other person, firm, or corporation.  You
- *  agree that all authorized persons having access to the Confidential
- *  Information shall observe and perform under this nondisclosure covenant.
- *  You agree to immediately notify Serena of any unauthorized access to or
- *  possession of the Confidential Information.
- *
- *  7.  AFFILIATES.  Serena as used herein shall refer to Serena Software,
- *  Inc. and its affiliates.  An entity shall be considered to be an
- *  affiliate of Serena if it is an entity that controls, is controlled by,
- *  or is under common control with Serena.
- *
- *  8.  GENERAL.  Title and full ownership rights to the Sample Code,
- *  including any derivative works shall remain with Serena.  If a court of
- *  competent jurisdiction holds any provision of this agreement illegal or
- *  otherwise unenforceable, that provision shall be severed and the
- *  remainder of the agreement shall remain in full force and effect.
- * ===========================================================================
- */
 package hudson.plugins.dimensionsscm;
 
 import hudson.EnvVars;
@@ -92,7 +8,7 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Hudson;
+import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.ModelObject;
 import hudson.model.Node;
@@ -107,6 +23,7 @@ import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
 import hudson.util.FormValidation;
 import hudson.util.Scrambler;
+import hudson.util.Secret;
 import hudson.util.VariableResolver;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -114,17 +31,17 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
-import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
  * An SCM that can poll, browse and update from Dimensions CM.
@@ -136,7 +53,8 @@ public class DimensionsSCM extends SCM implements Serializable {
     private final String eol;
 
     private final String jobUserName;
-    private final String jobPasswd;
+    private transient String jobPasswd;
+    private Secret jobPasswdSecret;
     private final String jobServer;
     private final String jobDatabase;
 
@@ -292,10 +210,14 @@ public class DimensionsSCM extends SCM implements Serializable {
     }
 
     /**
-     * Gets the password for the connection.
+     * Gets the password for the connection as a Secret instance.
      */
-    public String getJobPasswd() {
-        return Scrambler.descramble(jobPasswd);
+    public Secret getJobPasswd() {
+        if (jobPasswdSecret == null && jobPasswd != null) {
+            jobPasswdSecret = Secret.fromString(Scrambler.descramble(jobPasswd));
+            jobPasswd = null;
+        }
+        return jobPasswdSecret;
     }
 
     /**
@@ -440,8 +362,8 @@ public class DimensionsSCM extends SCM implements Serializable {
         this.jobServer = Values.textOrElse(jobServer, getDescriptor().getServer());
         this.jobUserName = Values.textOrElse(jobUserName, getDescriptor().getUserName());
         this.jobDatabase = Values.textOrElse(jobDatabase, getDescriptor().getDatabase());
-        String passwd = Values.textOrElse(jobPasswd, getDescriptor().getPasswd());
-        this.jobPasswd = Scrambler.scramble(passwd);
+        this.jobPasswd = null; // no longer used in config.xml serialization
+        this.jobPasswdSecret = (jobPasswd != null && jobPasswd.length() != 0) ? Secret.fromString(jobPasswd) : getDescriptor().getPasswd();
 
         this.canJobUpdate = Values.hasText(jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();
 
@@ -465,9 +387,10 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
+    @Deprecated
     @Override
-    public boolean checkout(final AbstractBuild build, final Launcher launcher, final FilePath workspace,
-            final BuildListener listener, final File changelogFile) throws IOException, InterruptedException {
+    public boolean checkout(final AbstractBuild<?, ?> build, final Launcher launcher, final FilePath workspace,
+            final BuildListener listener, final File changelogFile) {
         if (!isCanJobUpdate()) {
             Logger.debug("Skipping checkout - " + this.getClass().getName());
         }
@@ -478,9 +401,9 @@ public class DimensionsSCM extends SCM implements Serializable {
         try {
             // Load other Dimensions plugins if set.
             DimensionsBuildWrapper.DescriptorImpl bwplugin = (DimensionsBuildWrapper.DescriptorImpl)
-                    Hudson.getInstance().getDescriptor(DimensionsBuildWrapper.class);
+                    Jenkins.getInstance().getDescriptor(DimensionsBuildWrapper.class);
             DimensionsBuildNotifier.DescriptorImpl bnplugin = (DimensionsBuildNotifier.DescriptorImpl)
-                    Hudson.getInstance().getDescriptor(DimensionsBuildNotifier.class);
+                    Jenkins.getInstance().getDescriptor(DimensionsBuildNotifier.class);
 
             String nodeName = build.getBuiltOn().getNodeName();
 
@@ -506,10 +429,6 @@ public class DimensionsSCM extends SCM implements Serializable {
                     }
                     dmSCM.logout(key, build);
                 }
-
-                // Get the details of the master.
-                InetAddress netAddr = InetAddress.getLocalHost();
-                String hostname = netAddr.getHostName();
 
                 boolean master = true;
                 if (isForceAsSlave()) {
@@ -553,9 +472,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 bRet = true;
             }
 
-            if (bRet) {
-                bRet = generateChangeSet(build, listener, changelogFile);
-            }
+            generateChangeSet(build, listener, changelogFile);
         } catch (Exception e) {
             String message = Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again");
             listener.fatalError(message);
@@ -568,10 +485,8 @@ public class DimensionsSCM extends SCM implements Serializable {
     /**
      * Generate the changeset.
      */
-    private boolean generateChangeSet(final AbstractBuild build, final TaskListener listener, final File changelogFile)
-            throws IOException, InterruptedException {
+    private void generateChangeSet(final AbstractBuild<?, ?> build, final TaskListener listener, final File changelogFile) {
         long key = -1L;
-        boolean bRet = false;
         DimensionsAPI dmSCM = newDimensionsAPIWithCheck();
 
         try {
@@ -621,20 +536,16 @@ public class DimensionsSCM extends SCM implements Serializable {
                 if (requests != null && requests.length() == 0) {
                     requests = null;
                 }
-                bRet = true;
 
                 // Iterate through the project folders and process them in Dimensions.
                 for (String folderN : folders) {
-                    if (!bRet) {
-                        break;
-                    }
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
 
                     Logger.debug("Looking for changes in '" + folderN + "'...");
 
                     // Check out the folder.
-                    bRet = dmSCM.createChangeSetLogs(key, getProjectName(build, listener), dname, lastBuildCal, nowDateCal,
+                    dmSCM.createChangeSetLogs(key, getProjectName(build, listener), dname, lastBuildCal, nowDateCal,
                             changelogFile, tz, jobWebUrl, baseline, requests);
                     if (requests != null) {
                         break;
@@ -648,9 +559,8 @@ public class DimensionsSCM extends SCM implements Serializable {
                         pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(changelogFile, true), "UTF-8"));
                         pw.println("</changelog>");
                         pw.flush();
-                        bRet = true;
                     } catch (IOException e) {
-                        throw (IOException) new IOException(Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message")).initCause(e);
+                        throw new IOException(Values.exceptionMessage("Unable to write changelog file: " + changelogFile, e, "no message"), e);
                     } finally {
                         if (pw != null) {
                             pw.close();
@@ -662,11 +572,9 @@ public class DimensionsSCM extends SCM implements Serializable {
             String message = Values.exceptionMessage("Unable to run changelog callout", e, "no message - try again");
             listener.fatalError(message);
             Logger.debug(message, e);
-            bRet = false;
         } finally {
             dmSCM.logout(key, build);
         }
-        return bRet;
     }
 
     /**
@@ -674,9 +582,9 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
+    @Deprecated
     @Override
-    public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener)
-            throws IOException, InterruptedException {
+    public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build, Launcher launcher, TaskListener listener) {
         // Stub function for now
         return null;
     }
@@ -686,10 +594,10 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
+    @Deprecated
     @Override
     protected PollingResult compareRemoteRevisionWith(AbstractProject<?, ?> project, Launcher launcher,
-            FilePath workspace, TaskListener listener, SCMRevisionState baseline)
-            throws IOException, InterruptedException {
+            FilePath workspace, TaskListener listener, SCMRevisionState baseline) {
         // New polling function - to use old polling function for the moment.
         Change change = Change.NONE;
 
@@ -708,9 +616,9 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
+    @Deprecated
     @Override
-    public boolean processWorkspaceBeforeDeletion(AbstractProject<?, ?> project, FilePath workspace, Node node)
-            throws IOException, InterruptedException {
+    public boolean processWorkspaceBeforeDeletion(AbstractProject<?, ?> project, FilePath workspace, Node node) {
         // Not used at the moment, so we have a stub...
         return true;
     }
@@ -720,8 +628,8 @@ public class DimensionsSCM extends SCM implements Serializable {
      * <p>
      * {@inheritDoc}
      */
-    private boolean pollCMChanges(final Job project, final Launcher launcher, final FilePath workspace,
-            final TaskListener listener) throws IOException, InterruptedException {
+    private boolean pollCMChanges(final Job<?, ?> project, final Launcher launcher, final FilePath workspace,
+            final TaskListener listener) {
         boolean bChanged = false;
 
         Logger.debug("Invoking pollChanges - " + this.getClass().getName());
@@ -828,7 +736,8 @@ public class DimensionsSCM extends SCM implements Serializable {
     public static class DescriptorImpl extends SCMDescriptor<DimensionsSCM> implements ModelObject {
         private String server;
         private String userName;
-        private String passwd;
+        private transient String passwd;
+        private Secret passwdSecret;
         private String database;
 
         private String timeZone;
@@ -859,7 +768,8 @@ public class DimensionsSCM extends SCM implements Serializable {
         public boolean configure(StaplerRequest req, JSONObject jobj) throws FormException {
             // Get the values and check them.
             userName = req.getParameter("dimensionsscm.userName");
-            passwd = req.getParameter("dimensionsscm.passwd");
+            passwd = null;
+            passwdSecret = Secret.fromString(req.getParameter("dimensionsscm.passwd"));
             server = req.getParameter("dimensionsscm.server");
             database = req.getParameter("dimensionsscm.database");
 
@@ -868,9 +778,6 @@ public class DimensionsSCM extends SCM implements Serializable {
 
             if (userName != null) {
                 userName = Util.fixNull(req.getParameter("dimensionsscm.userName").trim());
-            }
-            if (passwd != null) {
-                passwd = Util.fixNull(req.getParameter("dimensionsscm.passwd").trim());
             }
             if (server != null) {
                 server = Util.fixNull(req.getParameter("dimensionsscm.server").trim());
@@ -901,14 +808,14 @@ public class DimensionsSCM extends SCM implements Serializable {
             String permissions = req.getParameter("dimensionsscm.permissions");
             String eol = req.getParameter("dimensionsscm.eol");
 
-            Boolean canJobDelete = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete"));
-            Boolean canJobForce = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce"));
-            Boolean canJobRevert = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert"));
-            Boolean canJobUpdate = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobUpdate"));
-            Boolean canJobExpand = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobExpand"));
-            Boolean canJobNoMetadata = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoMetadata"));
-            Boolean canJobNoTouch = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoTouch"));
-            Boolean forceAsSlave = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.forceAsSlave"));
+            boolean canJobDelete = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobDelete"));
+            boolean canJobForce = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobForce"));
+            boolean canJobRevert = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobRevert"));
+            boolean canJobUpdate = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobUpdate"));
+            boolean canJobExpand = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobExpand"));
+            boolean canJobNoMetadata = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoMetadata"));
+            boolean canJobNoTouch = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoTouch"));
+            boolean forceAsSlave = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.forceAsSlave"));
 
             String jobUserName = req.getParameter("dimensionsscm.jobUserName");
             String jobPasswd = req.getParameter("dimensionsscm.jobPasswd");
@@ -973,12 +880,16 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
 
         /**
-         * Gets the password.
+         * Gets the password as a Secret instance.
          *
-         * @return the password
+         * @return the password (as a Secret instance)
          */
-        public String getPasswd() {
-            return Scrambler.descramble(passwd);
+        public Secret getPasswd() {
+            if (passwdSecret == null && passwd != null) {
+                passwdSecret = Secret.fromString(Scrambler.descramble(passwd));
+                passwd = null;
+            }
+            return passwdSecret;
         }
 
         /**
@@ -1022,7 +933,8 @@ public class DimensionsSCM extends SCM implements Serializable {
          * Sets the password.
          */
         public void setPasswd(String password) {
-            this.passwd = Scrambler.scramble(password);
+            this.passwdSecret = Secret.fromString(password);
+            this.passwd = null;
         }
 
         /**
@@ -1039,23 +951,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.webUrl = x;
         }
 
-        public FormValidation doCheck(StaplerRequest req, StaplerResponse rsp)
-                throws IOException, ServletException {
-            String value = Util.fixEmpty(req.getParameter("value"));
-            String nullText = null;
-            if (value == null) {
-                if (nullText == null) {
-                    return FormValidation.ok();
-                } else {
-                    return FormValidation.error(nullText);
-                }
-            } else {
-                return FormValidation.ok();
-            }
-        }
-
-        public FormValidation domanadatoryFieldCheck(StaplerRequest req, StaplerResponse rsp)
-                throws IOException, ServletException {
+        public FormValidation domanadatoryFieldCheck(StaplerRequest req, StaplerResponse rsp) {
             String value = Util.fixEmpty(req.getParameter("value"));
             String errorTxt = "This value is manadatory.";
             if (value == null) {
@@ -1066,21 +962,13 @@ public class DimensionsSCM extends SCM implements Serializable {
             }
         }
 
-        public FormValidation domanadatoryJobFieldCheck(StaplerRequest req, StaplerResponse rsp)
-                throws IOException, ServletException {
-            String value = Util.fixEmpty(req.getParameter("value"));
-            String errorTxt = "This value is manadatory.";
-            // Some processing in the future.
-            return FormValidation.ok();
-        }
-
         /**
          * Check if the specified Dimensions server is valid.
          */
+        @RequirePOST
         public FormValidation docheckTz(StaplerRequest req, StaplerResponse rsp,
                 @QueryParameter("dimensionsscm.timeZone") final String timezone,
-                @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone)
-                throws IOException, ServletException {
+                @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone) {
             try {
                 String xtz = (jobtimezone != null) ? jobtimezone : timezone;
                 Logger.debug("Invoking docheckTz - " + xtz);
@@ -1103,6 +991,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         /**
          * Check if the specified Dimensions server is valid.
          */
+        @RequirePOST
         public FormValidation docheckServer(StaplerRequest req, StaplerResponse rsp,
                 @QueryParameter("dimensionsscm.userName") final String user,
                 @QueryParameter("dimensionsscm.passwd") final String passwd,
@@ -1111,8 +1000,13 @@ public class DimensionsSCM extends SCM implements Serializable {
                 @QueryParameter("dimensionsscm.jobUserName") final String jobuser,
                 @QueryParameter("dimensionsscm.jobPasswd") final String jobPasswd,
                 @QueryParameter("dimensionsscm.jobServer") final String jobServer,
-                @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase)
-                throws IOException, ServletException {
+                @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase,
+                @AncestorInPath final Item item) {
+            if (item == null) {
+                Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                item.checkPermission(Item.CONFIGURE);
+            }
             DimensionsAPI connectionCheck = newDimensionsAPIWithCheck();
             try {
                 String xserver = (jobServer != null) ? jobServer : server;
@@ -1121,7 +1015,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 String xdatabase = (jobDatabase != null) ? jobDatabase : database;
                 Logger.debug("Server connection check to user [" + xuser
                         + "], database [" + xdatabase + "], server [" + xserver + "]");
-                long key = connectionCheck.login(xuser, xpasswd, xdatabase, xserver);
+                long key = connectionCheck.login(xuser, Secret.fromString(xpasswd), xdatabase, xserver);
                 Logger.debug("Server connection check returned key [" + key + "]");
                 if (key < 1L) {
                     return FormValidation.error("Connection test failed");

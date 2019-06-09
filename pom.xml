@@ -1,25 +1,32 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <version>2.29</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <artifactId>dimensionsscm</artifactId>
-    <version>0.8.14-SNAPSHOT</version>
+    <version>0.8.17-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Jenkins Dimensions Plugin</name>
     <description>This plugin integrates the Dimensions CM SCM with Jenkins.</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
 
+    <licenses>
+        <license>
+            <name>The MIT license</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
     <developers>
-        <!--
-        Tim Payne (`tpayne`) created the original Jenkins Dimensions Plugin and maintained it for many years.
-        Tim is now busy doing more interesting things, so the Plugin maintainer is currently `dconneely`.
-        -->
+        <!-- Tim Payne (`tpayne`) created the original Jenkins Dimensions Plugin -->
         <developer>
             <id>dconneely</id>
             <name>David Conneely</name>
@@ -43,6 +50,7 @@
         <java.level>6</java.level>
         <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
+        <findbugs.skip>true</findbugs.skip>
     </properties>
 
     <profiles>
@@ -62,6 +70,15 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
+        <repository>
+            <id>lib</id>
+            <url>file://${basedir}/lib</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -74,14 +91,50 @@
     <dependencies>
         <dependency>
             <!--
-            The Dimensions CM dmclient.jar file must be installed into your local Maven repository.
-            Note the following does not mean that a particular version of the API is required:
-            Older JARs (back to 10.1.3) also work, because the plugin only calls older API classes and methods.
+            This dependency refers to the Dimensions CM Java API.
+
+            However, the JAR file in the lib/ subdirectory of this repository
+            is a non-functional stub (with source code) solely to allow anyone
+            (even without access to the CM Java API) to compile this plugin.
+
+            So the plugin works at runtime (in a Jenkins installation), please
+            follow the 'Installation' steps described in the plugin wiki page:
+            https://wiki.jenkins.io/display/JENKINS/Dimensions+Plugin#DimensionsPlugin-Installation
+
+            One way to debug the plugin is to change <version> to be a non-
+            stub version (which is installed in the local Maven repository)
+            and change <scope> to 'compile', then use 'mvn hpi:run'.
             -->
             <groupId>com.serena.dimensions</groupId>
             <artifactId>dmclient</artifactId>
-            <version>14.4.0-SNAPSHOT</version>
+            <version>DUMMY-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>display-info</id>
+                        <configuration>
+                            <rules>
+                                <requireReleaseDeps>
+                                    <!-- Prevent unexpected failures -->
+                                    <onlyWhenRelease>false</onlyWhenRelease>
+                                    <!-- This is a provided API dependency, so SNAPSHOT not an issue -->
+                                    <excludes combine.children="append">
+                                        <exclude>com.serena.dimensions:*</exclude>
+                                        <exclude>com.microfocus.adm.dimensions:*</exclude>
+                                    </excludes>
+                                </requireReleaseDeps>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

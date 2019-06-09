@@ -1,22 +1,22 @@
-<P>Setting this option will mean that all successful builds will be <i>tagged</i>
-in Dimensions as a baseline. This will mean that you have a baseline
-asset representing this build that can then be used at a future date.
-</P>
-<P>
-The baseline identifier that gets created is fixed at<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;<b><i>[PRODUCT:PROJECTID]_[HUDSON_PROJECT]_[BUILDNO]</i></b>
-</P>
-<P>
-where<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;[PRODUCT:PROJECTID] is the name of the Dimensions project or stream being monitored.<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;[HUDSON_PROJECT]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is the name of the build project<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;[BUILDNO]&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-is the build number<BR><BR>
-If a baseline identifier template is specified however, then the baseline identifier that gets
-created will reflect that template.
-</P>
-<P>
-(Note - For the baseline to be successfully created, the name of the build project
-must comply to Dimensions naming conventions).
-</P>
+Setting this option will mean that successful or unstable builds will be
+<i>tagged</i> in Dimensions as a baseline. You will then have a Dimensions
+baseline representing the built source to refer to in the future.
+<p>
+The baseline that gets created has a name of
+<blockquote>[PROJECTID]_[JENKINS_PROJECT]_[BUILDNO]</blockquote>
+by default, where
+<dl>
+    <dt>[PROJECTID]</dt>
+    <dd>is the name of the Dimensions stream or project being monitored.</dd>
+    <dt>[JENKINS_PROJECT]</dt>
+    <dd>is the name of the Jenkins project</dd>
+    <dt>[BUILDNO]</dt>
+    <dd>is the Jenkins build number</dd>
+</dl>
+If a baseline name pattern is specified (in Advanced...) then the baseline that
+is created will reflect that baseline name pattern.
+<p>
+(<i>Note</i>: The resulting baseline name must comply with restrictions on
+Dimensions baseline names. For example, if the baseline name includes the
+Jenkins project name, then that Jenkins project name may not include the colon
+character).
