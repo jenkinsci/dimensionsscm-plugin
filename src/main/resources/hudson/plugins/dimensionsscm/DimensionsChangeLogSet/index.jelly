@@ -1,0 +1,70 @@
+ <?jelly escape-by-default='true'?>
+ <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <j:set var="browser" value="${it.build.parent.scm.effectiveBrowser}"/>
+  <h2>${%Summary}</h2>
+  <ol>
+    <j:forEach var="cs" items="${it.logs}">
+      <li><st:out value="${cs.msg}"/></li>
+    </j:forEach>
+  </ol>
+  <table class="pane" style="border:none">
+    <j:forEach var="cs" items="${it.items}" varStatus="loop">
+      <tr class="pane">
+        <td colspan="3" class="changeset">
+          <a name="detail${loop.index}"></a>
+          <div class="changeset-message">
+            <b>
+              Commit by <a href="${rootURL}/${cs.author.url}/">${cs.author}</a>:
+            </b><br/>
+            ${cs.msgAnnotated}
+          </div>
+        </td>
+      </tr>
+      <f:section title="Files that changed in this Commit">
+        <f:advanced>
+          <j:forEach var="item" items="${cs.files}">
+            <tr>
+              <j:if test="${item.file!=null}">
+                  <td><t:editTypeIcon type="${item.editType}" /></td>
+                  <j:if test="${item.url!=null}">
+                      <td><a href="${item.url}">${item.file}</a></td>
+                  </j:if>
+                  <j:if test="${item.url==null}">
+                      <td>${item.file}</td>
+                  </j:if>
+              </j:if>
+              <td>
+                <j:set var="diff" value="${browser.getDiffLink(item)}"/>
+                <j:if test="${diff!=null}">
+                  <a href="${diff}">(diff)</a>
+                </j:if>
+              </td>
+            </tr>
+          </j:forEach>
+        </f:advanced>
+      </f:section>
+      <f:section title="Requests used for this Commit">
+        <f:advanced>
+          <j:forEach var="req" items="${cs.requests}">
+            <tr>
+              <td></td>
+              <j:if test="${req.url!=null}">
+                  <td><a href="${req.url}">${req.identifier}</a></td>
+              </j:if>
+              <j:if test="${req.url==null}">
+                  <td>${req.identifier}</td>
+              </j:if>
+              <j:if test="${req.title==null}">
+                  <td></td>
+              </j:if>
+              <j:if test="${req.title!=null}">
+                  <td>${req.title}</td>
+              </j:if>
+            </tr>
+          </j:forEach>
+        </f:advanced>
+      </f:section>
+    </j:forEach>
+  </table>
+</j:jelly>
+
