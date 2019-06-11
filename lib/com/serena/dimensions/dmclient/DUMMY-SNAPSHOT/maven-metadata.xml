@@ -5,20 +5,20 @@
   <version>DUMMY-SNAPSHOT</version>
   <versioning>
     <snapshot>
-      <timestamp>20190605.093108</timestamp>
+      <timestamp>20190611.080702</timestamp>
       <buildNumber>2</buildNumber>
     </snapshot>
-    <lastUpdated>20190605093108</lastUpdated>
+    <lastUpdated>20190611080702</lastUpdated>
     <snapshotVersions>
       <snapshotVersion>
         <extension>jar</extension>
-        <value>DUMMY-20190605.093108-2</value>
-        <updated>20190605093108</updated>
+        <value>DUMMY-20190611.080702-2</value>
+        <updated>20190611080702</updated>
       </snapshotVersion>
       <snapshotVersion>
         <extension>pom</extension>
-        <value>DUMMY-20190605.093108-2</value>
-        <updated>20190605093108</updated>
+        <value>DUMMY-20190611.080702-2</value>
+        <updated>20190611080702</updated>
       </snapshotVersion>
     </snapshotVersions>
   </versioning>

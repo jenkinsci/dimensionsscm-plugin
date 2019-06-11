@@ -25,7 +25,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.util.Secret;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -36,9 +35,10 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -415,7 +415,7 @@ public class DimensionsAPI implements Serializable {
         filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_FROM_DATE, dateAfter, Filter.Criterion.EQUALS));
         filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_TO_DATE, dateBefore, Filter.Criterion.EQUALS));
 
-        List<DimensionsChangeSet> changeSets = changeSetsQuery.queryChangeSets(project, filter, false);
+        List<DimensionsChangeSet> changeSets = changeSetsQuery.queryChangeSets(project, filter, true);
         List<DimensionsChangeStep> commonChgSteps = new ArrayList<DimensionsChangeStep>();
 
         for (DimensionsChangeSet changeSet : changeSets) {
@@ -444,7 +444,7 @@ public class DimensionsAPI implements Serializable {
             throw new IOException("Not connected to an SCM repository");
         }
 
-        DimensionsAPICallback dimensionsAPICallback = CallbackInstance.getInstance(connection);
+        DimensionsAPICallback dimensionsAPICallback = CallbackInstance.getInstance(connection, null, null);
 
         return dimensionsAPICallback.hasRepositoryBeenUpdated(this, connection, projectName, fromDate, toDate, tz, workspace);
     }
@@ -562,32 +562,10 @@ public class DimensionsAPI implements Serializable {
         if (connection == null) {
             throw new IOException("Not connected to an SCM repository");
         }
-        try {
-            List<ItemRevision> items = calcRepoDiffsWithRevisions(connection, projectName, baseline, requests, projectDir, fromDate, toDate, tz);
 
-            Logger.debug("CM Url : " + (url != null ? url : "(null)"));
-            if (requests != null) {
-                getLogger().println("[DIMENSIONS] Calculating changes for request(s) '" + requests + "'...");
-            } else {
-                getLogger().println("[DIMENSIONS] Calculating changes for directory '"
-                        + (projectDir != null ? projectDir.getRemote() : "/") + "'...");
-            }
-            getLogger().flush();
+        DimensionsAPICallback dimensionsAPICallback = CallbackInstance.getInstance(connection, baseline, requests);
+        dimensionsAPICallback.saveChangesToXmlFile(this, connection, projectName, projectDir, fromDate, toDate, tz, baseline, requests, changelogFile, url);
 
-            if (items != null) {
-                // Write the list of changes into a changelog file.
-                List<DimensionsChangeLogEntry> entries = createChangeList(items, tz, url);
-                Logger.debug("Writing " + entries.size() + " changes to changelog file '" + changelogFile.getPath() + "'");
-                DimensionsChangeLogWriter.writeLog(entries, changelogFile);
-            } else {
-                // No changes, so create an empty changelog file.
-                Logger.debug("Writing null changes to changelog file '" + changelogFile.getPath() + "'");
-                DimensionsChangeLogWriter.writeLog(null, changelogFile);
-            }
-        } catch (Exception e) {
-            throw new IOException(Values.exceptionMessage("Exception calculating changes", e,
-                    "no message"), e);
-        }
     }
 
     /**
@@ -1139,11 +1117,8 @@ public class DimensionsAPI implements Serializable {
      *
      * @throws DimensionsRuntimeException
      */
-    private List<DimensionsChangeLogEntry> createChangeList(List<ItemRevision> items, TimeZone tz, String url) {
-        items = getSortedItemList(items);
-        List<DimensionsChangeLogEntry> entries = new ArrayList<DimensionsChangeLogEntry>(items.size());
-        String key = null;
-        DimensionsChangeLogEntry entry = null;
+    Map<String, DimensionsChangeLogEntry> createChangeList(List<ItemRevision> items, TimeZone tz, String url) {
+        Map<String, DimensionsChangeLogEntry> entries = new HashMap<String, DimensionsChangeLogEntry>();
 
         // Internal
         //int SBM_ID   = 49;
@@ -1192,19 +1167,16 @@ public class DimensionsAPI implements Serializable {
             Calendar opDate = Calendar.getInstance();
             opDate.setTime(DateUtils.parse(date, tz));
 
-            if (key == null) {
-                entry = new DimensionsChangeLogEntry(fileName, author, operation, revision, comment, urlString, opDate);
-                key = comment + author;
-                entries.add(entry);
+
+            String key = DimensionsAPI.createKeyForChangeMap(author, opDate.getTime());
+            DimensionsChangeLogEntry entry;
+
+            if (entries.containsKey(key)) {
+                entry = entries.get(key);
+                entry.add(fileName, operation, urlString);
             } else {
-                String key1 = comment + author;
-                if (key.equals(key1)) {
-                    entry.add(fileName, operation, urlString);
-                } else {
-                    entry = new DimensionsChangeLogEntry(fileName, author, operation, revision, comment, urlString, opDate);
-                    key = comment + author;
-                    entries.add(entry);
-                }
+                entry = new DimensionsChangeLogEntry(fileName, author, operation, revision, comment, urlString, opDate);
+                entries.put(key, entry);
             }
 
             // at this point we have a valid DimensionsChangeLogEntry (entry) that has already been added
@@ -1237,32 +1209,8 @@ public class DimensionsAPI implements Serializable {
         return entries;
     }
 
-    /**
-     * Sort the item list.
-     *
-     * @throws DimensionsRuntimeException
-     */
-    private static List<ItemRevision> getSortedItemList(List<ItemRevision> items) {
-        Collections.sort(items, new Comparator<ItemRevision>() {
-            @Override
-            public int compare(ItemRevision o1, ItemRevision o2) {
-                int result;
-                try {
-                    String a1 = (String) o1.getAttribute(SystemAttributes.REVISION_COMMENT);
-                    String a2 = (String) o2.getAttribute(SystemAttributes.REVISION_COMMENT);
-
-                    a1 += (String) o1.getAttribute(SystemAttributes.LAST_UPDATED_USER);
-                    a2 += (String) o2.getAttribute(SystemAttributes.LAST_UPDATED_USER);
-
-                    result = a1.compareTo(a2);
-                } catch (Exception e) {
-                    throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage(
-                            "Unable to sort item list", e, "no message")).initCause(e);
-                }
-                return result;
-            }
-        });
-        return items;
+    static String createKeyForChangeMap(String author, Date date) {
+        return author + " " + DateUtils.format(date);
     }
 
     static int[] getItemFileAttributes(boolean isDirectory) {
@@ -1328,7 +1276,7 @@ public class DimensionsAPI implements Serializable {
     }
 
     // URL encode a webclient path + spec for opening
-    private static String constructRequestURL(String spec, String url, String dsn, String db) {
+    static String constructRequestURL(String spec, String url, String dsn, String db) {
         String urlString = "";
         if (spec != null && spec.length() > 0 && url != null && url.length() > 0) {
             String host = url;
@@ -1398,14 +1346,19 @@ public class DimensionsAPI implements Serializable {
                     Boolean.TRUE, 0));
         }
 
+        return getItemRevisionByFilter(srcProject, filter, connection, attrs);
+    }
+
+    static List<ItemRevision> getItemRevisionByFilter(Project project, Filter filter, DimensionsConnection connection, int[] attrs) {
+
         // Catch any exceptions that may be thrown by the Java API and for now return no changes.
         // Going forward it would be good to trap all the possible exception types and do something about them.
         try {
             long time0 = System.currentTimeMillis();
-            List<DimensionsRelatedObject> rels = srcProject.getChildItems(filter);
+            List<DimensionsRelatedObject> rels = project.getChildItems(filter);
             long time1 = System.currentTimeMillis();
             if (Logger.isDebugEnabled()) {
-                Logger.debug("queryItems() - Project(" + srcProject.getName() + ").getChildItems("
+                Logger.debug("queryItems() - Project(" + project.getName() + ").getChildItems("
                         + Values.toString(filter) + ") found " + rels.size() + " rel(s) in " + (time1 - time0) + " ms");
             }
             if (rels.size() == 0) {
@@ -1422,6 +1375,7 @@ public class DimensionsAPI implements Serializable {
             Logger.debug("Caught exception", e);
             return Collections.emptyList();
         }
+
     }
 
     /**
