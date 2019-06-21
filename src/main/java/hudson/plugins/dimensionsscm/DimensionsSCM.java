@@ -1,5 +1,11 @@
 package hudson.plugins.dimensionsscm;
 
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -21,7 +27,9 @@ import hudson.scm.RepositoryBrowsers;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
+import hudson.security.ACL;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import hudson.util.Scrambler;
 import hudson.util.Secret;
 import hudson.util.VariableResolver;
@@ -32,6 +40,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TimeZone;
 import jenkins.model.Jenkins;
@@ -51,13 +60,13 @@ public class DimensionsSCM extends SCM implements Serializable {
     private final String directory;
     private final String permissions;
     private final String eol;
-
-    private final String jobUserName;
+    private final String credentialsId;
+    private String jobUserName;
     private transient String jobPasswd;
     private Secret jobPasswdSecret;
     private final String jobServer;
     private final String jobDatabase;
-
+    private boolean isGlobalSettings;
     private final String[] folders;
     private final String[] pathsToExclude;
 
@@ -75,6 +84,10 @@ public class DimensionsSCM extends SCM implements Serializable {
 
     private transient DimensionsAPI cachedAPI;
     private transient DimensionsSCMRepositoryBrowser browser;
+
+    private static final String USER_DEFINED = "userDefined";
+    private static final String GLOBAL_DEFINED = "globalDefined";
+    private static final String PLUGIN_DEFINED = "pluginDefined";
 
     /**
      * Patch matcher that rejects nothing and includes everything.
@@ -139,6 +152,10 @@ public class DimensionsSCM extends SCM implements Serializable {
         String projectVersion = getProjectVersion(run, log);
         int sc = projectVersion.lastIndexOf(';');
         return sc >= 0 ? projectVersion.substring(0, sc) : projectVersion;
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
     }
 
     /**
@@ -338,18 +355,18 @@ public class DimensionsSCM extends SCM implements Serializable {
         super.buildEnvVars(build, env);
     }
 
-    private static final String[] EMPTY_STRING_ARRAY = new String[] { };
-    private static final String[] DEFAULT_FOLDERS = new String[] { "/" };
+    private static final String[] EMPTY_STRING_ARRAY = new String[]{};
+    private static final String[] DEFAULT_FOLDERS = new String[]{"/"};
 
     @DataBoundConstructor
-    public DimensionsSCM(String project, String[] folders, String[] pathsToExclude, String workarea,
-            boolean canJobDelete, boolean canJobForce, boolean canJobRevert, String jobUserName, String jobPasswd,
-            String jobServer, String jobDatabase, boolean canJobUpdate, String jobTimeZone, String jobWebUrl,
-            String directory, String permissions, String eol, boolean canJobExpand, boolean canJobNoMetadata,
-            boolean canJobNoTouch, boolean forceAsSlave) {
+    public DimensionsSCM(boolean isGlobalSettings, String credentialsId, String project, String[] folders, String[] pathsToExclude, String workarea,
+                         boolean canJobDelete, boolean canJobForce, boolean canJobRevert, String jobUserName, String jobPasswd,
+                         String jobServer, String jobDatabase, boolean canJobUpdate, String jobTimeZone, String jobWebUrl,
+                         String directory, String permissions, String eol, boolean canJobExpand, boolean canJobNoMetadata,
+                         boolean canJobNoTouch, boolean forceAsSlave) {
         // Check the folders specified have data specified.
         this.folders = folders != null ? Values.notEmptyOrElse(Values.trimCopy(folders), DEFAULT_FOLDERS)
-                : (Values.hasText(directory) ? new String[] { directory } : DEFAULT_FOLDERS);
+                : (Values.hasText(directory) ? new String[]{directory} : DEFAULT_FOLDERS);
         this.pathsToExclude = pathsToExclude != null ? Values.notEmptyOrElse(Values.trimCopy(pathsToExclude),
                 EMPTY_STRING_ARRAY) : EMPTY_STRING_ARRAY;
 
@@ -358,28 +375,63 @@ public class DimensionsSCM extends SCM implements Serializable {
         this.directory = Values.textOrElse(directory, null);
         this.permissions = Values.textOrElse(permissions, "DEFAULT");
         this.eol = Values.textOrElse(eol, "DEFAULT");
-
-        this.jobServer = Values.textOrElse(jobServer, getDescriptor().getServer());
-        this.jobUserName = Values.textOrElse(jobUserName, getDescriptor().getUserName());
-        this.jobDatabase = Values.textOrElse(jobDatabase, getDescriptor().getDatabase());
+        this.jobServer = jobServer;
+        this.jobUserName = jobUserName;
+        this.jobDatabase = jobDatabase;
         this.jobPasswd = null; // no longer used in config.xml serialization
-        this.jobPasswdSecret = (jobPasswd != null && jobPasswd.length() != 0) ? Secret.fromString(jobPasswd) : getDescriptor().getPasswd();
-
+        this.jobPasswdSecret = Secret.fromString(jobPasswd);
         this.canJobUpdate = Values.hasText(jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();
-
         this.canJobDelete = canJobDelete;
         this.canJobForce = canJobForce;
         this.canJobRevert = canJobRevert;
         this.canJobExpand = canJobExpand;
         this.canJobNoMetadata = canJobNoMetadata;
         this.canJobNoTouch = canJobNoTouch;
+        this.credentialsId = credentialsId;
         this.forceAsSlave = forceAsSlave;
-
         this.jobTimeZone = Values.textOrElse(jobTimeZone, getDescriptor().getTimeZone());
         this.jobWebUrl = Values.textOrElse(jobWebUrl, getDescriptor().getWebUrl());
+        this.isGlobalSettings = isGlobalSettings;
 
         Logger.debug("Starting job for project '" + this.project + "' ('" + this.folders.length + "')"
                 + ", connecting to " + this.jobServer + "-" + this.jobUserName + ":" + this.jobDatabase);
+    }
+
+    public boolean isChecked(String type) {
+
+        boolean isActive = false;
+
+        if (type.equalsIgnoreCase(PLUGIN_DEFINED)) {
+            isActive = !isGlobalSettings && !Values.isNullOrEmpty(credentialsId);
+        }
+
+        if (type.equalsIgnoreCase(GLOBAL_DEFINED)) {
+            isActive = isGlobalSettings;
+        }
+
+        if (type.equalsIgnoreCase(USER_DEFINED)) {
+            isActive = !isGlobalSettings && Values.isNullOrEmpty(credentialsId) && !Values.isNullOrEmpty(jobUserName);
+        }
+
+        return isActive;
+    }
+
+    private static UsernamePasswordCredentials initializeCredentials(String credentialsId) {
+
+        UsernamePasswordCredentials credentials = null;
+
+        if (credentialsId != null && !credentialsId.isEmpty()) {
+
+            Item dummy = null;
+            credentials = CredentialsMatchers.firstOrNull(
+                    CredentialsProvider.lookupCredentials(
+                            UsernamePasswordCredentials.class, dummy, ACL.SYSTEM,
+                            Collections.<DomainRequirement>emptyList()),
+                    CredentialsMatchers.allOf(
+                            CredentialsMatchers.withId(credentialsId))
+            );
+        }
+        return credentials;
     }
 
     /**
@@ -390,7 +442,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     @Deprecated
     @Override
     public boolean checkout(final AbstractBuild<?, ?> build, final Launcher launcher, final FilePath workspace,
-            final BuildListener listener, final File changelogFile) {
+                            final BuildListener listener, final File changelogFile) {
         if (!isCanJobUpdate()) {
             Logger.debug("Skipping checkout - " + this.getClass().getName());
         }
@@ -418,6 +470,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             if (isCanJobUpdate()) {
                 DimensionsAPI dmSCM = getAPI();
                 int version = 2009;
+
                 long key = dmSCM.login(getJobUserName(), getJobPasswd(), getJobDatabase(), getJobServer(), build);
 
                 if (key > 0L) {
@@ -597,7 +650,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     @Deprecated
     @Override
     protected PollingResult compareRemoteRevisionWith(AbstractProject<?, ?> project, Launcher launcher,
-            FilePath workspace, TaskListener listener, SCMRevisionState baseline) {
+                                                      FilePath workspace, TaskListener listener, SCMRevisionState baseline) {
         // New polling function - to use old polling function for the moment.
         Change change = Change.NONE;
 
@@ -629,7 +682,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * {@inheritDoc}
      */
     private boolean pollCMChanges(final Job<?, ?> project, final Launcher launcher, final FilePath workspace,
-            final TaskListener listener) {
+                                  final TaskListener listener) {
         boolean bChanged = false;
 
         Logger.debug("Invoking pollChanges - " + this.getClass().getName());
@@ -739,7 +792,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         private transient String passwd;
         private Secret passwdSecret;
         private String database;
-
+        private String credentialsId;
         private String timeZone;
         private String webUrl;
 
@@ -767,18 +820,29 @@ public class DimensionsSCM extends SCM implements Serializable {
         @Override
         public boolean configure(StaplerRequest req, JSONObject jobj) throws FormException {
             // Get the values and check them.
-            userName = req.getParameter("dimensionsscm.userName");
-            passwd = null;
-            passwdSecret = Secret.fromString(req.getParameter("dimensionsscm.passwd"));
+
             server = req.getParameter("dimensionsscm.server");
             database = req.getParameter("dimensionsscm.database");
-
             timeZone = req.getParameter("dimensionsscm.timeZone");
             webUrl = req.getParameter("dimensionsscm.webUrl");
+            passwd = null;
 
-            if (userName != null) {
-                userName = Util.fixNull(req.getParameter("dimensionsscm.userName").trim());
+            String credentialSavingType = jobj.getJSONObject("credentialsType").getString("value");
+
+            if (credentialSavingType.equalsIgnoreCase(PLUGIN_DEFINED)) {
+                credentialsId = jobj.getJSONObject("credentialsType").getString("credentialsId");
+                userName = "";
+                passwdSecret = Secret.fromString("");
+            } else {
+                userName = req.getParameter("dimensionsscm.userName");
+                passwdSecret = Secret.fromString(req.getParameter("dimensionsscm.passwd"));
+                credentialsId = "";
+
+                if (userName != null) {
+                    userName = userName.trim();
+                }
             }
+
             if (server != null) {
                 server = Util.fixNull(req.getParameter("dimensionsscm.server").trim());
             }
@@ -791,6 +855,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             if (webUrl != null) {
                 webUrl = Util.fixNull(req.getParameter("dimensionsscm.webUrl").trim());
             }
+
             req.bindJSON(DM_DESCRIPTOR, jobj);
 
             this.save();
@@ -817,14 +882,53 @@ public class DimensionsSCM extends SCM implements Serializable {
             boolean canJobNoTouch = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoTouch"));
             boolean forceAsSlave = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.forceAsSlave"));
 
-            String jobUserName = req.getParameter("dimensionsscm.jobUserName");
-            String jobPasswd = req.getParameter("dimensionsscm.jobPasswd");
             String jobServer = req.getParameter("dimensionsscm.jobServer");
             String jobDatabase = req.getParameter("dimensionsscm.jobDatabase");
             String jobTimeZone = req.getParameter("dimensionsscm.jobTimeZone");
             String jobWebUrl = req.getParameter("dimensionsscm.jobWebUrl");
 
-            DimensionsSCM scm = new DimensionsSCM(project, folders, pathsToExclude, null, canJobDelete, canJobForce,
+            String credentialSavingType = formData.getJSONObject("credentialsType").getString("value");
+
+            String credentialsId = "";
+            String jobUserName = "";
+            String jobPasswd = "";
+            boolean isGlobalSettings = false;
+
+            if (credentialSavingType.equalsIgnoreCase(PLUGIN_DEFINED)) {
+
+                credentialsId = formData.getJSONObject("credentialsType").getString("credentialsId");
+
+                UsernamePasswordCredentials credentials = initializeCredentials(credentialsId);
+
+                if (credentials != null) {
+                    jobUserName = credentials.getUsername();
+                    jobPasswd = credentials.getPassword().getPlainText();
+                }
+
+            } else if (credentialSavingType.equalsIgnoreCase(GLOBAL_DEFINED)) {
+
+                if (Values.isNullOrEmpty(this.userName) || this.passwdSecret == null) {
+                    UsernamePasswordCredentials credentials = initializeCredentials(this.credentialsId);
+
+                    if (credentials != null) {
+                        jobUserName = credentials.getUsername();
+                        jobPasswd = credentials.getPassword().getPlainText();
+                    }
+                } else {
+                    jobUserName = this.userName;
+                    jobPasswd = this.passwdSecret.getPlainText();
+                }
+
+                jobServer = this.server;
+                jobDatabase = this.database;
+                isGlobalSettings = true;
+
+            } else {
+                jobUserName = req.getParameter("dimensionsscm.jobUserName");
+                jobPasswd = req.getParameter("dimensionsscm.jobPasswd");
+            }
+
+            DimensionsSCM scm = new DimensionsSCM(isGlobalSettings, credentialsId, project, folders, pathsToExclude, null, canJobDelete, canJobForce,
                     canJobRevert, jobUserName, jobPasswd, jobServer, jobDatabase, canJobUpdate, jobTimeZone, jobWebUrl,
                     directory, permissions, eol, canJobExpand, canJobNoMetadata, canJobNoTouch, forceAsSlave);
 
@@ -832,6 +936,32 @@ public class DimensionsSCM extends SCM implements Serializable {
                     "browser");
             scm.getAPI();
             return scm;
+        }
+
+        public boolean isChecked(String type) {
+
+            if (type.equalsIgnoreCase(PLUGIN_DEFINED)) {
+                return !Values.isNullOrEmpty(credentialsId);
+            }
+
+            if (type.equalsIgnoreCase(USER_DEFINED)) {
+                return !Values.isNullOrEmpty(userName) && passwdSecret != null;
+            }
+
+            return false;
+        }
+
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item project, @QueryParameter String credentialsId) {
+
+            return new StandardListBoxModel()
+                    .includeEmptyValue()
+                    .includeMatchingAs(
+                            ACL.SYSTEM,
+                            project,
+                            StandardUsernamePasswordCredentials.class,
+                            Collections.<DomainRequirement>emptyList(),
+                            CredentialsMatchers.always()
+                    ).includeCurrentValue(credentialsId);
         }
 
         /**
@@ -859,6 +989,10 @@ public class DimensionsSCM extends SCM implements Serializable {
          */
         public String getUserName() {
             return this.userName;
+        }
+
+        public String getCredentialsId() {
+            return credentialsId;
         }
 
         /**
@@ -967,8 +1101,8 @@ public class DimensionsSCM extends SCM implements Serializable {
          */
         @RequirePOST
         public FormValidation docheckTz(StaplerRequest req, StaplerResponse rsp,
-                @QueryParameter("dimensionsscm.timeZone") final String timezone,
-                @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone) {
+                                        @QueryParameter("dimensionsscm.timeZone") final String timezone,
+                                        @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone) {
             try {
                 String xtz = (jobtimezone != null) ? jobtimezone : timezone;
                 Logger.debug("Invoking docheckTz - " + xtz);
@@ -993,15 +1127,17 @@ public class DimensionsSCM extends SCM implements Serializable {
          */
         @RequirePOST
         public FormValidation docheckServer(StaplerRequest req, StaplerResponse rsp,
-                @QueryParameter("dimensionsscm.userName") final String user,
-                @QueryParameter("dimensionsscm.passwd") final String passwd,
-                @QueryParameter("dimensionsscm.server") final String server,
-                @QueryParameter("dimensionsscm.database") final String database,
-                @QueryParameter("dimensionsscm.jobUserName") final String jobuser,
-                @QueryParameter("dimensionsscm.jobPasswd") final String jobPasswd,
-                @QueryParameter("dimensionsscm.jobServer") final String jobServer,
-                @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase,
-                @AncestorInPath final Item item) {
+                                            @QueryParameter("credentialsId") final String credentialsId,
+                                            @QueryParameter("credentialsType") final String credentialsType,
+                                            @QueryParameter("dimensionsscm.userName") final String user,
+                                            @QueryParameter("dimensionsscm.passwd") final String passwd,
+                                            @QueryParameter("dimensionsscm.server") final String server,
+                                            @QueryParameter("dimensionsscm.database") final String database,
+                                            @QueryParameter("dimensionsscm.jobUserName") final String jobuser,
+                                            @QueryParameter("dimensionsscm.jobPasswd") final String jobPasswd,
+                                            @QueryParameter("dimensionsscm.jobServer") final String jobServer,
+                                            @QueryParameter("dimensionsscm.jobDatabase") final String jobDatabase,
+                                            @AncestorInPath final Item item) {
             if (item == null) {
                 Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             } else {
@@ -1009,10 +1145,56 @@ public class DimensionsSCM extends SCM implements Serializable {
             }
             DimensionsAPI connectionCheck = newDimensionsAPIWithCheck();
             try {
+
+                String xuser = null;
+                String xpasswd = null;
                 String xserver = (jobServer != null) ? jobServer : server;
-                String xuser = (jobuser != null) ? jobuser : user;
-                String xpasswd = (jobPasswd != null) ? jobPasswd : passwd;
                 String xdatabase = (jobDatabase != null) ? jobDatabase : database;
+
+                if (credentialsType.equalsIgnoreCase(PLUGIN_DEFINED)) {
+
+                    UsernamePasswordCredentials credentials = initializeCredentials(credentialsId);
+
+                    if (credentials != null) {
+                        xuser = credentials.getUsername();
+                        xpasswd = credentials.getPassword().getPlainText();
+                    }
+
+                } else if (credentialsType.equalsIgnoreCase(USER_DEFINED)) {
+
+                    xuser = (jobuser != null) ? jobuser : user;
+                    xpasswd = (jobPasswd != null) ? jobPasswd : passwd;
+
+                } else {
+
+                    if (Values.isNullOrEmpty(this.userName) || this.passwdSecret == null) {
+                        UsernamePasswordCredentials credentials = initializeCredentials(this.credentialsId);
+
+                        if (credentials != null) {
+                            xuser = credentials.getUsername();
+                            xpasswd = credentials.getPassword().getPlainText();
+                        }
+                    } else {
+                        xuser = this.userName;
+                        xpasswd = this.passwdSecret.getPlainText();
+                    }
+
+                    xserver = this.server;
+                    xdatabase = this.database;
+
+                    if (Values.isNullOrEmpty(xuser) || Values.isNullOrEmpty(xpasswd)) {
+                        return FormValidation.error("User name and/or password not specified in global configuration.");
+                    }
+
+                    if (Values.isNullOrEmpty(xserver) || Values.isNullOrEmpty(xdatabase)) {
+                        return FormValidation.error("User server and/or database not specified in global configuration.");
+                    }
+                }
+
+                if (xpasswd == null || xuser == null) {
+                    return FormValidation.error("User name and password must be specified.");
+                }
+
                 Logger.debug("Server connection check to user [" + xuser
                         + "], database [" + xdatabase + "], server [" + xserver + "]");
                 long key = connectionCheck.login(xuser, Secret.fromString(xpasswd), xdatabase, xserver);

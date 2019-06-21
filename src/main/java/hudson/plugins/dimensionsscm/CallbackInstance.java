@@ -13,7 +13,7 @@ public class CallbackInstance {
 
     public static DimensionsAPICallback getInstance(DimensionsConnection connection, String baseline, String requests) {
 
-        boolean needCallback12 = isNotBlank(baseline) || isNotBlank(requests);
+        boolean needCallback12 = !Values.isNullOrEmpty(baseline) || !Values.isNullOrEmpty(requests);
 
         if (dimensionsAPICallback != null && dimensionsAPICallback.isCallback14() && needCallback12)
             dimensionsAPICallback = new DimensionsAPICallback12();
@@ -27,10 +27,6 @@ public class CallbackInstance {
             dimensionsAPICallback = new DimensionsAPICallback12();
 
         return dimensionsAPICallback;
-    }
-
-    private static boolean isNotBlank(String baseline) {
-        return baseline != null && !baseline.isEmpty();
     }
 
     private static boolean supportsChangeSets(DimensionsConnection connection) {
