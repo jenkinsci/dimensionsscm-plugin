@@ -882,12 +882,12 @@ public class DimensionsSCM extends SCM implements Serializable {
             boolean canJobNoTouch = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.canJobNoTouch"));
             boolean forceAsSlave = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.forceAsSlave"));
 
-            String jobServer = req.getParameter("dimensionsscm.jobServer");
-            String jobDatabase = req.getParameter("dimensionsscm.jobDatabase");
             String jobTimeZone = req.getParameter("dimensionsscm.jobTimeZone");
             String jobWebUrl = req.getParameter("dimensionsscm.jobWebUrl");
 
             String credentialSavingType = formData.getJSONObject("credentialsType").getString("value");
+            String jobServer = formData.getJSONObject("credentialsType").getString("jobServer");
+            String jobDatabase = formData.getJSONObject("credentialsType").getString("jobDatabase");
 
             String credentialsId = "";
             String jobUserName = "";
