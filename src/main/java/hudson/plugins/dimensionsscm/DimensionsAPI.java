@@ -1227,6 +1227,11 @@ public class DimensionsAPI implements Serializable {
                         SystemAttributes.CREATION_DATE};
     }
 
+    static int[] getItemFileSpecAttribute() {
+        return new int[]{SystemAttributes.OBJECT_SPEC};
+
+    }
+
     private static String preProcessSrcPath(String srcPath) {
         String path = srcPath.equals("/") ? "" : srcPath;
         if (!path.endsWith("/") && !path.equals("")) {
@@ -1243,7 +1248,7 @@ public class DimensionsAPI implements Serializable {
     }
 
     // URL encode a webclient path + spec for opening
-    private static String constructURL(String spec, String url, String dsn, String db) {
+    static String constructURL(String spec, String url, String dsn, String db) {
         String urlString = "";
         if (spec != null && spec.length() > 0 && url != null && url.length() > 0) {
             String host = url;

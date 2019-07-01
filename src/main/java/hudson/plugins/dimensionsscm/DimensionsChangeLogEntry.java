@@ -176,19 +176,19 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
      */
     @ExportedBean(defaultVisibility = 999)
     public static class FileChange implements ChangeLogSet.AffectedFile {
-        private String fileName;
-        final private String operation;
-        final private String url;
+        private String file;
+        private String operation;
+        private String url;
 
         public FileChange() {
             this("", "", "");
         }
 
         /**
-         * `fileName` is path name and revision separated by ';' character.
+         * `file` is path name and revision separated by ';' character.
          */
-        public FileChange(String fileName, String operation, String url) {
-            this.fileName = fileName;
+        public FileChange(String file, String operation, String url) {
+            this.file = file;
             this.url = url;
             this.operation = operation;
         }
@@ -203,18 +203,33 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
             return this.operation;
         }
 
+        public void setOperation(String operation) {
+            this.operation = operation;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
         /**
          * Returns the path name and revision (separated by ';') of the changed file.
          */
         @Exported
         public String getFile() {
-            return this.fileName == null || this.fileName.length() == 0 ? null : this.fileName;
+            return this.file == null || this.file.length() == 0 ? null : this.file;
+        }
+
+        /**
+         * Set the `file`, which is the path name and revision, separated by ';'.
+         */
+        public void setFile(String file) {
+            this.file = file;
         }
 
         @Override
         @Exported
         public EditType getEditType() {
-            if (operation.equalsIgnoreCase("delete")) {
+            if (operation.equalsIgnoreCase("delete") || operation.equalsIgnoreCase("remove")) {
                 return EditType.DELETE;
             } else if (operation.equalsIgnoreCase("add")) {
                 return EditType.ADD;
@@ -228,36 +243,31 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
          */
         @Override
         public String getPath() {
-            return strip(fileName);
+            return strip(file);
         }
 
         /**
-         * Removes leading '/'s and trailing ";revision" from `fileName`.
+         * Removes leading '/'s and trailing ";revision" from `file`.
          */
-        static String strip(String fileName) {
-            if (fileName == null) {
+        static String strip(String file) {
+            if (file == null) {
                 return "";
             }
             // Strip leading '/'.
             int from = 0;
-            int to = fileName.length();
-            while (from < to && fileName.charAt(from) == '/') {
+            int to = file.length();
+            while (from < to && file.charAt(from) == '/') {
                 ++from;
             }
             // Strip ";revision".
-            int sc = fileName.lastIndexOf(';');
+            int sc = file.lastIndexOf(';');
             if (sc >= from) {
                 to = sc;
             }
-            return fileName.substring(from, to);
+            return file.substring(from, to);
         }
 
-        /**
-         * Set the `fileName`, which is the path name and revision, separated by ';'.
-         */
-        public void setFile(String fileName) {
-            this.fileName = fileName;
-        }
+
     }
 
     @ExportedBean(defaultVisibility = 999)

@@ -70,17 +70,14 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
 
             List<DimensionsChangeStep> changeSteps = dimensionsAPI.calcRepoDiffsWithChangesets(connection, projectName, fromDate, toDate, tz);
             Set<Long> stepUIDs = new HashSet<Long>();
-            List<DimensionsChangeStep> deletedChgStep = new ArrayList<DimensionsChangeStep>();
-            Map<String, DimensionsChangeLogEntry> changeLogEntryMap = new HashMap<String, DimensionsChangeLogEntry>();
 
             for (DimensionsChangeStep changeStep : changeSteps) {
 
                 STEP_TYPE stepType = changeStep.getType();
 
-                if (stepType.equals(STEP_TYPE.REMOVE))
-                    deletedChgStep.add(changeStep);
-                else
+                if (!stepType.equals(STEP_TYPE.REMOVE) && !stepType.equals(STEP_TYPE.MOVE)) {
                     stepUIDs.add(changeStep.getObjUid());
+                }
             }
 
             Filter filter = new Filter();
@@ -91,7 +88,7 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
             }
 
             filter.criteria().add(Filter.Criterion.END_OR);
-            int[] attrs = DimensionsAPI.getItemFileAttributes(true);
+            int[] attrs = DimensionsAPI.getItemFileSpecAttribute();
 
             List<ItemRevision> items = DimensionsAPI.getItemRevisionByFilter(project, filter, connection, attrs);
 
@@ -106,13 +103,10 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
             }
             dimensionsAPI.getLogger().flush();
 
+            Map<String, DimensionsChangeLogEntry> changeLogEntryMap = new HashMap<String, DimensionsChangeLogEntry>();
 
-            if (items != null) {
-                changeLogEntryMap.putAll(dimensionsAPI.createChangeList(items, tz, url));
-            }
-
-            if (!deletedChgStep.isEmpty()) {
-                createChangeListForDeletedFiles(dimensionsAPI, deletedChgStep, tz, url, changeLogEntryMap);
+            if (!changeSteps.isEmpty()) {
+                createChangeListFromChangeSteps(dimensionsAPI, changeSteps, tz, url, changeLogEntryMap, items);
             }
 
             if (!changeLogEntryMap.isEmpty()) {
@@ -131,21 +125,38 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
         }
     }
 
-    private void createChangeListForDeletedFiles(DimensionsAPI dimensionsAPI, List<DimensionsChangeStep> deletedChgStep, TimeZone tz, final String url, Map<String, DimensionsChangeLogEntry> entries) {
+    private void createChangeListFromChangeSteps(DimensionsAPI dimensionsAPI, List<DimensionsChangeStep> deletedChgStep, TimeZone tz, final String url, Map<String, DimensionsChangeLogEntry> entries, List<ItemRevision> items) {
+
+        Map<Long, ItemRevision> itemRevisionToUidMap = createItemRevisionMap(items);
 
         for (DimensionsChangeStep changeStep : deletedChgStep) {
 
             String revision = changeStep.getRevision();
-            String fileName = changeStep.getProjectPath() + ";" + revision;
+            String projectPath = changeStep.getProjectPath();
+            String fileName = projectPath + ";" + revision;
             String author = changeStep.getChangeSet().getUserName();
             String comment = changeStep.getChangeSet().getComment();
             Date date = DateUtils.parse(DateUtils.format(changeStep.getChangeSet().getDate()), tz);
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(date);
-            String operation = changeStep.getType().name();
+            String operation = getOperationType(changeStep.getType().name());
+
+            Long uid = changeStep.getObjUid();
+            String spec = "";
+
+            if (itemRevisionToUidMap.containsKey(uid) && !changeStep.getType().equals(STEP_TYPE.MOVE)) {
+                ItemRevision itemRevision = itemRevisionToUidMap.get(uid);
+                spec = (String) itemRevision.getAttribute(SystemAttributes.OBJECT_SPEC);
+            }
+
+            String fileUrl = DimensionsAPI.constructURL(spec, url, dimensionsAPI.getSCMDsn(), dimensionsAPI.getSCMBaseDb());
+
+            if (fileUrl == null) {
+                fileUrl = "";
+            }
 
             Logger.debug("Change details -" + comment + " " + revision + " " + fileName + " " + author
-                    + " " + calendar + " " + operation + " (" + changeStep.getInternalType() + ")");
+                    + " " + spec + " " + calendar + " " + operation + " " + fileUrl);
 
             DimensionsChangeLogEntry entry;
 
@@ -153,9 +164,9 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
 
             if (entries.containsKey(key)) {
                 entry = entries.get(key);
-                entry.add(fileName, operation, "");
+                entry.add(fileName, operation, fileUrl);
             } else {
-                entry = new DimensionsChangeLogEntry(fileName, author, operation, revision, comment, "", calendar);
+                entry = new DimensionsChangeLogEntry(fileName, author, operation, revision, comment, fileUrl, calendar);
                 entries.put(key, entry);
             }
 
@@ -174,5 +185,26 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
                 Logger.debug("Child Request Details IRT -" + requestId + " " + requestUrl + " " + requestTitle);
             }
         }
+    }
+
+    private String getOperationType(String name) {
+
+        if (name.equals("MOVE"))
+            return "edit";
+        else if (name.equals("REMOVE"))
+            return "delete";
+
+        return name.toLowerCase();
+    }
+
+    private Map<Long, ItemRevision> createItemRevisionMap(List<ItemRevision> items) {
+        Map<Long, ItemRevision> itemRevisionMap = new HashMap<Long, ItemRevision>();
+
+        for (ItemRevision itemRevision : items) {
+            Long uid = itemRevision.getUid();
+            itemRevisionMap.put(uid, itemRevision);
+        }
+
+        return itemRevisionMap;
     }
 }

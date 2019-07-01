@@ -20,15 +20,40 @@
           </div>
         </td>
       </tr>
+
+ <j:if test="${cs.requests.size()>0}">
+                       <f:section title="Requests used for this Commit">
+                                       <j:forEach var="req" items="${cs.requests}">
+                                         <tr>
+                                           <td></td>
+                                           <j:if test="${req.url!=null}">
+                                               <td><a href="${req.url}">${req.identifier}</a></td>
+                                           </j:if>
+                                           <j:if test="${req.url==null}">
+                                               <td>${req.identifier}</td>
+                                           </j:if>
+                                           <j:if test="${req.title==null}">
+                                               <td></td>
+                                           </j:if>
+                                           <j:if test="${req.title!=null}">
+                                               <td>${req.title}</td>
+                                           </j:if>
+                                         </tr>
+                                       </j:forEach>
+                                   </f:section>
+  </j:if>
+
+
+
       <f:section title="Files that changed in this Commit">
         <f:advanced>
           <j:forEach var="item" items="${cs.files}">
             <tr>
               <j:if test="${item.file!=null}">
-                  <td><t:editTypeIcon type="${item.editType}" /></td>
-                  <j:if test="${item.url!=null}">
-                      <td><a href="${item.url}">${item.file}</a></td>
-                  </j:if>
+                  <td style="width:16px;"><t:editTypeIcon type="${item.editType}" /></td>
+            <j:if test="${item.url!=null}">
+                <td><a href="${item.url}">${item.file}</a></td>
+            </j:if>
                   <j:if test="${item.url==null}">
                       <td>${item.file}</td>
                   </j:if>
@@ -43,27 +68,7 @@
           </j:forEach>
         </f:advanced>
       </f:section>
-      <f:section title="Requests used for this Commit">
-        <f:advanced>
-          <j:forEach var="req" items="${cs.requests}">
-            <tr>
-              <td></td>
-              <j:if test="${req.url!=null}">
-                  <td><a href="${req.url}">${req.identifier}</a></td>
-              </j:if>
-              <j:if test="${req.url==null}">
-                  <td>${req.identifier}</td>
-              </j:if>
-              <j:if test="${req.title==null}">
-                  <td></td>
-              </j:if>
-              <j:if test="${req.title!=null}">
-                  <td>${req.title}</td>
-              </j:if>
-            </tr>
-          </j:forEach>
-        </f:advanced>
-      </f:section>
+
     </j:forEach>
   </table>
 </j:jelly>
