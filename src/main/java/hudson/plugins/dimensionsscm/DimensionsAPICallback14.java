@@ -75,7 +75,7 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
 
                 STEP_TYPE stepType = changeStep.getType();
 
-                if (!stepType.equals(STEP_TYPE.REMOVE) && !stepType.equals(STEP_TYPE.MOVE)) {
+                if (notMoveOrDeleteOpType(stepType)) {
                     stepUIDs.add(changeStep.getObjUid());
                 }
             }
@@ -125,6 +125,10 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
         }
     }
 
+    private boolean notMoveOrDeleteOpType(STEP_TYPE stepType){
+        return !stepType.equals(STEP_TYPE.REMOVE) && !stepType.equals(STEP_TYPE.MOVE);
+    }
+
     private void createChangeListFromChangeSteps(DimensionsAPI dimensionsAPI, List<DimensionsChangeStep> deletedChgStep, TimeZone tz, final String url, Map<String, DimensionsChangeLogEntry> entries, List<ItemRevision> items) {
 
         Map<Long, ItemRevision> itemRevisionToUidMap = createItemRevisionMap(items);
@@ -144,7 +148,7 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
             Long uid = changeStep.getObjUid();
             String spec = "";
 
-            if (itemRevisionToUidMap.containsKey(uid) && !changeStep.getType().equals(STEP_TYPE.MOVE)) {
+            if (itemRevisionToUidMap.containsKey(uid) && notMoveOrDeleteOpType(changeStep.getType())) {
                 ItemRevision itemRevision = itemRevisionToUidMap.get(uid);
                 spec = (String) itemRevision.getAttribute(SystemAttributes.OBJECT_SPEC);
             }
@@ -190,7 +194,7 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
     private String getOperationType(String name) {
 
         if (name.equals("MOVE"))
-            return "edit";
+            return "update";
         else if (name.equals("REMOVE"))
             return "delete";
 
