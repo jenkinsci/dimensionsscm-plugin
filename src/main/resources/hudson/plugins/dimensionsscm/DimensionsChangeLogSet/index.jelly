@@ -46,7 +46,7 @@
 
 
       <f:section title="Files that changed in this Commit">
-        <f:advanced>
+        <f:advanced title="Files">
           <j:forEach var="item" items="${cs.files}">
             <tr>
               <j:if test="${item.file!=null}">

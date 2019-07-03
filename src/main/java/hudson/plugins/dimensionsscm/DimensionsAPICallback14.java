@@ -194,7 +194,7 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
     private String getOperationType(String name) {
 
         if (name.equals("MOVE"))
-            return "update";
+            return "edit";
         else if (name.equals("REMOVE"))
             return "delete";
 

@@ -229,7 +229,7 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
         @Override
         @Exported
         public EditType getEditType() {
-            if (operation.equalsIgnoreCase("delete") || operation.equalsIgnoreCase("remove")) {
+            if (operation.equalsIgnoreCase("delete")) {
                 return EditType.DELETE;
             } else if (operation.equalsIgnoreCase("add")) {
                 return EditType.ADD;
