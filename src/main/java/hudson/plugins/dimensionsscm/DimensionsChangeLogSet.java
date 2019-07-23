@@ -1,6 +1,6 @@
 package hudson.plugins.dimensionsscm;
 
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.RepositoryBrowser;
 import java.util.Collections;
@@ -23,8 +23,8 @@ public final class DimensionsChangeLogSet extends ChangeLogSet<DimensionsChangeL
      * }
      * </pre>
      */
-    DimensionsChangeLogSet(AbstractBuild<?, ?> build, RepositoryBrowser<?> browser, List<DimensionsChangeLogEntry> entries) {
-        super(build);
+    DimensionsChangeLogSet(Run<?, ?> build, RepositoryBrowser<?> browser, List<DimensionsChangeLogEntry> entries) {
+        super(build, browser);
         this.entries = incorporateChanges(entries, this);
     }
 

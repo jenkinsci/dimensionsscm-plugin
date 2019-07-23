@@ -25,6 +25,8 @@ import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.util.Secret;
+import org.apache.commons.lang.StringUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -319,7 +321,7 @@ public class DimensionsAPI implements Serializable {
      * @return a long
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final long login(String userID, Secret password, String database, String server, Run<?, ?> build) {
+    public final long login(String userID, String password, String database, String server, Run<?, ?> build) {
         Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \""
                 + build.getParent().getName() + "\"");
         if (build instanceof AbstractBuild) {
@@ -327,7 +329,7 @@ public class DimensionsAPI implements Serializable {
             String nodeName = node != null ? node.getNodeName() : null;
             Logger.debug("  build getBuiltOn().getNodeName(): " + (nodeName != null ? ("\"" + nodeName + "\"") : null));
         }
-        final long key = login(userID, password, database, server);
+        final long key = login(userID, Secret.decrypt(password), database, server);
         Logger.debug("  key: \"" + key + "\"");
         return key;
     }
@@ -512,7 +514,9 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-                cmd += "/USER_DIR=\"" + workspaceName.getRemote() + "\" ";
+                String remote = DimensionsSCM.normalizePath(workspaceName.getRemote());
+
+                cmd += "/USER_DIR=\"" + remote + "\" ";
 
                 if (doRevert) {
                     cmd += " /OVERWRITE";

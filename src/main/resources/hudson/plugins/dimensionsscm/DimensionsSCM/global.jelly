@@ -23,7 +23,7 @@
                   </f:entry>
 
                   <f:entry>
-                      <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
+                      <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerGlobal"
                            with="dimensionsscm.server,dimensionsscm.database,credentialsId,credentialsType"/>
                   </f:entry>
 
@@ -59,7 +59,7 @@
             </f:entry>
 
             <f:entry>
-                <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
+                <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerGlobal"
                      with="dimensionsscm.userName,dimensionsscm.passwd,dimensionsscm.server,dimensionsscm.database,credentialsType"/>
             </f:entry>
 

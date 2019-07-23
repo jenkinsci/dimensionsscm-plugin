@@ -1,6 +1,8 @@
 package hudson.plugins.dimensionsscm;
 
 import com.serena.dmclient.api.Filter;
+import hudson.plugins.dimensionsscm.model.StringVarStorage;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +28,7 @@ final class Values {
      * Interpret a string as a primitive boolean. Similar rules to Ant: "true", "yes" and "on" are true; "false", "no"
      * and "off" are false. Case-insensitive and ignores leading and trailing whitespace.
      *
-     * @param value string to try to interpret
+     * @param value               string to try to interpret
      * @param defaultBooleanValue how to interpret the string if it doesn't match one of the known strings
      * @return boolean interpreted from the string; defaultValue if not able to interpret
      */
@@ -65,7 +67,7 @@ final class Values {
     /**
      * Is the array null or empty?
      *
-     * @param <T> type of the array to check
+     * @param <T>    type of the array to check
      * @param values array to check if null or empty
      * @return true if array is null or empty; false otherwise
      */
@@ -76,8 +78,8 @@ final class Values {
     /**
      * Return a default array if the values array is null or empty.
      *
-     * @param <T> type of the array to check
-     * @param values array to check if null or empty
+     * @param <T>           type of the array to check
+     * @param values        array to check if null or empty
      * @param defaultValues array to return if values is null or empty
      * @return defaultValues if values is null or empty; values otherwise
      */
@@ -88,7 +90,7 @@ final class Values {
     /**
      * Return a default value if the value string is null, empty or just whitespace.
      *
-     * @param value string to check if null, empty or just whitespace
+     * @param value        string to check if null, empty or just whitespace
      * @param defaultValue string to return if value is null, empty or just whitespace
      * @return defaultValue if value is null, empty or just whitespace; value otherwise
      */
@@ -117,9 +119,9 @@ final class Values {
     /**
      * Check method argument matches some condition. Throws IllegalArgumentException if it does not.
      *
-     * @param argument The argument to check
+     * @param argument  The argument to check
      * @param condition The condition that must apply to the argument
-     * @param message A message for the IllegalArgumentException if the condition does not apply
+     * @param message   A message for the IllegalArgumentException if the condition does not apply
      * @return The passed argument
      * @throws IllegalArgumentException if the condition is false
      */
@@ -134,7 +136,7 @@ final class Values {
      * Check method argument is not null. Throws NullPointerException if it is null.
      *
      * @param argument The argument to check
-     * @param message A message for the NullPointerException if the argument is null
+     * @param message  A message for the NullPointerException if the argument is null
      * @return The passed argument
      * @throws NullPointerException if the argument is null
      */
@@ -253,7 +255,42 @@ final class Values {
         return sb.toString();
     }
 
-    /** Helper method used by {@linkplain #toString(Filter)}. */
+
+    static String[] convertListToArray(List<StringVarStorage> listToConvert) {
+
+        String[] resultArr = new String[listToConvert.size()];
+
+        for (int i = 0; i < listToConvert.size(); i++) {
+            resultArr[i] = listToConvert.get(i).getStrVar();
+        }
+
+        return resultArr;
+    }
+
+    static List<StringVarStorage> notBlankOrElseList(List<StringVarStorage> values, List<StringVarStorage> defaultValues) {
+
+        if (values == null)
+            return defaultValues;
+
+        if (values.size() == 0)
+            return defaultValues;
+
+        List<StringVarStorage> notBlankList = new ArrayList<StringVarStorage>();
+
+        for (StringVarStorage value : values) {
+            if (!Values.isNullOrEmpty(value.getStrVar()))
+                notBlankList.add(value);
+        }
+
+        if (notBlankList.size() == 0)
+            return defaultValues;
+
+        return notBlankList;
+    }
+
+    /**
+     * Helper method used by {@linkplain #toString(Filter)}.
+     */
     private static String debugDecodeAttribute(int attrNum) {
         switch (attrNum) {
             case -1201:
@@ -277,7 +314,9 @@ final class Values {
         }
     }
 
-    /** Helper method used by {@linkplain #toString(Filter)}. */
+    /**
+     * Helper method used by {@linkplain #toString(Filter)}.
+     */
     private static String debugDecodeFlags(int flags) {
         switch (flags) {
             case 0:
@@ -299,7 +338,9 @@ final class Values {
         }
     }
 
-    /** Helper method used by {@linkplain #toString(Filter)}. */
+    /**
+     * Helper method used by {@linkplain #toString(Filter)}.
+     */
     private static String debugDecodeDirection(int direction) {
         switch (direction) {
             case 1:
@@ -311,7 +352,9 @@ final class Values {
         }
     }
 
-    /** Helper method used by {@linkplain #toString(Filter)}. */
+    /**
+     * Helper method used by {@linkplain #toString(Filter)}.
+     */
     private static String debugDecodeValue(Object value) {
         if (value == null) {
             return "null";
