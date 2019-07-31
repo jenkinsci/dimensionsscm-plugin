@@ -406,6 +406,11 @@ public class DimensionsAPI implements Serializable {
     @SuppressWarnings("unchecked")
     List<DimensionsChangeStep> calcRepoDiffsWithChangesets(DimensionsConnection connection, final String projectName,
                                                            final Calendar fromDate, final Calendar toDate, final TimeZone tz) {
+        List<DimensionsChangeStep> commonChgSteps = new ArrayList<DimensionsChangeStep>();
+
+        if (fromDate == null) {
+            return commonChgSteps;
+        }
 
         Project project = connection.getObjectFactory().getProject(projectName);
         ChangeSetsQuery changeSetsQuery = connection.getObjectFactory().getChangeSetsQuery();
@@ -418,7 +423,6 @@ public class DimensionsAPI implements Serializable {
         filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_TO_DATE, dateBefore, Filter.Criterion.EQUALS));
 
         List<DimensionsChangeSet> changeSets = changeSetsQuery.queryChangeSets(project, filter, true);
-        List<DimensionsChangeStep> commonChgSteps = new ArrayList<DimensionsChangeStep>();
 
         for (DimensionsChangeSet changeSet : changeSets) {
 

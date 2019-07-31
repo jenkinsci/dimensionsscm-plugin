@@ -68,9 +68,9 @@ public class DimensionsSCM extends SCM implements Serializable {
     private String jobTimeZone;
     private String jobWebUrl;
     private String credentialsType;
-    private boolean canJobUpdate;
     private List<StringVarStorage> folders;
     private List<StringVarStorage> pathsToExclude;
+    private boolean canJobUpdate;
     private boolean canJobDelete;
     private boolean canJobForce;
     private boolean canJobRevert;
