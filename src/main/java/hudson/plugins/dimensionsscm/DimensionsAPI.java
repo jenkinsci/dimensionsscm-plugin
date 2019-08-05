@@ -408,19 +408,18 @@ public class DimensionsAPI implements Serializable {
                                                            final Calendar fromDate, final Calendar toDate, final TimeZone tz) {
         List<DimensionsChangeStep> commonChgSteps = new ArrayList<DimensionsChangeStep>();
 
-        if (fromDate == null) {
-            return commonChgSteps;
-        }
-
         Project project = connection.getObjectFactory().getProject(projectName);
         ChangeSetsQuery changeSetsQuery = connection.getObjectFactory().getChangeSetsQuery();
 
-        Date dateAfter = DateUtils.parse(formatDatabaseDate(fromDate.getTime(), tz));
         Date dateBefore = (toDate != null) ? DateUtils.parse(formatDatabaseDate(toDate.getTime(), tz)) : DateUtils.parse(formatDatabaseDate(Calendar.getInstance().getTime(), tz));
 
         Filter filter = new Filter();
-        filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_FROM_DATE, dateAfter, Filter.Criterion.EQUALS));
         filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_TO_DATE, dateBefore, Filter.Criterion.EQUALS));
+
+        if (fromDate != null) {
+            Date dateAfter = DateUtils.parse(formatDatabaseDate(fromDate.getTime(), tz));
+            filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_FROM_DATE, dateAfter, Filter.Criterion.EQUALS));
+        }
 
         List<DimensionsChangeSet> changeSets = changeSetsQuery.queryChangeSets(project, filter, true);
 
