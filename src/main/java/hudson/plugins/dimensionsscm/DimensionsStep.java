@@ -18,16 +18,16 @@ import java.util.List;
 public final class DimensionsStep extends SCMStep {
 
     private String credentialsId;
-    private String jobUserName;
-    private String jobServerUser;
-    private String jobServerPlugin;
-    private String jobDatabaseUser;
-    private String jobDatabasePlugin;
+    private String userName;
+    private String userServer;
+    private String pluginServer;
+    private String userDatabase;
+    private String pluginDatabase;
     private String project;
-    private String jobPasswd;
+    private String password;
     private String credentialsType;
-    private String jobTimeZone;
-    private String jobWebUrl;
+    private String timeZone;
+    private String webUrl;
     private String permissions;
     private String eol;
     private List<StringVarStorage> folders;
@@ -43,80 +43,47 @@ public final class DimensionsStep extends SCMStep {
 
 
     @DataBoundConstructor
-    public DimensionsStep() {
+    public DimensionsStep(String credentialsId, String userName, String userServer, String pluginServer,
+                          String userDatabase, String pluginDatabase, String password, String credentialsType) {
+
+        this.credentialsId = null;
+        this.pluginServer = null;
+        this.pluginDatabase = null;
+        this.userName = null;
+        this.userServer = null;
+        this.userDatabase = null;
+        this.password = null;
+
+        if (DimensionsSCM.PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
+            this.credentialsId = credentialsId;
+            this.pluginServer = pluginServer;
+            this.pluginDatabase = pluginDatabase;
+        } else if (DimensionsSCM.USER_DEFINED.equalsIgnoreCase(credentialsType)) {
+            this.userName = userName;
+            this.userServer = userServer;
+            this.userDatabase = userDatabase;
+            this.password = password;
+        }
+
+        this.credentialsType = credentialsType;
     }
 
-
-    public String getJobTimeZone() {
-        return jobTimeZone;
-    }
-
-    @DataBoundSetter
-    public void setJobTimeZone(String jobTimeZone) {
-        this.jobTimeZone = Values.textOrElse(jobTimeZone, null);
-    }
-
-    public String getJobWebUrl() {
-        return jobWebUrl;
-    }
-
-    @DataBoundSetter
-    public void setJobWebUrl(String jobWebUrl) {
-        this.jobWebUrl = Values.textOrElse(jobWebUrl, null);
-    }
-
-    public String getCredentialsId() {
-        return credentialsId;
-    }
-
-    @DataBoundSetter
-    public void setCredentialsId(String credentialsId) {
-        this.credentialsId = Values.textOrElse(credentialsId, null);
-    }
-
-    public String getJobUserName() {
-        return jobUserName;
+    public String getTimeZone() {
+        return timeZone;
     }
 
     @DataBoundSetter
-    public void setJobUserName(String jobUserName) {
-        this.jobUserName = Values.textOrElse(jobUserName, null);
+    public void setTimeZone(String timeZone) {
+        this.timeZone = Values.textOrElse(timeZone, null);
     }
 
-    public String getJobServerUser() {
-        return jobServerUser;
-    }
-
-    @DataBoundSetter
-    public void setJobServerUser(String jobServerUser) {
-        this.jobServerUser = Values.textOrElse(jobServerUser, null);
-    }
-
-    public String getJobServerPlugin() {
-        return jobServerPlugin;
+    public String getWebUrl() {
+        return webUrl;
     }
 
     @DataBoundSetter
-    public void setJobServerPlugin(String jobServerPlugin) {
-        this.jobServerPlugin = Values.textOrElse(jobServerPlugin, null);
-    }
-
-    public String getJobDatabaseUser() {
-        return jobDatabaseUser;
-    }
-
-    @DataBoundSetter
-    public void setJobDatabaseUser(String jobDatabaseUser) {
-        this.jobDatabaseUser = Values.textOrElse(jobDatabaseUser, null);
-    }
-
-    public String getJobDatabasePlugin() {
-        return jobDatabasePlugin;
-    }
-
-    @DataBoundSetter
-    public void setJobDatabasePlugin(String jobDatabasePlugin) {
-        this.jobDatabasePlugin = Values.textOrElse(jobDatabasePlugin, null);
+    public void setWebUrl(String webUrl) {
+        this.webUrl = Values.textOrElse(webUrl, null);
     }
 
     public String getProject() {
@@ -126,24 +93,6 @@ public final class DimensionsStep extends SCMStep {
     @DataBoundSetter
     public void setProject(String project) {
         this.project = Values.textOrElse(project, null);
-    }
-
-    public String getJobPasswd() {
-        return jobPasswd != null ? Secret.fromString(jobPasswd).getEncryptedValue() : null;
-    }
-
-    @DataBoundSetter
-    public void setJobPasswd(String jobPasswd) {
-        this.jobPasswd = Values.textOrElse(jobPasswd, null);
-    }
-
-    public String getCredentialsType() {
-        return credentialsType;
-    }
-
-    @DataBoundSetter
-    public void setCredentialsType(String credentialsType) {
-        this.credentialsType = Values.textOrElse(credentialsType, null);
     }
 
     public List<StringVarStorage> getFolders() {
@@ -161,7 +110,7 @@ public final class DimensionsStep extends SCMStep {
 
     @DataBoundSetter
     public void setPathsToExclude(List<StringVarStorage> pathsToExclude) {
-        this.pathsToExclude =Values.notBlankOrElseList(pathsToExclude, null);
+        this.pathsToExclude = Values.notBlankOrElseList(pathsToExclude, null);
     }
 
     public boolean isCanJobDelete() {
@@ -254,13 +203,45 @@ public final class DimensionsStep extends SCMStep {
         this.canJobUpdate = canJobUpdate;
     }
 
+    public String getCredentialsId() {
+        return credentialsId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public String getUserServer() {
+        return userServer;
+    }
+
+    public String getPluginServer() {
+        return pluginServer;
+    }
+
+    public String getUserDatabase() {
+        return userDatabase;
+    }
+
+    public String getPluginDatabase() {
+        return pluginDatabase;
+    }
+
+    public String getPassword() {
+        return password != null ? Secret.fromString(password).getEncryptedValue() : null;
+    }
+
+    public String getCredentialsType() {
+        return credentialsType;
+    }
+
     @Nonnull
     @Override
     protected SCM createSCM() {
-        DimensionsSCM scm = new DimensionsSCM(project, credentialsType, jobUserName, jobPasswd, jobServerUser,
-                jobServerPlugin, jobDatabaseUser, jobDatabasePlugin, credentialsId, canJobUpdate);
-        scm.setJobTimeZone(jobTimeZone);
-        scm.setJobWebUrl(jobWebUrl);
+        DimensionsSCM scm = new DimensionsSCM(project, credentialsType, userName, password, userServer,
+                pluginServer, userDatabase, pluginDatabase, credentialsId);
+        scm.setJobTimeZone(timeZone);
+        scm.setJobWebUrl(webUrl);
         scm.setCanJobDelete(canJobDelete);
         scm.setCanJobForce(canJobForce);
         scm.setCanJobRevert(canJobRevert);
@@ -269,6 +250,7 @@ public final class DimensionsStep extends SCMStep {
         scm.setEol(eol);
         scm.setPermissions(permissions);
         scm.setCanJobExpand(canJobExpand);
+        scm.setCanJobUpdate(canJobUpdate);
         scm.setCanJobNoMetadata(canJobNoMetadata);
         scm.setCanJobNoTouch(canJobNoTouch);
         scm.setForceAsSlave(forceAsSlave);
@@ -300,32 +282,20 @@ public final class DimensionsStep extends SCMStep {
         @RequirePOST
         public FormValidation docheckTz(StaplerRequest req, StaplerResponse rsp,
                                         @QueryParameter("dimensionsscm.timeZone") final String timezone,
-                                        @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone) {
+                                        @QueryParameter("dimensionsscm.timeZone") final String jobtimezone) {
             return delegate.docheckTz(req, rsp, timezone, jobtimezone);
-        }
-
-        @RequirePOST
-        public FormValidation doCheckServerGlobal(StaplerRequest req, StaplerResponse rsp,
-                                                  @QueryParameter("credentialsId") final String credentialsId,
-                                                  @QueryParameter("credentialsType") final String credentialsType,
-                                                  @QueryParameter("dimensionsscm.userName") final String user,
-                                                  @QueryParameter("dimensionsscm.passwd") final String passwd,
-                                                  @QueryParameter("dimensionsscm.server") final String server,
-                                                  @QueryParameter("dimensionsscm.database") final String database,
-                                                  @AncestorInPath final Item item) {
-            return delegate.doCheckServerGlobal(req, rsp, credentialsId, credentialsType, user, passwd, server, database, item);
         }
 
         @RequirePOST
         public FormValidation doCheckServerConfig(StaplerRequest req, StaplerResponse rsp,
                                                   @QueryParameter("credentialsId") final String credentialsId,
                                                   @QueryParameter("credentialsType") final String credentialsType,
-                                                  @QueryParameter("dimensionsscm.jobUserName") final String jobuser,
-                                                  @QueryParameter("dimensionsscm.jobPasswd") final String jobPasswd,
-                                                  @QueryParameter("dimensionsscm.jobServerUser") final String jobServerUser,
-                                                  @QueryParameter("dimensionsscm.jobDatabaseUser") final String jobDatabaseUser,
-                                                  @QueryParameter("dimensionsscm.jobServerPlugin") final String jobServerPlugin,
-                                                  @QueryParameter("dimensionsscm.jobDatabasePlugin") final String jobDatabasePlugin,
+                                                  @QueryParameter("dimensionsscm.userName") final String jobuser,
+                                                  @QueryParameter("dimensionsscm.password") final String jobPasswd,
+                                                  @QueryParameter("dimensionsscm.userServer") final String jobServerUser,
+                                                  @QueryParameter("dimensionsscm.userDatabase") final String jobDatabaseUser,
+                                                  @QueryParameter("dimensionsscm.pluginServer") final String jobServerPlugin,
+                                                  @QueryParameter("dimensionsscm.pluginDatabase") final String jobDatabasePlugin,
                                                   @AncestorInPath final Item item) {
             return delegate.doCheckServerConfig(req, rsp, credentialsId, credentialsType, jobuser, jobPasswd, jobServerUser,
                     jobDatabaseUser, jobServerPlugin, jobDatabasePlugin, item);

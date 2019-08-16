@@ -20,14 +20,14 @@
                             <c:select/>
                         </f:entry>
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-                            <f:textbox name="dimensionsscm.jobServerPlugin" value="${instance.jobServer}"/>
+                            <f:textbox name="dimensionsscm.pluginServer" value="${instance.jobServer}"/>
                         </f:entry>
                         <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-                            <f:textbox name="dimensionsscm.jobDatabasePlugin" value="${instance.jobDatabase}"/>
+                            <f:textbox name="dimensionsscm.pluginDatabase" value="${instance.jobDatabase}"/>
                             <i>(the format used must be database@dsn)</i>
                         </f:entry>
                         <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig"
-                            with="dimensionsscm.jobServerPlugin,dimensionsscm.jobDatabasePlugin,credentialsId,credentialsType"/>
+                            with="dimensionsscm.pluginServer,dimensionsscm.pluginDatabase,credentialsId,credentialsType"/>
 
                     </f:nested>
                 </f:radioBlock>
@@ -52,20 +52,20 @@
                             </p>
                         </f:entry>
                         <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-                            <f:textbox name="dimensionsscm.jobUserName" value="${instance.jobUserName}"/>
+                            <f:textbox name="dimensionsscm.userName" value="${instance.userName}"/>
                         </f:entry>
                         <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-                            <input type="password" class="setting-input" name="dimensionsscm.jobPasswd" value="${instance.jobPasswd}"/>
+                            <input type="password" class="setting-input" name="dimensionsscm.password" value="${instance.password}"/>
                         </f:entry>
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-                            <f:textbox name="dimensionsscm.jobServerUser" value="${instance.jobServer}"/>
+                            <f:textbox name="dimensionsscm.userServer" value="${instance.jobServer}"/>
                         </f:entry>
                         <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-                            <f:textbox name="dimensionsscm.jobDatabaseUser" value="${instance.jobDatabase}"/>
+                            <f:textbox name="dimensionsscm.userDatabase" value="${instance.jobDatabase}"/>
                             <i>(the format used must be database@dsn)</i>
                         </f:entry>
                         <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig"
-                            with="dimensionsscm.jobUserName,dimensionsscm.jobPasswd,dimensionsscm.jobServerUser,dimensionsscm.jobDatabaseUser,credentialsType"/>
+                            with="dimensionsscm.userName,dimensionsscm.password,dimensionsscm.userServer,dimensionsscm.userDatabase,credentialsType"/>
                     </f:nested>
                 </f:radioBlock>
 
@@ -166,14 +166,14 @@
         </f:optionalBlock>
 
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
-            <f:textbox name="dimensionsscm.jobTimeZone" value="${instance.jobTimeZone}"/>
+            <f:textbox name="dimensionsscm.timeZone" value="${instance.timeZone}"/>
         </f:entry>
 
             <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
-                  with="dimensionsscm.jobTimeZone"/>
+                  with="dimensionsscm.timeZone"/>
 
         <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
-            <f:textbox name="dimensionsscm.jobWebUrl" value="${instance.jobWebUrl}"/>
+            <f:textbox name="dimensionsscm.webUrl" value="${instance.webUrl}"/>
         </f:entry>
     </f:advanced>
 

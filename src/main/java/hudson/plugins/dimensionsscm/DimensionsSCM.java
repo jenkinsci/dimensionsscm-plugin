@@ -21,6 +21,7 @@ import hudson.util.ListBoxModel;
 import hudson.util.Scrambler;
 import hudson.util.Secret;
 import hudson.util.VariableResolver;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,12 +29,14 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.*;
+
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.interceptor.RequirePOST;
+
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
@@ -45,9 +48,9 @@ public class DimensionsSCM extends SCM implements Serializable {
     @Extension
     public static final DescriptorImpl DM_DESCRIPTOR = new DescriptorImpl();
 
-    private static final String USER_DEFINED = "userDefined";
+    public static final String USER_DEFINED = "userDefined";
     private static final String GLOBAL_DEFINED = "globalDefined";
-    private static final String PLUGIN_DEFINED = "pluginDefined";
+    public static final String PLUGIN_DEFINED = "pluginDefined";
 
     private static final List<StringVarStorage> EMPTY_STRING_LIST = new ArrayList<StringVarStorage>();
     private static final List<StringVarStorage> DEFAULT_FOLDERS = Collections.singletonList(new StringVarStorage("/"));
@@ -83,7 +86,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     @DataBoundConstructor
     public DimensionsSCM(String project, String credentialsType, String jobUserName, String jobPasswd,
                          String jobServerUser, String jobServerPlugin, String jobDatabaseUser, String jobDatabasePlugin,
-                         String credentialsId, boolean canJobUpdate) {
+                         String credentialsId) {
 
         this.credentialsId = StringUtils.EMPTY;
         this.jobUserName = StringUtils.EMPTY;
@@ -100,8 +103,6 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.jobDatabase = jobDatabaseUser;
 
         } else if (PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
-
-
             UsernamePasswordCredentials credentials = initializeCredentials(credentialsId);
 
             if (credentials != null) {
@@ -112,23 +113,16 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.jobServer = jobServerPlugin;
             this.jobDatabase = jobDatabasePlugin;
             this.credentialsId = credentialsId;
-
-        } else if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
-            this.jobUserName = getDescriptor().getUserName();
-            this.jobPasswdSecret = getDescriptor().getPasswd();
-            this.jobServer = getDescriptor().getServer();
-            this.jobDatabase = getDescriptor().getDatabase();
         }
 
         this.credentialsType = credentialsType;
         this.project = Values.textOrElse(project, "${JOB_NAME}");
-        this.canJobUpdate = Values.hasText(this.jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();
         this.jobPasswd = null; // no longer used in config.xml serialization
         this.browser = getDescriptor().getBrowser();
         getAPI();
 
-        Logger.debug("Starting job for project '" + this.project + "' "
-                + ", connecting to " + this.jobServer + "-" + this.jobUserName + ":" + this.jobDatabase);
+        Logger.debug("Starting job for project '" + getProject() + "' "
+                + ", connecting to " + getJobServer() + "-" + getJobUserName() + ":" + getJobDatabase());
     }
 
     private static DimensionsAPI newDimensionsAPIWithCheck() {
@@ -287,6 +281,9 @@ public class DimensionsSCM extends SCM implements Serializable {
      * Gets the user ID for the connection.
      */
     public String getJobUserName() {
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return getDescriptor().getUserName();
+        }
         return this.jobUserName;
     }
 
@@ -298,6 +295,11 @@ public class DimensionsSCM extends SCM implements Serializable {
             jobPasswdSecret = Secret.fromString(Scrambler.descramble(jobPasswd));
             jobPasswd = null;
         }
+
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            jobPasswdSecret = getDescriptor().getPasswd();
+        }
+
         return jobPasswdSecret != null ? jobPasswdSecret.getEncryptedValue() : StringUtils.EMPTY;
     }
 
@@ -305,9 +307,13 @@ public class DimensionsSCM extends SCM implements Serializable {
      * Gets the server name for the connection.
      */
     public String getJobServer() {
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return getDescriptor().getServer();
+        }
         return this.jobServer;
     }
 
+    //this getter is needed for config.jelly
     public String getJobServerUser() {
         if (USER_DEFINED.equalsIgnoreCase(credentialsType)) {
             return this.jobServer;
@@ -315,6 +321,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         return null;
     }
 
+    //this getter is needed for config.jelly
     public String getJobServerPlugin() {
         if (PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
             return this.jobServer;
@@ -326,9 +333,13 @@ public class DimensionsSCM extends SCM implements Serializable {
      * Gets the database name for the connection.
      */
     public String getJobDatabase() {
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return getDescriptor().getDatabase();
+        }
         return this.jobDatabase;
     }
 
+    //this getter is needed for config.jelly
     public String getJobDatabaseUser() {
         if (USER_DEFINED.equalsIgnoreCase(credentialsType)) {
             return this.jobDatabase;
@@ -336,6 +347,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         return null;
     }
 
+    //this getter is needed for config.jelly
     public String getJobDatabasePlugin() {
         if (PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
             return this.jobDatabase;
@@ -445,6 +457,11 @@ public class DimensionsSCM extends SCM implements Serializable {
     @DataBoundSetter
     public void setJobWebUrl(String jobWebUrl) {
         this.jobWebUrl = Values.textOrElse(jobWebUrl, getDescriptor().getWebUrl());
+    }
+
+    @DataBoundSetter
+    public void setCanJobUpdate(boolean canJobUpdate) {
+        this.canJobUpdate = Values.hasText(this.jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();;
     }
 
     @DataBoundSetter
@@ -841,7 +858,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             dmSCM.setLogger(listener.getLogger());
 
             // Connect to Dimensions...
-            key = dmSCM.login(jobUserName, Secret.decrypt(getJobPasswd()), jobDatabase, jobServer);
+            key = dmSCM.login(getJobUserName(), Secret.decrypt(getJobPasswd()), getJobDatabase(), getJobServer());
             if (key > 0L) {
                 List<StringVarStorage> folders = getFolders();
                 // Iterate through the project folders and process them in Dimensions
@@ -971,8 +988,6 @@ public class DimensionsSCM extends SCM implements Serializable {
         public boolean configure(StaplerRequest req, JSONObject jobj) throws FormException {
             // Get the values and check them.
 
-            this.server = req.getParameter("dimensionsscm.server");
-            this.database = req.getParameter("dimensionsscm.database");
             this.timeZone = req.getParameter("dimensionsscm.timeZone");
             this.webUrl = req.getParameter("dimensionsscm.webUrl");
             this.passwd = null;
@@ -988,9 +1003,14 @@ public class DimensionsSCM extends SCM implements Serializable {
                     this.passwdSecret = credentials.getPassword();
                 }
 
+                this.server = Values.textOrElse(req.getParameter("dimensionsscm.serverPlugin"), null);
+                this.database = Values.textOrElse(req.getParameter("dimensionsscm.databasePlugin"), null);
+
             } else if (USER_DEFINED.equalsIgnoreCase(this.credentialsType)) {
-                this.userName = req.getParameter("dimensionsscm.userName");
+                this.userName = Values.textOrElse(req.getParameter("dimensionsscm.userName"), null);
                 this.passwdSecret = Secret.fromString(req.getParameter("dimensionsscm.passwd"));
+                this.server = Values.textOrElse(req.getParameter("dimensionsscm.serverUser"), null);
+                this.database = Values.textOrElse(req.getParameter("dimensionsscm.databaseUser"), null);
                 this.credentialsId = "";
             }
 
@@ -1228,12 +1248,16 @@ public class DimensionsSCM extends SCM implements Serializable {
                                                   @QueryParameter("credentialsType") final String credentialsType,
                                                   @QueryParameter("dimensionsscm.userName") final String user,
                                                   @QueryParameter("dimensionsscm.passwd") final String passwd,
-                                                  @QueryParameter("dimensionsscm.server") final String server,
-                                                  @QueryParameter("dimensionsscm.database") final String database,
+                                                  @QueryParameter("dimensionsscm.serverUser") final String serverUser,
+                                                  @QueryParameter("dimensionsscm.serverPlugin") final String serverPlugin,
+                                                  @QueryParameter("dimensionsscm.databaseUser") final String databaseUser,
+                                                  @QueryParameter("dimensionsscm.databasePlugin") final String databasePlugin,
                                                   @AncestorInPath final Item item) {
 
             String xuser = null;
             String xpasswd = null;
+            String xserver = null;
+            String xdatabase = null;
 
             if (credentialsType.equalsIgnoreCase(PLUGIN_DEFINED)) {
 
@@ -1244,14 +1268,17 @@ public class DimensionsSCM extends SCM implements Serializable {
                     xpasswd = credentials.getPassword().getPlainText();
                 }
 
+                xserver = serverPlugin;
+                xdatabase = databasePlugin;
             } else if (credentialsType.equalsIgnoreCase(USER_DEFINED)) {
 
                 xuser = user;
                 xpasswd = passwd;
-
+                xserver = serverUser;
+                xdatabase = databaseUser;
             }
 
-            return checkServer(item, xuser, xpasswd, server, database);
+            return checkServer(item, xuser, xpasswd, xserver, xdatabase);
         }
 
 

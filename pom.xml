@@ -183,6 +183,35 @@
             <version>1.10</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.serena.dimensions</groupId>
+            <artifactId>darius</artifactId>
+            <version>14.5.0-SNAPSHOT</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.serena.dimensions</groupId>
+            <artifactId>dmclient</artifactId>
+            <version>14.5.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.serena.dimensions</groupId>
+            <artifactId>dmfile</artifactId>
+            <version>14.5.0-SNAPSHOT</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.serena.dimensions</groupId>
+            <artifactId>dmnet</artifactId>
+            <version>14.5.0-SNAPSHOT</version>
+            <scope>runtime</scope>
+        </dependency>
+
+
     </dependencies>
 
     <build>
