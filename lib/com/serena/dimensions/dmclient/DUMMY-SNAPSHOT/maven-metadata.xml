@@ -5,25 +5,20 @@
   <version>DUMMY-SNAPSHOT</version>
   <versioning>
     <snapshot>
-      <localCopy>true</localCopy>
+      <timestamp>20190611.080702</timestamp>
+      <buildNumber>2</buildNumber>
     </snapshot>
-    <lastUpdated>20180131194826</lastUpdated>
+    <lastUpdated>20190611080702</lastUpdated>
     <snapshotVersions>
       <snapshotVersion>
-        <classifier>sources</classifier>
         <extension>jar</extension>
-        <value>DUMMY-SNAPSHOT</value>
-        <updated>20180131194826</updated>
-      </snapshotVersion>
-      <snapshotVersion>
-        <extension>jar</extension>
-        <value>DUMMY-SNAPSHOT</value>
-        <updated>20180131194826</updated>
+        <value>DUMMY-20190611.080702-2</value>
+        <updated>20190611080702</updated>
       </snapshotVersion>
       <snapshotVersion>
         <extension>pom</extension>
-        <value>DUMMY-SNAPSHOT</value>
-        <updated>20180131194826</updated>
+        <value>DUMMY-20190611.080702-2</value>
+        <updated>20190611080702</updated>
       </snapshotVersion>
     </snapshotVersions>
   </versioning>

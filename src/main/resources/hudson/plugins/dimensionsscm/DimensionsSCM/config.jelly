@@ -1,11 +1,12 @@
  <?jelly escape-by-default='true'?>
- <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+ <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"  xmlns:c="/lib/credentials">
 
     <f:entry title="Project Name" help="/plugin/dimensionsscm/project.html">
         <f:textbox name="dimensionsscm.project" value="${h.defaulted(scm.project, 'Enter your projectId here')}"
          checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
     <i>(the format used must be PRODUCT_ID:PROJECT_NAME even for streams)</i>
     </f:entry>
+
 
     <f:entry title="${%Folders To Monitor}">
        <f:repeatable var="folders" items="${scm.folders}" noAddButton="true" minimum="1">
@@ -51,6 +52,63 @@
     <f:checkbox name="dimensionsscm.canJobRevert" default="false" checked="${scm.canJobRevert}"/>
     </f:entry>
 
+    <f:entry title="${%Choose appropriate credential type:}">
+        <f:radioBlock  name="credentialsType" checked="${scm.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined">
+
+            <f:entry field="credentialsId">
+                <c:select/>
+            </f:entry>
+            <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+                <f:textbox name="dimensionsscm.jobServer" value="${scm.jobServer}"/>
+            </f:entry>
+            <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                <f:textbox name="dimensionsscm.jobDatabase" value="${scm.jobDatabase}"/>
+                <i>(the format used must be database@dsn)</i>
+            </f:entry>
+            <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
+              with="dimensionsscm.jobServer,dimensionsscm.jobDatabase,credentialsId,credentialsType"/>
+
+        </f:radioBlock>
+
+        <f:radioBlock name="credentialsType" checked="${scm.isChecked('userDefined')}" title="Legacy username/password" value="userDefined">
+
+            <f:entry>
+                <p>
+                    Don't use credential plugin for this job. Specify the username and password directly here.
+                </p>
+            </f:entry>
+            <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
+                <f:textbox name="dimensionsscm.jobUserName" value="${scm.jobUserName}"/>
+            </f:entry>
+            <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
+                <input type="password" class="setting-input" name="dimensionsscm.jobPasswd" value="${scm.jobPasswd}"/>
+            </f:entry>
+            <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+                <f:textbox name="dimensionsscm.jobServer" value="${scm.jobServer}"/>
+            </f:entry>
+            <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                <f:textbox name="dimensionsscm.jobDatabase" value="${scm.jobDatabase}"/>
+                <i>(the format used must be database@dsn)</i>
+            </f:entry>
+            <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
+              with="dimensionsscm.jobUserName,dimensionsscm.jobPasswd,dimensionsscm.jobServer,dimensionsscm.jobDatabase,credentialsType"/>
+
+        </f:radioBlock>
+
+
+        <f:radioBlock name="credentialsType" checked="${scm.isChecked('globalDefined')}" title="Global configuration" value="globalDefined">
+
+             <f:entry></f:entry>
+
+            <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
+              with="credentialsType"/>
+
+        </f:radioBlock>
+
+             <f:entry></f:entry>
+    </f:entry>
+
+
     <f:advanced>
         <f:entry>
             <p>
@@ -58,25 +116,6 @@
             These details are used for this job regardless of the default Dimensions SCM repository.
             </p>
         </f:entry>
-        <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-        <f:textbox name="dimensionsscm.jobUserName" value="${scm.jobUserName}"/>
-        </f:entry>
-
-        <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-        <input type="password" class="setting-input" name="dimensionsscm.jobPasswd" value="${scm.jobPasswd}"/>
-        </f:entry>
-
-        <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-        <f:textbox name="dimensionsscm.jobServer" value="${scm.jobServer}"/>
-        </f:entry>
-
-        <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-        <f:textbox name="dimensionsscm.jobDatabase" value="${scm.jobDatabase}"/>
-        <i>(the format used must be database@dsn)</i>
-        </f:entry>
-
-        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
-              with="dimensionsscm.jobUserName,dimensionsscm.jobPasswd,dimensionsscm.jobServer,dimensionsscm.jobDatabase"/>
 
         <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use update (note: overrides default setting)"
                                checked="${scm.canJobUpdate}" default="true" help="/plugin/dimensionsscm/canupdate.html">

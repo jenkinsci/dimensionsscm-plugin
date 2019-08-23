@@ -94,6 +94,8 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
         digester.addObjectCreate("*/changeset/items/item", DimensionsChangeLogEntry.FileChange.class);
         digester.addSetProperties("*/changeset/items/item");
         digester.addBeanPropertySetter("*/changeset/items/item", "file");
+        digester.addBeanPropertySetter("*/changeset/items/item/editType", "operation");
+        digester.addBeanPropertySetter("*/changeset/items/item/url", "url");
         digester.addSetNext("*/changeset/items/item", "add");
 
         digester.addObjectCreate("*/changeset/requests/request", DimensionsChangeLogEntry.IRTRequest.class);

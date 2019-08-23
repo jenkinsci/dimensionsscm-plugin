@@ -1,40 +1,80 @@
  <?jelly escape-by-default='true'?>
- <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+ <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"  xmlns:c="/lib/credentials">
 
   <f:section title="Dimensions">
-    <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-    <f:textbox name="dimensionsscm.userName" value="${h.defaulted(descriptor.userName, 'Enter your Dimensions user here')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
-    </f:entry>
 
-    <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-    <input type="password" class="setting-input" name="dimensionsscm.passwd" value="${h.defaulted(descriptor.passwd, 'DMSYS')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
 
-    </f:entry>
+   <f:entry title="${%Choose appropriate credential type:}">
 
-    <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-    <f:textbox name="dimensionsscm.server" value="${h.defaulted(descriptor.server, 'Enter your Dimensions server here')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
-    </f:entry>
+        <f:radioBlock  name="credentialsType" checked="${descriptor.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined">
+              <f:entry field="credentialsId">
+                    <c:select />
+              </f:entry>
 
-    <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-    <f:textbox name="dimensionsscm.database" value="${h.defaulted(descriptor.database, 'Enter your Dimensions database here')}"
-         checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
-    <i>(the format used must be database@dsn)</i>
-    </f:entry>
+              <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+                  <f:textbox name="dimensionsscm.server" value="${h.defaulted(descriptor.server, 'Enter your Dimensions server here')}"
+                       checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+                  </f:entry>
 
-    <f:entry>
-        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
-             with="dimensionsscm.userName,dimensionsscm.passwd,dimensionsscm.server,dimensionsscm.database"/>
-    </f:entry>
+                  <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                  <f:textbox name="dimensionsscm.database" value="${h.defaulted(descriptor.database, 'Enter your Dimensions database here')}"
+                       checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+                  <i>(the format used must be database@dsn)</i>
+                  </f:entry>
 
-    <f:entry>
-        <p>
-        Note: The installation details entered above is the default Dimensions SCM repository for new jobs.
-        Use the job configuration page to re-configure an existing job.
-        </p>
-    </f:entry>
+                  <f:entry>
+                      <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
+                           with="dimensionsscm.server,dimensionsscm.database,credentialsId,credentialsType"/>
+                  </f:entry>
+
+
+                    <f:entry>
+                        <p>
+                        Note: The installation details entered above is the default Dimensions SCM repository for new jobs.
+                        Use the job configuration page to re-configure an existing job.
+                        </p>
+                    </f:entry>
+        </f:radioBlock>
+
+        <f:radioBlock name="credentialsType" checked="${descriptor.isChecked('userDefined')}" title="Legacy username/password" value="userDefined">
+                <f:entry></f:entry>
+                 <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
+                     <f:textbox name="dimensionsscm.userName" value="${descriptor.userName}"
+                              checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+                 </f:entry>
+
+                 <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.passwd" value="${descriptor.passwd}"/>
+                 </f:entry>
+
+        <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+            <f:textbox name="dimensionsscm.server" value="${h.defaulted(descriptor.server, 'Enter your Dimensions server here')}"
+                 checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+            </f:entry>
+
+            <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+            <f:textbox name="dimensionsscm.database" value="${h.defaulted(descriptor.database, 'Enter your Dimensions database here')}"
+                 checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+            <i>(the format used must be database@dsn)</i>
+            </f:entry>
+
+            <f:entry>
+                <f:validateButton title="Check Connection..." progress="Checking..." method="checkServer"
+                     with="dimensionsscm.userName,dimensionsscm.passwd,dimensionsscm.server,dimensionsscm.database,credentialsType"/>
+            </f:entry>
+
+                <f:entry>
+                    <p>
+                    Note: The installation details entered above is the default Dimensions SCM repository for new jobs.
+                    Use the job configuration page to re-configure an existing job.
+                    </p>
+                </f:entry>
+
+        </f:radioBlock>
+
+       <f:entry></f:entry>
+
+   </f:entry>
 
     <f:entry title="${%Use update}">
         <f:checkbox name="dimensionsscm.canUpdate" default="true" checked="${descriptor.canUpdate}"/>
