@@ -240,8 +240,8 @@ public final class DimensionsStep extends SCMStep {
     protected SCM createSCM() {
         DimensionsSCM scm = new DimensionsSCM(project, credentialsType, userName, password, userServer,
                 pluginServer, userDatabase, pluginDatabase, credentialsId);
-        scm.setJobTimeZone(timeZone);
-        scm.setJobWebUrl(webUrl);
+        scm.setTimeZone(timeZone);
+        scm.setWebUrl(webUrl);
         scm.setCanJobDelete(canJobDelete);
         scm.setCanJobForce(canJobForce);
         scm.setCanJobRevert(canJobRevert);
@@ -281,9 +281,8 @@ public final class DimensionsStep extends SCMStep {
 
         @RequirePOST
         public FormValidation docheckTz(StaplerRequest req, StaplerResponse rsp,
-                                        @QueryParameter("dimensionsscm.timeZone") final String timezone,
-                                        @QueryParameter("dimensionsscm.timeZone") final String jobtimezone) {
-            return delegate.docheckTz(req, rsp, timezone, jobtimezone);
+                                        @QueryParameter("dimensionsscm.timeZone") final String timezone) {
+            return delegate.docheckTz(req, rsp, timezone);
         }
 
         @RequirePOST

@@ -129,11 +129,11 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
         return !stepType.equals(STEP_TYPE.REMOVE) && !stepType.equals(STEP_TYPE.MOVE);
     }
 
-    private void createChangeListFromChangeSteps(DimensionsAPI dimensionsAPI, List<DimensionsChangeStep> deletedChgStep, TimeZone tz, final String url, Map<String, DimensionsChangeLogEntry> entries, List<ItemRevision> items) {
+    private void createChangeListFromChangeSteps(DimensionsAPI dimensionsAPI, List<DimensionsChangeStep> dimensionsChangeSteps, TimeZone tz, final String url, Map<String, DimensionsChangeLogEntry> entries, List<ItemRevision> items) {
 
         Map<Long, ItemRevision> itemRevisionToUidMap = createItemRevisionMap(items);
 
-        for (DimensionsChangeStep changeStep : deletedChgStep) {
+        for (DimensionsChangeStep changeStep : dimensionsChangeSteps) {
 
             String revision = changeStep.getRevision();
             String projectPath = changeStep.getProjectPath();

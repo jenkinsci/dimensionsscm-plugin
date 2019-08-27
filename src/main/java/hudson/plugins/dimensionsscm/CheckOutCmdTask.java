@@ -4,7 +4,6 @@ import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.plugins.dimensionsscm.model.StringVarStorage;
 import hudson.util.Secret;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -261,7 +260,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
             // Iterate through the project folders and process them in Dimensions.
             for (StringVarStorage folderStrg : folders) {
 
-                String folderN = folderStrg.getStrVar();
+                String folderN = folderStrg.getValue();
                 if (!bRet) {
                     break;
                 }

@@ -52,10 +52,10 @@
                             </p>
                         </f:entry>
                         <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-                            <f:textbox name="dimensionsscm.userName" value="${instance.userName}"/>
+                            <f:textbox name="dimensionsscm.userName" value="${instance.jobUserName}"/>
                         </f:entry>
                         <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-                            <input type="password" class="setting-input" name="dimensionsscm.password" value="${instance.password}"/>
+                            <input type="password" class="setting-input" name="dimensionsscm.password" value="${instance.jobPasswd}"/>
                         </f:entry>
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
                             <f:textbox name="dimensionsscm.userServer" value="${instance.jobServer}"/>
@@ -78,7 +78,7 @@
        <f:repeatable noAddButton="true" minimum="1" field="folders">
             <table width="98%" cellpadding="2" cellspacing="2">
                 <f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
-                <f:textbox field="strVar" />
+                <f:textbox field="value" />
                 </f:entry>
                 <f:entry>
                     <div align="right">
@@ -94,7 +94,7 @@
        <f:repeatable noAddButton="true" minimum="1" field="pathsToExclude">
            <table width="98%" cellpadding="2" cellspacing="2">
                <f:entry title="Path" help="/plugin/dimensionsscm/excludedPaths.html">
-                   <f:textbox field="strVar" />
+                   <f:textbox field="value" />
                </f:entry>
                <f:entry>
                    <div align="right">
@@ -166,14 +166,14 @@
         </f:optionalBlock>
 
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
-            <f:textbox name="dimensionsscm.timeZone" value="${instance.timeZone}"/>
+            <f:textbox name="dimensionsscm.timeZone" value="${instance.jobTimeZone}"/>
         </f:entry>
 
             <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
                   with="dimensionsscm.timeZone"/>
 
         <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
-            <f:textbox name="dimensionsscm.webUrl" value="${instance.webUrl}"/>
+            <f:textbox name="dimensionsscm.webUrl" value="${instance.jobWebUrl}"/>
         </f:entry>
     </f:advanced>
 

@@ -166,7 +166,7 @@ public class CheckOutAPITask extends GenericAPITask {
                 // Iterate through the project folders and process them in Dimensions.
                 for (StringVarStorage folderStrg : folders) {
 
-                    String folderN = folderStrg.getStrVar();
+                    String folderN = folderStrg.getValue();
                     if (!bRet) {
                         break;
                     }
