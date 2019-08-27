@@ -1,7 +1,13 @@
 package hudson.plugins.dimensionsscm;
 
+import hudson.plugins.dimensionsscm.model.StringVarStorage;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Test for Values class.
@@ -65,20 +71,20 @@ public class ValuesTest {
     public void testIsNullOrEmpty_Array() {
         Assert.assertTrue(Values.isNullOrEmpty((String[]) null));
         Assert.assertTrue(Values.isNullOrEmpty(EMPTY_STRING_ARRAY));
-        Assert.assertFalse(Values.isNullOrEmpty(new String[] { null }));
-        Assert.assertFalse(Values.isNullOrEmpty(new String[] { "" }));
-        Assert.assertFalse(Values.isNullOrEmpty(new String[] { " " }));
-        Assert.assertFalse(Values.isNullOrEmpty(new String[] { "", "" }));
-        Assert.assertFalse(Values.isNullOrEmpty(new String[] { "A" }));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[]{null}));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[]{""}));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[]{" "}));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[]{"", ""}));
+        Assert.assertFalse(Values.isNullOrEmpty(new String[]{"A"}));
     }
 
-    private static final String[][] STRING_ARRAY_INPUTS = { null, EMPTY_STRING_ARRAY,
-            new String[] { null, "", "   " }, new String[] { null, "", "Value 1 ", "    Value 2    ", "  " } };
-    private static final String[] NOT_EMPTY_OR_ELSE_DEFAULTS = new String[] { "default" };
-    private static final String[][] NOT_EMPTY_OR_ELSE_EXPECTS = new String[][] { NOT_EMPTY_OR_ELSE_DEFAULTS,
-            NOT_EMPTY_OR_ELSE_DEFAULTS, STRING_ARRAY_INPUTS[2], STRING_ARRAY_INPUTS[3] };
-    private static final String[][] TRIM_COPY_EXPECTS = { EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY,
-            EMPTY_STRING_ARRAY, new String[] { "Value 1", "Value 2" } };
+    private static final String[][] STRING_ARRAY_INPUTS = {null, EMPTY_STRING_ARRAY,
+            new String[]{null, "", "   "}, new String[]{null, "", "Value 1 ", "    Value 2    ", "  "}};
+    private static final String[] NOT_EMPTY_OR_ELSE_DEFAULTS = new String[]{"default"};
+    private static final String[][] NOT_EMPTY_OR_ELSE_EXPECTS = new String[][]{NOT_EMPTY_OR_ELSE_DEFAULTS,
+            NOT_EMPTY_OR_ELSE_DEFAULTS, STRING_ARRAY_INPUTS[2], STRING_ARRAY_INPUTS[3]};
+    private static final String[][] TRIM_COPY_EXPECTS = {EMPTY_STRING_ARRAY, EMPTY_STRING_ARRAY,
+            EMPTY_STRING_ARRAY, new String[]{"Value 1", "Value 2"}};
 
     @Test
     public void testNotEmptyOrElse() {
@@ -166,5 +172,88 @@ public class ValuesTest {
             String[] expects = TRIM_COPY_EXPECTS[i];
             Assert.assertArrayEquals(expects, Values.trimCopy(inputs));
         }
+    }
+
+
+    @Test
+    public void convertListToArrayTest() {
+
+        List<StringVarStorage> stringVarStorageList = Arrays.asList(
+                new StringVarStorage("1"),
+                new StringVarStorage("2"),
+                new StringVarStorage("3")
+        );
+
+        Assert.assertArrayEquals(new String[]{"1", "2", "3"}, Values.convertListToArray(stringVarStorageList));
+
+        stringVarStorageList = Arrays.asList(
+                new StringVarStorage("1"),
+                new StringVarStorage(null),
+                new StringVarStorage("")
+        );
+
+        Assert.assertArrayEquals(new String[]{"1", null, ""}, Values.convertListToArray(stringVarStorageList));
+
+
+        stringVarStorageList = new ArrayList<StringVarStorage>();
+
+        Assert.assertArrayEquals(new String[]{}, Values.convertListToArray(stringVarStorageList));
+    }
+
+    @Test
+    public void convertArrayToListTest() {
+
+        List<StringVarStorage> stringVarStorageList = Arrays.asList(
+                new StringVarStorage("1"),
+                new StringVarStorage("2"),
+                new StringVarStorage("3")
+        );
+
+        Assert.assertEquals(stringVarStorageList, Values.convertArrayToList(new String[]{"1", "2", "3"}));
+
+        stringVarStorageList = Arrays.asList(
+                new StringVarStorage("1"),
+                new StringVarStorage(null),
+                new StringVarStorage("")
+        );
+
+        Assert.assertEquals(stringVarStorageList, Values.convertArrayToList(new String[]{"1", null, ""}));
+
+
+        stringVarStorageList = new ArrayList<StringVarStorage>();
+
+        Assert.assertEquals(stringVarStorageList, Values.convertArrayToList(new String[]{}));
+    }
+
+    @Test
+    public void notBlankOrElseList() {
+
+        List<StringVarStorage> stringVarStorageList = Arrays.asList(
+                new StringVarStorage("1"),
+                new StringVarStorage("2"),
+                new StringVarStorage("3")
+        );
+
+        List<StringVarStorage> elseList = Arrays.asList(
+                new StringVarStorage("4"),
+                new StringVarStorage("5")
+        );
+
+        Assert.assertEquals(elseList, Values.notBlankOrElseList(new ArrayList<StringVarStorage>(), elseList));
+        Assert.assertEquals(elseList, Values.notBlankOrElseList(null, elseList));
+        Assert.assertEquals(stringVarStorageList, Values.notBlankOrElseList(stringVarStorageList, elseList));
+
+        stringVarStorageList = Collections.singletonList(
+                new StringVarStorage("")
+        );
+
+        Assert.assertEquals(elseList, Values.notBlankOrElseList(stringVarStorageList, elseList));
+
+        stringVarStorageList = Arrays.asList(
+                new StringVarStorage("1"),
+                new StringVarStorage("")
+        );
+
+        Assert.assertEquals(Collections.singletonList(new StringVarStorage("1")), Values.notBlankOrElseList(stringVarStorageList, elseList));
     }
 }

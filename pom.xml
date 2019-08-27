@@ -184,34 +184,25 @@
         </dependency>
 
         <dependency>
-            <groupId>com.serena.dimensions</groupId>
-            <artifactId>darius</artifactId>
-            <version>14.5.0-SNAPSHOT</version>
-            <scope>runtime</scope>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.10.19</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>com.serena.dimensions</groupId>
-            <artifactId>dmclient</artifactId>
-            <version>14.5.0-SNAPSHOT</version>
-            <scope>compile</scope>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>com.serena.dimensions</groupId>
-            <artifactId>dmfile</artifactId>
-            <version>14.5.0-SNAPSHOT</version>
-            <scope>runtime</scope>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <version>1.3</version>
+            <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.serena.dimensions</groupId>
-            <artifactId>dmnet</artifactId>
-            <version>14.5.0-SNAPSHOT</version>
-            <scope>runtime</scope>
-        </dependency>
-
-
     </dependencies>
 
     <build>
