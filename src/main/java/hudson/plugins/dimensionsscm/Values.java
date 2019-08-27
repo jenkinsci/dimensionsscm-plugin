@@ -255,18 +255,47 @@ final class Values {
         return sb.toString();
     }
 
-
+    /**
+     * Convert a <tt>StringVarStorage</tt> instance into a string array.
+     *
+     * @param listToConvert list to convert into array.
+     * @return String array.
+     */
     static String[] convertListToArray(List<StringVarStorage> listToConvert) {
 
         String[] resultArr = new String[listToConvert.size()];
 
         for (int i = 0; i < listToConvert.size(); i++) {
-            resultArr[i] = listToConvert.get(i).getStrVar();
+            resultArr[i] = listToConvert.get(i).getValue();
         }
 
         return resultArr;
     }
 
+    /**
+     * Convert a string array instance into a <tt>StringVarStorage</tt>.
+     *
+     * @param arrayToConvert array to convert into list.
+     * @return StringVarStorage list.
+     */
+    static List<StringVarStorage> convertArrayToList(String[] arrayToConvert) {
+
+        List<StringVarStorage> resList = new ArrayList<StringVarStorage>();
+
+        for (String value : arrayToConvert) {
+            resList.add(new StringVarStorage(value));
+        }
+
+        return resList;
+    }
+
+    /**
+     * Return a default value list if the value list is null, empty or is filled whitespace.
+     *
+     * @param values StringVarStorage list.
+     * @param defaultValues StringVarStorage default list.
+     * @return StringVarStorage list.
+     */
     static List<StringVarStorage> notBlankOrElseList(List<StringVarStorage> values, List<StringVarStorage> defaultValues) {
 
         if (values == null)
@@ -278,7 +307,7 @@ final class Values {
         List<StringVarStorage> notBlankList = new ArrayList<StringVarStorage>();
 
         for (StringVarStorage value : values) {
-            if (!Values.isNullOrEmpty(value.getStrVar()))
+            if (!Values.isNullOrEmpty(value.getValue()))
                 notBlankList.add(value);
         }
 

@@ -71,8 +71,10 @@ public class DimensionsSCM extends SCM implements Serializable {
     private String jobTimeZone;
     private String jobWebUrl;
     private String credentialsType;
-    private List<StringVarStorage> folders;
-    private List<StringVarStorage> pathsToExclude;
+    private String[] folders;
+    private String[] pathsToExclude;
+    private List<StringVarStorage> foldersList;
+    private List<StringVarStorage> pathsToExcludeList;
     private boolean canJobUpdate;
     private boolean canJobDelete;
     private boolean canJobForce;
@@ -84,8 +86,8 @@ public class DimensionsSCM extends SCM implements Serializable {
 
 
     @DataBoundConstructor
-    public DimensionsSCM(String project, String credentialsType, String jobUserName, String jobPasswd,
-                         String jobServerUser, String jobServerPlugin, String jobDatabaseUser, String jobDatabasePlugin,
+    public DimensionsSCM(String project, String credentialsType, String userName, String password,
+                         String userServer, String pluginServer, String userDatabase, String pluginDatabase,
                          String credentialsId) {
 
         this.credentialsId = StringUtils.EMPTY;
@@ -96,11 +98,11 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         if (USER_DEFINED.equalsIgnoreCase(credentialsType)) {
 
-            Secret passwDecr = Secret.decrypt(jobPasswd);
-            this.jobUserName = jobUserName;
-            this.jobPasswdSecret = passwDecr == null ? Secret.fromString(jobPasswd) : passwDecr;
-            this.jobServer = jobServerUser;
-            this.jobDatabase = jobDatabaseUser;
+            Secret passwDecr = Secret.decrypt(password);
+            this.jobUserName = userName;
+            this.jobPasswdSecret = passwDecr == null ? Secret.fromString(password) : passwDecr;
+            this.jobServer = userServer;
+            this.jobDatabase = userDatabase;
 
         } else if (PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
             UsernamePasswordCredentials credentials = initializeCredentials(credentialsId);
@@ -110,8 +112,8 @@ public class DimensionsSCM extends SCM implements Serializable {
                 this.jobPasswdSecret = credentials.getPassword();
             }
 
-            this.jobServer = jobServerPlugin;
-            this.jobDatabase = jobDatabasePlugin;
+            this.jobServer = pluginServer;
+            this.jobDatabase = pluginDatabase;
             this.credentialsId = credentialsId;
         }
 
@@ -267,14 +269,30 @@ public class DimensionsSCM extends SCM implements Serializable {
      * Gets the project paths to monitor.
      */
     public List<StringVarStorage> getFolders() {
-        return folders;
+        if (folders != null && folders.length > 0) {
+            if (foldersList == null) {
+                foldersList = new ArrayList<StringVarStorage>();
+            }
+            foldersList.addAll(Values.convertArrayToList(folders));
+            folders = null;
+        }
+
+        return foldersList;
     }
 
     /**
      * Gets paths excluded from monitoring.
      */
     public List<StringVarStorage> getPathsToExclude() {
-        return pathsToExclude;
+        if (pathsToExclude != null && pathsToExclude.length > 0) {
+            if (pathsToExcludeList == null) {
+                pathsToExcludeList = new ArrayList<StringVarStorage>();
+            }
+            pathsToExcludeList.addAll(Values.convertArrayToList(folders));
+            pathsToExclude = null;
+        }
+
+        return pathsToExcludeList;
     }
 
     /**
@@ -431,12 +449,12 @@ public class DimensionsSCM extends SCM implements Serializable {
 
     @DataBoundSetter
     public void setFolders(List<StringVarStorage> folders) {
-        this.folders = Values.notBlankOrElseList(folders, DEFAULT_FOLDERS);
+        this.foldersList = Values.notBlankOrElseList(folders, DEFAULT_FOLDERS);
     }
 
     @DataBoundSetter
     public void setPathsToExclude(List<StringVarStorage> pathsToExclude) {
-        this.pathsToExclude = Values.notBlankOrElseList(pathsToExclude, EMPTY_STRING_LIST);
+        this.pathsToExcludeList = Values.notBlankOrElseList(pathsToExclude, EMPTY_STRING_LIST);
     }
 
     @DataBoundSetter
@@ -450,18 +468,18 @@ public class DimensionsSCM extends SCM implements Serializable {
     }
 
     @DataBoundSetter
-    public void setJobTimeZone(String jobTimeZone) {
-        this.jobTimeZone = Values.textOrElse(jobTimeZone, getDescriptor().getTimeZone());
+    public void setTimeZone(String timeZone) {
+        this.jobTimeZone = Values.textOrElse(timeZone, getDescriptor().getTimeZone());
     }
 
     @DataBoundSetter
-    public void setJobWebUrl(String jobWebUrl) {
-        this.jobWebUrl = Values.textOrElse(jobWebUrl, getDescriptor().getWebUrl());
+    public void setWebUrl(String webUrl) {
+        this.jobWebUrl = Values.textOrElse(webUrl, getDescriptor().getWebUrl());
     }
 
     @DataBoundSetter
     public void setCanJobUpdate(boolean canJobUpdate) {
-        this.canJobUpdate = Values.hasText(this.jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();;
+        this.canJobUpdate = Values.hasText(this.jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();
     }
 
     @DataBoundSetter
@@ -737,7 +755,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 // Iterate through the project folders and process them in Dimensions.
                 for (StringVarStorage folderStrg : folders) {
 
-                    String folderN = folderStrg.getStrVar();
+                    String folderN = folderStrg.getValue();
 
                     File fileName = new File(folderN);
                     FilePath dname = new FilePath(fileName);
@@ -864,7 +882,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 // Iterate through the project folders and process them in Dimensions
                 for (StringVarStorage folderStrg : folders) {
 
-                    String folderN = folderStrg.getStrVar();
+                    String folderN = folderStrg.getValue();
                     if (bChanged) {
                         break;
                     }
@@ -906,7 +924,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      */
     public PathMatcher createPathMatcher() {
 
-        String[] pathToExcludeArr = Values.convertListToArray(pathsToExclude);
+        String[] pathToExcludeArr = Values.convertListToArray(getPathsToExclude());
 
         return Values.isNullOrEmpty(pathToExcludeArr) ? new NullPathMatcher()
                 : new DefaultPathMatcher(pathToExcludeArr, null);
@@ -1052,12 +1070,15 @@ public class DimensionsSCM extends SCM implements Serializable {
 
         public boolean isChecked(String type) {
 
+            boolean isPluginDefined = PLUGIN_DEFINED.equalsIgnoreCase(this.credentialsType);
+            boolean isUserDefined = USER_DEFINED.equalsIgnoreCase(this.credentialsType);
+
             if (type.equalsIgnoreCase(PLUGIN_DEFINED)) {
-                return PLUGIN_DEFINED.equalsIgnoreCase(this.credentialsType);
+                return isPluginDefined;
             }
 
             if (type.equalsIgnoreCase(USER_DEFINED)) {
-                return USER_DEFINED.equalsIgnoreCase(this.credentialsType);
+                return isUserDefined || (!isPluginDefined && !Values.isNullOrEmpty(this.userName));
             }
 
             return false;
@@ -1217,16 +1238,14 @@ public class DimensionsSCM extends SCM implements Serializable {
          */
         @RequirePOST
         public FormValidation docheckTz(StaplerRequest req, StaplerResponse rsp,
-                                        @QueryParameter("dimensionsscm.timeZone") final String timezone,
-                                        @QueryParameter("dimensionsscm.jobTimeZone") final String jobtimezone) {
+                                        @QueryParameter("dimensionsscm.timeZone") final String timezone) {
             try {
-                String xtz = (jobtimezone != null) ? jobtimezone : timezone;
-                Logger.debug("Invoking docheckTz - " + xtz);
-                TimeZone ctz = TimeZone.getTimeZone(xtz);
+                Logger.debug("Invoking docheckTz - " + timezone);
+                TimeZone ctz = TimeZone.getTimeZone(timezone);
                 String lmt = ctz.getID();
-                if (lmt.equalsIgnoreCase("GMT") && !(xtz.equalsIgnoreCase("GMT")
-                        || xtz.equalsIgnoreCase("Greenwich Mean Time") || xtz.equalsIgnoreCase("UTC")
-                        || xtz.equalsIgnoreCase("Coordinated Universal Time"))) {
+                if (lmt.equalsIgnoreCase("GMT") && !(timezone.equalsIgnoreCase("GMT")
+                        || timezone.equalsIgnoreCase("Greenwich Mean Time") || timezone.equalsIgnoreCase("UTC")
+                        || timezone.equalsIgnoreCase("Coordinated Universal Time"))) {
                     return FormValidation.error("Timezone specified is not valid.");
                 } else {
                     return FormValidation.ok("Timezone test succeeded!");
@@ -1289,12 +1308,12 @@ public class DimensionsSCM extends SCM implements Serializable {
         public FormValidation doCheckServerConfig(StaplerRequest req, StaplerResponse rsp,
                                                   @QueryParameter("credentialsId") final String credentialsId,
                                                   @QueryParameter("credentialsType") final String credentialsType,
-                                                  @QueryParameter("dimensionsscm.jobUserName") final String jobuser,
-                                                  @QueryParameter("dimensionsscm.jobPasswd") final String jobPasswd,
-                                                  @QueryParameter("dimensionsscm.jobServerUser") final String jobServerUser,
-                                                  @QueryParameter("dimensionsscm.jobDatabaseUser") final String jobDatabaseUser,
-                                                  @QueryParameter("dimensionsscm.jobServerPlugin") final String jobServerPlugin,
-                                                  @QueryParameter("dimensionsscm.jobDatabasePlugin") final String jobDatabasePlugin,
+                                                  @QueryParameter("dimensionsscm.userName") final String jobuser,
+                                                  @QueryParameter("dimensionsscm.password") final String jobPasswd,
+                                                  @QueryParameter("dimensionsscm.userServer") final String jobServerUser,
+                                                  @QueryParameter("dimensionsscm.userDatabase") final String jobDatabaseUser,
+                                                  @QueryParameter("dimensionsscm.pluginServer") final String jobServerPlugin,
+                                                  @QueryParameter("dimensionsscm.pluginDatabase") final String jobDatabasePlugin,
                                                   @AncestorInPath final Item item) {
 
             String xuser = null;
