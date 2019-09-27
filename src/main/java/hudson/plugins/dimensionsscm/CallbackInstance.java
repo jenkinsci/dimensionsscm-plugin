@@ -37,7 +37,7 @@ public class CallbackInstance {
 
     /*We need only number part of server version*/
     private static String normalizeServerVersion(String version) {
-        Pattern regPattern = Pattern.compile("([\\d]+)(.*|R*)");
+        Pattern regPattern = Pattern.compile("([\\d]+)(.*)");
         Matcher matcher = regPattern.matcher(version);
 
         if (matcher.find()) {
