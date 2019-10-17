@@ -25,11 +25,17 @@ public final class DimensionsStep extends SCMStep {
     private String pluginDatabase;
     private String project;
     private String password;
+    private String certificatePassword;
+    private String keystorePassword;
+    private String keystoreServer;
+    private String keystoreDatabase;
     private String credentialsType;
     private String timeZone;
     private String webUrl;
     private String permissions;
     private String eol;
+    private String keystorePath;
+    private String certificateAlias;
     private List<StringVarStorage> folders;
     private List<StringVarStorage> pathsToExclude;
     private boolean canJobDelete;
@@ -44,7 +50,9 @@ public final class DimensionsStep extends SCMStep {
 
     @DataBoundConstructor
     public DimensionsStep(String credentialsId, String userName, String userServer, String pluginServer,
-                          String userDatabase, String pluginDatabase, String password, String credentialsType) {
+                          String userDatabase, String pluginDatabase, String password, String credentialsType,
+                          String keystorePath, String certificateAlias, String certificatePassword, String keystorePassword,
+                          String keystoreServer, String keystoreDatabase) {
 
         this.credentialsId = null;
         this.pluginServer = null;
@@ -53,6 +61,12 @@ public final class DimensionsStep extends SCMStep {
         this.userServer = null;
         this.userDatabase = null;
         this.password = null;
+        this.keystorePath = null;
+        this.certificateAlias = null;
+        this.keystoreServer = null;
+        this.keystoreDatabase = null;
+        this.certificatePassword = null;
+        this.keystorePassword = null;
 
         if (DimensionsSCM.PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
             this.credentialsId = credentialsId;
@@ -63,6 +77,13 @@ public final class DimensionsStep extends SCMStep {
             this.userServer = userServer;
             this.userDatabase = userDatabase;
             this.password = password;
+        } else if (DimensionsSCM.KEYSTORE_DEFINED.equalsIgnoreCase(credentialsType)) {
+            this.keystorePath = keystorePath;
+            this.certificateAlias = certificateAlias;
+            this.keystoreServer = keystoreServer;
+            this.keystoreDatabase = keystoreDatabase;
+            this.certificatePassword = certificatePassword;
+            this.keystorePassword = keystorePassword;
         }
 
         this.credentialsType = credentialsType;
@@ -235,11 +256,36 @@ public final class DimensionsStep extends SCMStep {
         return credentialsType;
     }
 
+    public String getCertificatePassword() {
+        return certificatePassword != null ? Secret.fromString(certificatePassword).getEncryptedValue() : null;
+    }
+
+    public String getKeystorePassword() {
+        return keystorePassword != null ? Secret.fromString(keystorePassword).getEncryptedValue() : null;
+    }
+
+    public String getKeystoreServer() {
+        return keystoreServer;
+    }
+
+    public String getKeystoreDatabase() {
+        return keystoreDatabase;
+    }
+
+    public String getKeystorePath() {
+        return keystorePath;
+    }
+
+    public String getCertificateAlias() {
+        return certificateAlias;
+    }
+
     @Nonnull
     @Override
     protected SCM createSCM() {
         DimensionsSCM scm = new DimensionsSCM(project, credentialsType, userName, password, userServer,
-                pluginServer, userDatabase, pluginDatabase, credentialsId);
+                pluginServer, keystoreServer, keystoreDatabase, userDatabase, pluginDatabase, keystorePath,
+                certificateAlias, credentialsId, certificatePassword, keystorePassword);
         scm.setTimeZone(timeZone);
         scm.setWebUrl(webUrl);
         scm.setCanJobDelete(canJobDelete);
@@ -300,5 +346,17 @@ public final class DimensionsStep extends SCMStep {
                     jobDatabaseUser, jobServerPlugin, jobDatabasePlugin, item);
         }
 
+        @RequirePOST
+        public FormValidation doCheckServerKeystore(StaplerRequest req, StaplerResponse rsp,
+                                                    @QueryParameter("dimensionsscm.keystorePath") final String keystorePath,
+                                                    @QueryParameter("dimensionsscm.keystorePassword") final String keystorePassword,
+                                                    @QueryParameter("dimensionsscm.keystoreServer") final String keystoreServer,
+                                                    @QueryParameter("dimensionsscm.keystoreDatabase") final String keystoreDatabase,
+                                                    @QueryParameter("dimensionsscm.certificatePassword") final String certificatePassword,
+                                                    @QueryParameter("dimensionsscm.certificateAlias") final String certificateAlias,
+                                                    @AncestorInPath final Item item) {
+            return delegate.doCheckServerKeystore(req, rsp, keystorePath, keystorePassword, keystoreServer, keystoreDatabase,
+                    certificatePassword, certificateAlias, item);
+        }
     }
 }

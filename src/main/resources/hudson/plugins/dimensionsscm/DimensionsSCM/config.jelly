@@ -69,6 +69,44 @@
                     </f:nested>
                 </f:radioBlock>
 
+            <f:radioBlock name="credentialsType" checked="${instance.isChecked('keystoreDefined')}" title="Keystore authentication" value="keystoreDefined" inline="true">
+                  <f:nested>
+                <f:entry></f:entry>
+                 <f:entry title="Keystore path">
+                     <f:textbox name="dimensionsscm.keystorePath" value="${h.defaulted(instance.keystorePath, 'Enter path to keystore here')}"/>
+                 </f:entry>
+
+                 <f:entry title="Certificate alias">
+                     <f:textbox name="dimensionsscm.certificateAlias" value="${h.defaulted(instance.certificateAlias, 'Enter alias to your certificate within jks')}"/>
+                 </f:entry>
+
+                 <f:entry title="Keystore password">
+                     <input type="password" class="setting-input" name="dimensionsscm.keystorePassword" value="${instance.keystorePassword}"/>
+                 </f:entry>
+
+                <f:entry title="Certificate password">
+                     <input type="password" class="setting-input" name="dimensionsscm.certificatePassword" value="${instance.certificatePassword}"/>
+                 </f:entry>
+
+
+            <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+            <f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(instance.jobServer, 'Enter your Dimensions server here')}"
+                 checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+            </f:entry>
+
+            <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+            <f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(instance.jobDatabase, 'Enter your Dimensions database here')}"
+                 checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+            <i>(the format used must be database@dsn)</i>
+            </f:entry>
+
+            <f:entry>
+                <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore"
+                     with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias"/>
+            </f:entry>
+            </f:nested>
+        </f:radioBlock>
+
                 <f:entry></f:entry>
             </f:entry>
         </table>

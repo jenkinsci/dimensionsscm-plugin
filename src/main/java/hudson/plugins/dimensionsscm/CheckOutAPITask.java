@@ -148,7 +148,7 @@ public class CheckOutAPITask extends GenericAPITask {
                     Logger.debug("Checking out '" + folderN + "'...");
 
                     // Checkout the folder.
-                    bRet = dmSCM.checkout(key, projectId, dname, wa, cmdOutput, baseline, reqId, isRevert, isExpand,
+                    bRet = scmAPI.checkout(key, projectId, dname, wa, cmdOutput, baseline, reqId, isRevert, isExpand,
                             isNoMetadata, isNoTouch, "DEFAULT", eol);
                     Logger.debug("SCM checkout returned " + bRet);
 
@@ -176,7 +176,7 @@ public class CheckOutAPITask extends GenericAPITask {
                     Logger.debug("Checking out '" + folderN + "'...");
 
                     // Checkout the folder.
-                    bRet = dmSCM.checkout(key, projectId, dname, wa, cmdOutput, baseline, requests, isRevert, isExpand,
+                    bRet = scmAPI.checkout(key, projectId, dname, wa, cmdOutput, baseline, requests, isRevert, isExpand,
                             isNoMetadata, isNoTouch, permissions, eol);
                     Logger.debug("SCM checkout returned " + bRet);
 

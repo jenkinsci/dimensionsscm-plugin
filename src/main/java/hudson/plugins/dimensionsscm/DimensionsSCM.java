@@ -11,10 +11,24 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.Item;
+import hudson.model.Job;
+import hudson.model.ModelObject;
+import hudson.model.Node;
+import hudson.model.ParameterValue;
+import hudson.model.ParametersAction;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.plugins.dimensionsscm.model.StringVarStorage;
-import hudson.scm.*;
+import hudson.scm.ChangeLogParser;
+import hudson.scm.PollingResult;
 import hudson.scm.PollingResult.Change;
+import hudson.scm.RepositoryBrowser;
+import hudson.scm.RepositoryBrowsers;
+import hudson.scm.SCM;
+import hudson.scm.SCMDescriptor;
+import hudson.scm.SCMRevisionState;
 import hudson.security.ACL;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -28,7 +42,12 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
@@ -51,6 +70,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     public static final String USER_DEFINED = "userDefined";
     private static final String GLOBAL_DEFINED = "globalDefined";
     public static final String PLUGIN_DEFINED = "pluginDefined";
+    public static final String KEYSTORE_DEFINED = "keystoreDefined";
 
     private static final List<StringVarStorage> EMPTY_STRING_LIST = new ArrayList<StringVarStorage>();
     private static final List<StringVarStorage> DEFAULT_FOLDERS = Collections.singletonList(new StringVarStorage("/"));
@@ -66,11 +86,15 @@ public class DimensionsSCM extends SCM implements Serializable {
     private String project;
 
     private Secret jobPasswdSecret;
+    private Secret certificatePassword;
+    private Secret keystorePassword;
     private String permissions;
     private String eol;
     private String jobTimeZone;
     private String jobWebUrl;
     private String credentialsType;
+    private String keystorePath;
+    private String certificateAlias;
     private String[] folders;
     private String[] pathsToExclude;
     private List<StringVarStorage> foldersList;
@@ -87,20 +111,20 @@ public class DimensionsSCM extends SCM implements Serializable {
 
     @DataBoundConstructor
     public DimensionsSCM(String project, String credentialsType, String userName, String password,
-                         String userServer, String pluginServer, String userDatabase, String pluginDatabase,
-                         String credentialsId) {
+                         String userServer, String pluginServer, String keystoreServer, String keystoreDatabase,
+                         String userDatabase, String pluginDatabase, String keystorePath, String certificateAlias,
+                         String credentialsId, String certificatePassword, String keystorePassword) {
 
         this.credentialsId = StringUtils.EMPTY;
         this.jobUserName = StringUtils.EMPTY;
-        this.jobPasswdSecret = Secret.fromString(StringUtils.EMPTY);
+        this.jobPasswdSecret = null;
         this.jobServer = StringUtils.EMPTY;
         this.jobDatabase = StringUtils.EMPTY;
 
         if (USER_DEFINED.equalsIgnoreCase(credentialsType)) {
 
-            Secret passwDecr = Secret.decrypt(password);
             this.jobUserName = userName;
-            this.jobPasswdSecret = passwDecr == null ? Secret.fromString(password) : passwDecr;
+            this.jobPasswdSecret = Secret.fromString(password);
             this.jobServer = userServer;
             this.jobDatabase = userDatabase;
 
@@ -115,6 +139,14 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.jobServer = pluginServer;
             this.jobDatabase = pluginDatabase;
             this.credentialsId = credentialsId;
+
+        } else if (KEYSTORE_DEFINED.equalsIgnoreCase(credentialsType)) {
+            this.keystorePath = keystorePath;
+            this.certificateAlias = certificateAlias;
+            this.jobServer = keystoreServer;
+            this.jobDatabase = keystoreDatabase;
+            this.certificatePassword = Secret.fromString(certificatePassword);
+            this.keystorePassword = Secret.fromString(keystorePassword);
         }
 
         this.credentialsType = credentialsType;
@@ -172,6 +204,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         boolean isPluginDefined = PLUGIN_DEFINED.equalsIgnoreCase(credentialsType);
         boolean isGlobalDefined = GLOBAL_DEFINED.equalsIgnoreCase(credentialsType);
         boolean isUserDefined = USER_DEFINED.equalsIgnoreCase(credentialsType);
+        boolean isKeystoreDefined = KEYSTORE_DEFINED.equalsIgnoreCase(credentialsType);
 
         if (type.equalsIgnoreCase(PLUGIN_DEFINED)) {
             isActive = isPluginDefined;
@@ -181,9 +214,13 @@ public class DimensionsSCM extends SCM implements Serializable {
             isActive = isGlobalDefined;
         }
 
+        if (type.equalsIgnoreCase(KEYSTORE_DEFINED)) {
+            isActive = isKeystoreDefined;
+        }
+
         if (type.equalsIgnoreCase(USER_DEFINED)) {
             //the second part of 'or' needed in case when user updates from plugin version where it was no credential types yet
-            isActive = isUserDefined || (!isPluginDefined && !isGlobalDefined && !Values.isNullOrEmpty(jobUserName));
+            isActive = isUserDefined || (!isKeystoreDefined && !isPluginDefined && !isGlobalDefined && !Values.isNullOrEmpty(jobUserName));
         }
 
         return isActive;
@@ -222,7 +259,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * Gets selected credentialsId for the project
      */
     public String getCredentialsId() {
-        return credentialsId;
+        return Values.textOrElse(this.credentialsId, null);
     }
 
     /**
@@ -305,6 +342,11 @@ public class DimensionsSCM extends SCM implements Serializable {
         return this.jobUserName;
     }
 
+    //this getter is used when generate script in GeneralSCM tab
+    public String getUserName() {
+        return Values.textOrElse(getJobUserName(), null);
+    }
+
     /**
      * Gets the password for the connection as a Secret instance.
      */
@@ -314,11 +356,54 @@ public class DimensionsSCM extends SCM implements Serializable {
             jobPasswd = null;
         }
 
+        Secret currentPassword = jobPasswdSecret;
         if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
-            jobPasswdSecret = getDescriptor().getPasswd();
+            currentPassword = getDescriptor().getPasswd();
         }
 
-        return jobPasswdSecret != null ? jobPasswdSecret.getEncryptedValue() : StringUtils.EMPTY;
+        return currentPassword != null && !currentPassword.getPlainText().isEmpty() ? currentPassword.getEncryptedValue() : StringUtils.EMPTY;
+    }
+
+    //this getter is used when generate script in GeneralSCM tab
+    public String getPassword() {
+        return Values.textOrElse(getJobPasswd(), null);
+    }
+
+    /**
+     * Gets the certificate password as String.
+     */
+    public String getCertificatePassword() {
+        Secret currentPassword = getCertificatePasswordSecret();
+        return currentPassword != null ? currentPassword.getEncryptedValue() : null;
+    }
+
+
+    /**
+     * Gets the certificate password as Secret object.
+     */
+    public Secret getCertificatePasswordSecret() {
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return getDescriptor().getCertificatePassword();
+        }
+        return certificatePassword;
+    }
+
+    /**
+     * Gets the keystore password as Secret object.
+     */
+    public Secret getKeystorePasswordSecret() {
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return getDescriptor().getKeystorePassword();
+        }
+        return keystorePassword;
+    }
+
+    /**
+     * Gets the keystore password as String.
+     */
+    public String getKeystorePassword() {
+        Secret currentPassword = getKeystorePasswordSecret();
+        return currentPassword != null ? currentPassword.getEncryptedValue() : null;
     }
 
     /**
@@ -331,18 +416,26 @@ public class DimensionsSCM extends SCM implements Serializable {
         return this.jobServer;
     }
 
-    //this getter is needed for config.jelly
-    public String getJobServerUser() {
-        if (USER_DEFINED.equalsIgnoreCase(credentialsType)) {
-            return this.jobServer;
+    //this getter is used when generate script in GeneralSCM tab
+    public String getPluginServer() {
+        if (PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return Values.textOrElse(this.jobServer, null);
         }
         return null;
     }
 
-    //this getter is needed for config.jelly
-    public String getJobServerPlugin() {
-        if (PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
-            return this.jobServer;
+    //this getter is used when generate script in GeneralSCM tab
+    public String getUserServer() {
+        if (USER_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return Values.textOrElse(this.jobServer, null);
+        }
+        return null;
+    }
+
+    //this getter is used when generate script in GeneralSCM tab
+    public String getKeystoreServer() {
+        if (KEYSTORE_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return Values.textOrElse(this.jobServer, null);
         }
         return null;
     }
@@ -357,27 +450,41 @@ public class DimensionsSCM extends SCM implements Serializable {
         return this.jobDatabase;
     }
 
-    //this getter is needed for config.jelly
-    public String getJobDatabaseUser() {
-        if (USER_DEFINED.equalsIgnoreCase(credentialsType)) {
-            return this.jobDatabase;
+    //this getter is used when generate script in GeneralSCM tab
+    public String getKeystoreDatabase() {
+        if (KEYSTORE_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return Values.textOrElse(this.jobDatabase, null);
         }
         return null;
     }
 
-    //this getter is needed for config.jelly
-    public String getJobDatabasePlugin() {
-        if (PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
-            return this.jobDatabase;
+    //this getter is used when generate script in GeneralSCM tab
+    public String getUserDatabase() {
+        if (USER_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return Values.textOrElse(this.jobDatabase, null);
         }
         return null;
     }
+
+    //this getter is used when generate script in GeneralSCM tab
+    public String getPluginDatabase() {
+        if (PLUGIN_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return Values.textOrElse(this.jobDatabase, null);
+        }
+        return null;
+    }
+
 
     /**
      * Gets the time zone for the connection.
      */
     public String getJobTimeZone() {
         return this.jobTimeZone;
+    }
+
+    //this getter is used when generate script in GeneralSCM tab
+    public String getTimeZone() {
+        return Values.textOrElse(this.jobTimeZone, null);
     }
 
     /**
@@ -387,8 +494,40 @@ public class DimensionsSCM extends SCM implements Serializable {
         return this.jobWebUrl;
     }
 
+    //this getter is used when generate script in GeneralSCM tab
+    public String getWebUrl() {
+        return Values.textOrElse(this.jobWebUrl, null);
+    }
+
+    /**
+     * Gets the credentials type.
+     */
     public String getCredentialsType() {
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return getDescriptor().getCredentialsType();
+        }
         return credentialsType;
+    }
+
+    /**
+     * Gets the keystore path.
+     */
+    public String getKeystorePath() {
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return getDescriptor().getKeystorePath();
+        }
+
+        return keystorePath;
+    }
+
+    /**
+     * Gets the certificate alias.
+     */
+    public String getCertificateAlias() {
+        if (GLOBAL_DEFINED.equalsIgnoreCase(credentialsType)) {
+            return getDescriptor().getCertificateAlias();
+        }
+        return certificateAlias;
     }
 
     /**
@@ -472,6 +611,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         this.jobTimeZone = Values.textOrElse(timeZone, getDescriptor().getTimeZone());
     }
 
+
     @DataBoundSetter
     public void setWebUrl(String webUrl) {
         this.jobWebUrl = Values.textOrElse(webUrl, getDescriptor().getWebUrl());
@@ -479,7 +619,7 @@ public class DimensionsSCM extends SCM implements Serializable {
 
     @DataBoundSetter
     public void setCanJobUpdate(boolean canJobUpdate) {
-        this.canJobUpdate = Values.hasText(this.jobServer) ? canJobUpdate : getDescriptor().isCanUpdate();
+        this.canJobUpdate = GLOBAL_DEFINED.equalsIgnoreCase(credentialsType) ? getDescriptor().isCanUpdate() : canJobUpdate;
     }
 
     @DataBoundSetter
@@ -618,7 +758,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             DimensionsAPI dmSCM = getAPI();
             int version = 2009;
 
-            long key = dmSCM.login(getJobUserName(), getJobPasswd(), getJobDatabase(), getJobServer(), build);
+            long key = dmSCM.login(this, build);
 
             if (key > 0L) {
                 // Get the server version.
@@ -712,7 +852,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             dmSCM.setLogger(listener.getLogger());
 
             // Connect to Dimensions...
-            key = dmSCM.login(getJobUserName(), getJobPasswd(), getJobDatabase(), getJobServer(), build);
+            key = dmSCM.login(this, build);
 
             if (key > 0L) {
                 Logger.debug("Login worked.");
@@ -876,7 +1016,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             dmSCM.setLogger(listener.getLogger());
 
             // Connect to Dimensions...
-            key = dmSCM.login(getJobUserName(), Secret.decrypt(getJobPasswd()), getJobDatabase(), getJobServer());
+            key = dmSCM.login(this, null);
             if (key > 0L) {
                 List<StringVarStorage> folders = getFolders();
                 // Iterate through the project folders and process them in Dimensions
@@ -976,8 +1116,12 @@ public class DimensionsSCM extends SCM implements Serializable {
         private String server;
         private String userName;
         private Secret passwdSecret;
+        private Secret keystoreSecret;
+        private Secret certificateSecret;
         private String database;
         private String credentialsId;
+        private String keystorePath;
+        private String certificateAlias;
         private String timeZone;
         private String webUrl;
         private boolean canUpdate;
@@ -1011,6 +1155,15 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.passwd = null;
             this.credentialsType = jobj.getJSONObject("credentialsType").getString("value");
 
+            this.userName = StringUtils.EMPTY;
+            this.passwdSecret = null;
+            this.keystoreSecret = null;
+            this.certificateSecret = null;
+            this.userName = StringUtils.EMPTY;
+            this.credentialsId = StringUtils.EMPTY;
+            this.keystorePath = StringUtils.EMPTY;
+            this.certificateAlias = StringUtils.EMPTY;
+
             if (PLUGIN_DEFINED.equalsIgnoreCase(this.credentialsType)) {
                 this.credentialsId = jobj.getJSONObject("credentialsType").getString("credentialsId");
 
@@ -1029,7 +1182,14 @@ public class DimensionsSCM extends SCM implements Serializable {
                 this.passwdSecret = Secret.fromString(req.getParameter("dimensionsscm.passwd"));
                 this.server = Values.textOrElse(req.getParameter("dimensionsscm.serverUser"), null);
                 this.database = Values.textOrElse(req.getParameter("dimensionsscm.databaseUser"), null);
-                this.credentialsId = "";
+
+            } else if (KEYSTORE_DEFINED.equalsIgnoreCase(credentialsType)) {
+                this.keystorePath = Values.textOrElse(req.getParameter("dimensionsscm.keystorePath"), null);
+                this.certificateAlias = Values.textOrElse(req.getParameter("dimensionsscm.certificateAlias"), null);
+                this.keystoreSecret = Secret.fromString(req.getParameter("dimensionsscm.keystorePassword"));
+                this.certificateSecret = Secret.fromString(req.getParameter("dimensionsscm.certificatePassword"));
+                this.server = Values.textOrElse(req.getParameter("dimensionsscm.keystoreServer"), null);
+                this.database = Values.textOrElse(req.getParameter("dimensionsscm.keystoreDatabase"), null);
             }
 
             if (this.userName != null) {
@@ -1072,13 +1232,18 @@ public class DimensionsSCM extends SCM implements Serializable {
 
             boolean isPluginDefined = PLUGIN_DEFINED.equalsIgnoreCase(this.credentialsType);
             boolean isUserDefined = USER_DEFINED.equalsIgnoreCase(this.credentialsType);
+            boolean isKeystoreDefined = KEYSTORE_DEFINED.equalsIgnoreCase(this.credentialsType);
 
             if (type.equalsIgnoreCase(PLUGIN_DEFINED)) {
                 return isPluginDefined;
             }
 
+            if (type.equalsIgnoreCase(KEYSTORE_DEFINED)) {
+                return isKeystoreDefined;
+            }
+
             if (type.equalsIgnoreCase(USER_DEFINED)) {
-                return isUserDefined || (!isPluginDefined && !Values.isNullOrEmpty(this.userName));
+                return isUserDefined || (!isKeystoreDefined && !isPluginDefined && !Values.isNullOrEmpty(this.userName));
             }
 
             return false;
@@ -1128,8 +1293,23 @@ public class DimensionsSCM extends SCM implements Serializable {
             return this.userName;
         }
 
+        /**
+         * Gets the credentials id.
+         *
+         * @return the credentials ID of user
+         */
         public String getCredentialsId() {
             return credentialsId;
+        }
+
+
+        /**
+         * Gets the credentials type.
+         *
+         * @return the credentials type
+         */
+        public String getCredentialsType() {
+            return credentialsType;
         }
 
         /**
@@ -1161,6 +1341,42 @@ public class DimensionsSCM extends SCM implements Serializable {
                 passwd = null;
             }
             return passwdSecret;
+        }
+
+        /**
+         * Gets the keystore password as a Secret instance.
+         *
+         * @return the password (as a Secret instance)
+         */
+        public Secret getKeystorePassword() {
+            return keystoreSecret;
+        }
+
+        /**
+         * Gets the certificate password as a Secret instance.
+         *
+         * @return the password (as a Secret instance)
+         */
+        public Secret getCertificatePassword() {
+            return certificateSecret;
+        }
+
+        /**
+         * Gets the certificate alias.
+         *
+         * @return alias
+         */
+        public String getCertificateAlias() {
+            return certificateAlias;
+        }
+
+        /**
+         * Gets the keystore path.
+         *
+         * @return the path
+         */
+        public String getKeystorePath() {
+            return keystorePath;
         }
 
         /**
@@ -1300,6 +1516,52 @@ public class DimensionsSCM extends SCM implements Serializable {
             return checkServer(item, xuser, xpasswd, xserver, xdatabase);
         }
 
+        @RequirePOST
+        public FormValidation doCheckServerKeystore(StaplerRequest req, StaplerResponse rsp,
+                                                    @QueryParameter("dimensionsscm.keystorePath") final String keystorePath,
+                                                    @QueryParameter("dimensionsscm.keystorePassword") final String keystorePassword,
+                                                    @QueryParameter("dimensionsscm.keystoreServer") final String keystoreServer,
+                                                    @QueryParameter("dimensionsscm.keystoreDatabase") final String keystoreDatabase,
+                                                    @QueryParameter("dimensionsscm.certificatePassword") final String certificatePassword,
+                                                    @QueryParameter("dimensionsscm.certificateAlias") final String certificateAlias,
+                                                    @AncestorInPath final Item item) {
+
+
+            try {
+                if (StringUtils.isBlank(keystorePath)) {
+                    return FormValidation.error("Keystore path must be specified.");
+                }
+
+                if (StringUtils.isBlank(certificateAlias)) {
+                    return FormValidation.error("Certificate alias must be specified.");
+                }
+
+                if (StringUtils.isBlank(keystorePassword) || StringUtils.isBlank(certificatePassword)) {
+                    return FormValidation.error("Passwords for keystore and certificate must be specified.");
+                }
+
+                Logger.debug("Server connection check to keystore [" + keystorePath
+                        + "], certificate [" + certificateAlias + "]");
+
+                Secret keystorePassSecret = Secret.fromString(keystorePassword);
+                Secret certPassSecret = Secret.fromString(certificatePassword);
+                DimensionsAPI connectionCheck = newDimensionsAPIWithCheck();
+
+                long key = connectionCheck.login(keystoreServer, keystoreDatabase, certificateAlias, certPassSecret, keystorePath, keystorePassSecret);
+
+                Logger.debug("Server connection check returned key [" + key + "]");
+                if (key < 1L) {
+                    return FormValidation.error("Connection test failed");
+                } else {
+                    connectionCheck.logout(key);
+                    return FormValidation.ok("Connection test succeeded!");
+                }
+            } catch (Exception e) {
+                String message = Values.exceptionMessage("Server connection check error", e, "no message");
+                Logger.debug(message, e);
+                return FormValidation.error(message);
+            }
+        }
 
         /**
          * Check if the specified Dimensions server is valid (config.jelly).
@@ -1343,6 +1605,17 @@ public class DimensionsSCM extends SCM implements Serializable {
             } else {
 
 
+                if (this.credentialsType.equalsIgnoreCase(KEYSTORE_DEFINED)) {
+                    if (this.keystoreSecret == null || this.certificateSecret == null)
+                        return FormValidation.error("Keystore or certificate password not specified in global configuration.");
+
+                    return doCheckServerKeystore(req, rsp, this.keystorePath, this.keystoreSecret.getPlainText(), this.server, this.database, this.certificateSecret.getPlainText(), this.certificateAlias, item);
+                }
+
+                if (this.passwdSecret == null) {
+                    return FormValidation.error("Password not specified in global configuration.");
+                }
+
                 xuser = this.userName;
                 xpasswd = this.passwdSecret.getPlainText();
                 xserver = this.server;
@@ -1350,10 +1623,6 @@ public class DimensionsSCM extends SCM implements Serializable {
 
                 if (Values.isNullOrEmpty(xuser)) {
                     return FormValidation.error("User name not specified in global configuration.");
-                }
-
-                if (Values.isNullOrEmpty(xpasswd)) {
-                    return FormValidation.error("Password not specified in global configuration.");
                 }
 
                 if (Values.isNullOrEmpty(xdatabase)) {

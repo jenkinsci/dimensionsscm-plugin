@@ -13,8 +13,10 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.Secret;
 import hudson.util.VariableResolver;
+
 import java.io.IOException;
 import java.io.Serializable;
+
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -24,8 +26,8 @@ import org.kohsuke.stapler.StaplerRequest;
  * as a post-build step in a Jenkins build.
  */
 public class ArtifactUploader extends Notifier implements Serializable {
-    private static final String[] DEFAULT_INCLUDES_REGEX = new String[] { ".*" };
-    private static final String[] DEFAULT_INCLUDES_ANT = new String[] { "**/*" };
+    private static final String[] DEFAULT_INCLUDES_REGEX = new String[]{".*"};
+    private static final String[] DEFAULT_INCLUDES_ANT = new String[]{"**/*"};
 
     private final String[] patternsRegEx;
     private final String[] patternsAnt;
@@ -40,7 +42,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
     @DataBoundConstructor
     public ArtifactUploader(String[] pregEx, boolean fTip, boolean fMerge, String part, boolean fAsSlave,
-            String patternType, String[] pAnt, String[] pregExExc, String[] pAntExc) {
+                            String patternType, String[] pAnt, String[] pregExExc, String[] pAntExc) {
         this.patternsRegEx = Values.notEmptyOrElse(Values.trimCopy(pregEx), DEFAULT_INCLUDES_REGEX);
         this.patternsAnt = Values.notEmptyOrElse(Values.trimCopy(pAnt), DEFAULT_INCLUDES_ANT);
         this.patternsRegExExc = Values.trimCopy(pregExExc);
@@ -158,8 +160,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 Logger.debug("Calculating version of Dimensions...");
 
                 int version = 2009;
-                long key = dmSCM.login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(), scm.getJobServer(),
-                        build);
+                long key = dmSCM.login(scm, build);
 
                 if (key > 0L) {
                     // Get the server version.

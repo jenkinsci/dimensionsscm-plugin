@@ -123,7 +123,7 @@ public class CheckInAPITask extends GenericAPITask {
                         requests = requests.toUpperCase(Values.ROOT_LOCALE);
                     }
 
-                    DimensionsResult res = dmSCM.UploadFiles(key, wd, projectId, tmpFile, jobId, buildNo, requests,
+                    DimensionsResult res = scmAPI.UploadFiles(key, wd, projectId, tmpFile, jobId, buildNo, requests,
                             isForceCheckIn, isForceTip, owningPart);
                     if (res == null) {
                         listener.getLogger().println("[DIMENSIONS] New artifacts failed to get loaded into Dimensions");
