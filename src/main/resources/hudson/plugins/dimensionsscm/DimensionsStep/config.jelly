@@ -1,4 +1,4 @@
- <?jelly escape-by-default='true'?>
+<?jelly escape-by-default='true'?>
  <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form"  xmlns:c="/lib/credentials">
 
     <f:entry title="Project Name" help="/plugin/dimensionsscm/project.html" field="project">
@@ -20,10 +20,10 @@
                             <c:select/>
                         </f:entry>
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-                            <f:textbox name="dimensionsscm.pluginServer" value="${instance.jobServer}"/>
+                            <f:textbox name="dimensionsscm.pluginServer"/>
                         </f:entry>
                         <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-                            <f:textbox name="dimensionsscm.pluginDatabase" value="${instance.jobDatabase}"/>
+                            <f:textbox name="dimensionsscm.pluginDatabase"/>
                             <i>(the format used must be database@dsn)</i>
                         </f:entry>
                         <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig"
@@ -52,16 +52,16 @@
                             </p>
                         </f:entry>
                         <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-                            <f:textbox name="dimensionsscm.userName" value="${instance.jobUserName}"/>
+                            <f:textbox name="dimensionsscm.userName"/>
                         </f:entry>
                         <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-                            <input type="password" class="setting-input" name="dimensionsscm.password" value="${instance.jobPasswd}"/>
+                            <input type="password" class="setting-input" name="dimensionsscm.password"/>
                         </f:entry>
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-                            <f:textbox name="dimensionsscm.userServer" value="${instance.jobServer}"/>
+                            <f:textbox name="dimensionsscm.userServer"/>
                         </f:entry>
                         <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-                            <f:textbox name="dimensionsscm.userDatabase" value="${instance.jobDatabase}"/>
+                            <f:textbox name="dimensionsscm.userDatabase"/>
                             <i>(the format used must be database@dsn)</i>
                         </f:entry>
                         <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig"
@@ -74,11 +74,12 @@
         </table>
     </f:block>
 
-    <f:entry title="${%Folders To Monitor}" field="folders">
+
+<f:entry title="${%Folders To Monitor}" field="folders">
        <f:repeatable noAddButton="true" minimum="1" field="folders">
             <table width="98%" cellpadding="2" cellspacing="2">
                 <f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
-                <f:textbox field="value" />
+                <f:textbox field="strVar" />
                 </f:entry>
                 <f:entry>
                     <div align="right">
@@ -94,7 +95,7 @@
        <f:repeatable noAddButton="true" minimum="1" field="pathsToExclude">
            <table width="98%" cellpadding="2" cellspacing="2">
                <f:entry title="Path" help="/plugin/dimensionsscm/excludedPaths.html">
-                   <f:textbox field="value" />
+                   <f:textbox field="strVar" />
                </f:entry>
                <f:entry>
                    <div align="right">
@@ -120,7 +121,7 @@
 
 
 
-    <f:advanced>
+ <f:advanced>
         <f:entry>
             <p>
             The installation details provided below is the Dimensions SCM repository for this job.
@@ -128,7 +129,7 @@
             </p>
         </f:entry>
 
-        <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use update (note: overrides default setting)"
+         <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use update (note: overrides default setting)"
                                checked="${instance.canJobUpdate}" default="true" help="/plugin/dimensionsscm/canupdate.html" inline="true">
             <f:entry title="${%Expand file substitution variables}" help="/plugin/dimensionsscm/canexpand.html">
                <f:checkbox name="dimensionsscm.canJobExpand" default="false" checked="${instance.canJobExpand}"/>
@@ -166,15 +167,16 @@
         </f:optionalBlock>
 
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
-            <f:textbox name="dimensionsscm.timeZone" value="${instance.jobTimeZone}"/>
+            <f:textbox name="dimensionsscm.timeZone" value="${instance.timeZone}"/>
         </f:entry>
 
             <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
                   with="dimensionsscm.timeZone"/>
 
         <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
-            <f:textbox name="dimensionsscm.webUrl" value="${instance.jobWebUrl}"/>
+            <f:textbox name="dimensionsscm.webUrl" value="${instance.webUrl}"/>
         </f:entry>
     </f:advanced>
+
 
 </j:jelly>

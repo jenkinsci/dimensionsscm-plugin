@@ -45,5 +45,4 @@ public class CallbackInstance {
         }
         return "0.0";
     }
-
 }

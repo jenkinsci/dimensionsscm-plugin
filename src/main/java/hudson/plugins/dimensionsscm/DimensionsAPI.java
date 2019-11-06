@@ -25,6 +25,8 @@ import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.Run;
 import hudson.util.Secret;
+import org.apache.commons.lang.StringUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -319,7 +321,7 @@ public class DimensionsAPI implements Serializable {
      * @return a long
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final long login(String userID, Secret password, String database, String server, Run<?, ?> build) {
+    public final long login(String userID, String password, String database, String server, Run<?, ?> build) {
         Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \""
                 + build.getParent().getName() + "\"");
         if (build instanceof AbstractBuild) {
@@ -327,7 +329,7 @@ public class DimensionsAPI implements Serializable {
             String nodeName = node != null ? node.getNodeName() : null;
             Logger.debug("  build getBuiltOn().getNodeName(): " + (nodeName != null ? ("\"" + nodeName + "\"") : null));
         }
-        final long key = login(userID, password, database, server);
+        final long key = login(userID, Secret.decrypt(password), database, server);
         Logger.debug("  key: \"" + key + "\"");
         return key;
     }
@@ -404,19 +406,22 @@ public class DimensionsAPI implements Serializable {
     @SuppressWarnings("unchecked")
     List<DimensionsChangeStep> calcRepoDiffsWithChangesets(DimensionsConnection connection, final String projectName,
                                                            final Calendar fromDate, final Calendar toDate, final TimeZone tz) {
+        List<DimensionsChangeStep> commonChgSteps = new ArrayList<DimensionsChangeStep>();
 
         Project project = connection.getObjectFactory().getProject(projectName);
         ChangeSetsQuery changeSetsQuery = connection.getObjectFactory().getChangeSetsQuery();
 
-        Date dateAfter = DateUtils.parse(formatDatabaseDate(fromDate.getTime(), tz));
         Date dateBefore = (toDate != null) ? DateUtils.parse(formatDatabaseDate(toDate.getTime(), tz)) : DateUtils.parse(formatDatabaseDate(Calendar.getInstance().getTime(), tz));
 
         Filter filter = new Filter();
-        filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_FROM_DATE, dateAfter, Filter.Criterion.EQUALS));
         filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_TO_DATE, dateBefore, Filter.Criterion.EQUALS));
 
+        if (fromDate != null) {
+            Date dateAfter = DateUtils.parse(formatDatabaseDate(fromDate.getTime(), tz));
+            filter.criteria().add(new Filter.Criterion(SystemAttributes.CHANGE_SET_FROM_DATE, dateAfter, Filter.Criterion.EQUALS));
+        }
+
         List<DimensionsChangeSet> changeSets = changeSetsQuery.queryChangeSets(project, filter, true);
-        List<DimensionsChangeStep> commonChgSteps = new ArrayList<DimensionsChangeStep>();
 
         for (DimensionsChangeSet changeSet : changeSets) {
 
@@ -512,7 +517,9 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-                cmd += "/USER_DIR=\"" + workspaceName.getRemote() + "\" ";
+                String remote = DimensionsSCM.normalizePath(workspaceName.getRemote());
+
+                cmd += "/USER_DIR=\"" + remote + "\" ";
 
                 if (doRevert) {
                     cmd += " /OVERWRITE";

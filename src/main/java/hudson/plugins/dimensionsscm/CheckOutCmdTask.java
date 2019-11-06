@@ -2,12 +2,15 @@ package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
 import hudson.model.TaskListener;
+import hudson.plugins.dimensionsscm.model.StringVarStorage;
 import hudson.util.Secret;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * Update local work area using dmcli command-line.
@@ -27,7 +30,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
     private final String permissions;
     private final String eol;
 
-    private final String[] folders;
+    private final List<StringVarStorage> folders;
 
     /**
      * Utility routine to create command file for dmcli.
@@ -117,9 +120,9 @@ public class CheckOutCmdTask extends GenericCmdTask {
     }
 
     public CheckOutCmdTask(String userName, Secret passwd, String database, String server, String projectId,
-            String baselineId, String requestId, boolean isDelete, boolean isRevert, boolean isForce, boolean isExpand,
-            boolean isNoMetadata, boolean isNoTouch, boolean freshBuild, String[] folders, int version,
-            String permissions, String eol, FilePath workspace, TaskListener listener) {
+                           String baselineId, String requestId, boolean isDelete, boolean isRevert, boolean isForce, boolean isExpand,
+                           boolean isNoMetadata, boolean isNoTouch, boolean freshBuild, List<StringVarStorage> folders, int version,
+                           String permissions, String eol, FilePath workspace, TaskListener listener) {
         super(userName, passwd, database, server, version, workspace, listener);
 
         // Config details.
@@ -144,190 +147,195 @@ public class CheckOutCmdTask extends GenericCmdTask {
      * Process the checkout.
      */
     @Override
-    public Boolean execute(final File exe, final File param, final File area) {
+    public Boolean execute(final File exe, final File param, final File area) throws IOException, InterruptedException {
+
         FilePath wa = new FilePath(area);
         boolean bRet = true;
 
+        if (!area.exists()) {
+            area.mkdir();
+        }
+
         // Emulate SVN plugin - if workspace exists and it is not managed by this project, blow it away.
-        try {
-            if (bFreshBuild) {
-                if (listener.getLogger() != null) {
-                    listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
+
+        if (bFreshBuild) {
+            if (listener.getLogger() != null) {
+                listener.getLogger().println("[DIMENSIONS] Checking out a fresh workspace because this project has not been built before...");
+                listener.getLogger().flush();
+            }
+        }
+
+        if (wa.exists() && (isDelete || bFreshBuild)) {
+            Logger.debug("Deleting '" + wa.toURI() + "'...");
+            listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
+            listener.getLogger().flush();
+            wa.deleteContents();
+        }
+
+        if (baseline != null) {
+            baseline = baseline.trim();
+            baseline = baseline.toUpperCase(Values.ROOT_LOCALE);
+        }
+        if (requests != null) {
+            requests = requests.replaceAll(" ", "");
+            requests = requests.toUpperCase(Values.ROOT_LOCALE);
+        }
+
+        String cmdLog = null;
+
+        if (baseline != null && baseline.length() == 0) {
+            baseline = null;
+        }
+        if (requests != null && requests.length() == 0) {
+            requests = null;
+        }
+        if (listener.getLogger() != null) {
+            if (requests != null) {
+                listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
+            } else if (baseline != null) {
+                listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
+            } else {
+                listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
+            }
+            listener.getLogger().flush();
+        }
+
+        if (version == 10 && requests != null) {
+            String[] requestsProcess = requests.split(",");
+            if (requestsProcess.length == 0) {
+                requestsProcess = new String[]{requests};
+            }
+
+            listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
+
+            for (String reqId : requestsProcess) {
+                if (!bRet) {
+                    break;
+                }
+                String folderN = "/";
+                File fileName = new File(folderN);
+                FilePath projectDir = new FilePath(fileName);
+                String projDir = projectDir.getRemote();
+
+                String remote = DimensionsSCM.normalizePath(area.getAbsolutePath());
+
+                File cmdFile = createCmdFile(reqId, projDir, new File(remote));
+                if (cmdFile == null) {
+                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create UPDATE command file.");
+                    param.delete();
+                    return false;
+                }
+
+                String[] cmd = new String[5];
+                cmd[0] = exe.getAbsolutePath();
+                cmd[1] = "-param";
+                cmd[2] = param.getAbsolutePath();
+                cmd[3] = "-file";
+                cmd[4] = cmdFile.getAbsolutePath();
+
+                SCMLauncher proc = new SCMLauncher(cmd, listener, wa);
+                bRet = proc.execute();
+                String outputStr = proc.getResults();
+                cmdFile.delete();
+
+                if (bRet) {
+                    // Check if any conflicts were identified.
+                    int confl = outputStr.indexOf("C\t");
+                    if (confl > 0) {
+                        bRet = false;
+                    }
+                }
+
+                if (cmdLog == null) {
+                    cmdLog = "\n";
+                }
+                cmdLog += outputStr;
+                cmdLog += "\n";
+
+                if (!bRet && isForce) {
+                    bRet = true;
+                }
+            }
+        } else {
+            // Iterate through the project folders and process them in Dimensions.
+            for (StringVarStorage folderStrg : folders) {
+
+                String folderN = folderStrg.getValue();
+                if (!bRet) {
+                    break;
+                }
+                File fileName = new File(folderN);
+                FilePath projectDir = new FilePath(fileName);
+                String projDir = projectDir.getRemote();
+
+                String remote = DimensionsSCM.normalizePath(area.getAbsolutePath());
+
+                File cmdFile = createCmdFile(null, projDir, new File(remote));
+                if (cmdFile == null) {
+                    listener.getLogger().println("[DIMENSIONS] Error: Cannot create UPDATE command file.");
+                    param.delete();
+                    return false;
+                }
+
+                if (requests == null) {
+                    listener.getLogger().println("[DIMENSIONS] Checking out directory '"
+                            + (projDir != null ? projDir : "/") + "'...");
                     listener.getLogger().flush();
                 }
-            }
 
-            if (wa.exists() && (isDelete || bFreshBuild)) {
-                Logger.debug("Deleting '" + wa.toURI() + "'...");
-                listener.getLogger().println("[DIMENSIONS] Removing '" + wa.toURI() + "'...");
-                listener.getLogger().flush();
-                wa.deleteContents();
-            }
+                String[] cmd = new String[5];
+                cmd[0] = exe.getAbsolutePath();
+                cmd[1] = "-param";
+                cmd[2] = param.getAbsolutePath();
+                cmd[3] = "-file";
+                cmd[4] = cmdFile.getAbsolutePath();
 
-            if (baseline != null) {
-                baseline = baseline.trim();
-                baseline = baseline.toUpperCase(Values.ROOT_LOCALE);
-            }
-            if (requests != null) {
-                requests = requests.replaceAll(" ", "");
-                requests = requests.toUpperCase(Values.ROOT_LOCALE);
-            }
+                SCMLauncher proc = new SCMLauncher(cmd, listener, wa);
+                bRet = proc.execute();
+                String outputStr = proc.getResults();
+                cmdFile.delete();
 
-            String cmdLog = null;
+                if (bRet) {
+                    // Check if any conflicts were identified.
+                    int confl = outputStr.indexOf("C\t");
+                    if (confl > 0) {
+                        bRet = false;
+                    }
+                }
 
-            if (baseline != null && baseline.length() == 0) {
-                baseline = null;
-            }
-            if (requests != null && requests.length() == 0) {
-                requests = null;
-            }
-            if (listener.getLogger() != null) {
+                if (cmdLog == null) {
+                    cmdLog = "\n";
+                }
+                cmdLog += outputStr;
+                cmdLog += "\n";
+
+                if (!bRet && isForce) {
+                    bRet = true;
+                }
                 if (requests != null) {
-                    listener.getLogger().println("[DIMENSIONS] Checking out request(s) \"" + requests + "\" - ignoring project folders...");
-                } else if (baseline != null) {
-                    listener.getLogger().println("[DIMENSIONS] Checking out baseline \"" + baseline + "\"...");
-                } else {
-                    listener.getLogger().println("[DIMENSIONS] Checking out project \"" + projectId + "\"...");
-                }
-                listener.getLogger().flush();
-            }
-
-            if (version == 10 && requests != null) {
-                String[] requestsProcess = requests.split(",");
-                if (requestsProcess.length == 0) {
-                    requestsProcess = new String[] { requests };
-                }
-
-                listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
-
-                for (String reqId : requestsProcess) {
-                    if (!bRet) {
-                        break;
-                    }
-                    String folderN = "/";
-                    File fileName = new File(folderN);
-                    FilePath projectDir = new FilePath(fileName);
-                    String projDir = projectDir.getRemote();
-
-                    File cmdFile = createCmdFile(reqId, projDir, area);
-                    if (cmdFile == null) {
-                        listener.getLogger().println("[DIMENSIONS] Error: Cannot create UPDATE command file.");
-                        param.delete();
-                        return false;
-                    }
-
-                    String[] cmd = new String[5];
-                    cmd[0] = exe.getAbsolutePath();
-                    cmd[1] = "-param";
-                    cmd[2] = param.getAbsolutePath();
-                    cmd[3] = "-file";
-                    cmd[4] = cmdFile.getAbsolutePath();
-
-                    SCMLauncher proc = new SCMLauncher(cmd, listener, wa);
-                    bRet = proc.execute();
-                    String outputStr = proc.getResults();
-                    cmdFile.delete();
-
-                    if (bRet) {
-                        // Check if any conflicts were identified.
-                        int confl = outputStr.indexOf("C\t");
-                        if (confl > 0) {
-                            bRet = false;
-                        }
-                    }
-
-                    if (cmdLog == null) {
-                        cmdLog = "\n";
-                    }
-                    cmdLog += outputStr;
-                    cmdLog += "\n";
-
-                    if (!bRet && isForce) {
-                        bRet = true;
-                    }
-                }
-            } else {
-                // Iterate through the project folders and process them in Dimensions.
-                for (String folderN : folders) {
-                    if (!bRet) {
-                        break;
-                    }
-                    File fileName = new File(folderN);
-                    FilePath projectDir = new FilePath(fileName);
-                    String projDir = projectDir.getRemote();
-
-                    File cmdFile = createCmdFile(null, projDir, area);
-                    if (cmdFile == null) {
-                        listener.getLogger().println("[DIMENSIONS] Error: Cannot create UPDATE command file.");
-                        param.delete();
-                        return false;
-                    }
-
-                    if (requests == null) {
-                        listener.getLogger().println("[DIMENSIONS] Checking out directory '"
-                                + (projDir != null ? projDir : "/") + "'...");
-                        listener.getLogger().flush();
-                    }
-
-                    String[] cmd = new String[5];
-                    cmd[0] = exe.getAbsolutePath();
-                    cmd[1] = "-param";
-                    cmd[2] = param.getAbsolutePath();
-                    cmd[3] = "-file";
-                    cmd[4] = cmdFile.getAbsolutePath();
-
-                    SCMLauncher proc = new SCMLauncher(cmd, listener, wa);
-                    bRet = proc.execute();
-                    String outputStr = proc.getResults();
-                    cmdFile.delete();
-
-                    if (bRet) {
-                        // Check if any conflicts were identified.
-                        int confl = outputStr.indexOf("C\t");
-                        if (confl > 0) {
-                            bRet = false;
-                        }
-                    }
-
-                    if (cmdLog == null) {
-                        cmdLog = "\n";
-                    }
-                    cmdLog += outputStr;
-                    cmdLog += "\n";
-
-                    if (!bRet && isForce) {
-                        bRet = true;
-                    }
-                    if (requests != null) {
-                        break;
-                    }
+                    break;
                 }
             }
-            param.delete();
-
-            PrintStream log = listener.getLogger();
-            if (!Values.isNullOrEmpty(cmdLog) && log != null) {
-                log.println("[DIMENSIONS] (Note: Dimensions command output was - ");
-                cmdLog = cmdLog.replaceAll("\n\n", "\n");
-                log.println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
-                log.flush();
-            }
-
-            if (!bRet && log != null) {
-                log.println("[DIMENSIONS] ==========================================================");
-                log.println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
-                log.println("[DIMENSIONS] Please review the command output and correct any issues");
-                log.println("[DIMENSIONS] that may have been detected.");
-                log.println("[DIMENSIONS] ==========================================================");
-                log.flush();
-            }
-            return bRet;
-        } catch (Exception e) {
-            param.delete();
-            String message = Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again");
-            listener.fatalError(message);
-            Logger.debug(message, e);
-            return false;
         }
+        param.delete();
+
+        PrintStream log = listener.getLogger();
+        if (!Values.isNullOrEmpty(cmdLog) && log != null) {
+            log.println("[DIMENSIONS] (Note: Dimensions command output was - ");
+            cmdLog = cmdLog.replaceAll("\n\n", "\n");
+            log.println(cmdLog.replaceAll("\n", "\n[DIMENSIONS] ") + ")");
+            log.flush();
+        }
+
+        if (!bRet && log != null) {
+            log.println("[DIMENSIONS] ==========================================================");
+            log.println("[DIMENSIONS] The Dimensions checkout command returned a failure status.");
+            log.println("[DIMENSIONS] Please review the command output and correct any issues");
+            log.println("[DIMENSIONS] that may have been detected.");
+            log.println("[DIMENSIONS] ==========================================================");
+            log.flush();
+            throw new IOException("Error: the Dimensions checkout command returned a failure status.");
+        }
+        return bRet;
     }
 }

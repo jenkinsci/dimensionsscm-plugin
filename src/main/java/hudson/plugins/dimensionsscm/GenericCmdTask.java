@@ -74,7 +74,7 @@ abstract class GenericCmdTask extends BaseCallable {
     }
 
     @Override
-    public Boolean invoke(File area, VirtualChannel channel) {
+    public Boolean invoke(File area, VirtualChannel channel) throws IOException {
         boolean retStatus = false;
 
         // This here code is executed on the slave.
@@ -98,13 +98,14 @@ abstract class GenericCmdTask extends BaseCallable {
             }
             return retStatus;
         } catch (Exception e) {
-            listener.fatalError(Values.exceptionMessage("Unable to run command callout", e, "no message - try again"));
-            return false;
+            String message = Values.exceptionMessage("Unable to run command callout", e, "no message - try again");
+            listener.fatalError(message);
+            throw new IOException(message);
         }
     }
 
     /**
      * Process the task. Template method to override in subclasses.
      */
-    abstract Boolean execute(final File exe, final File param, final File area);
+    abstract Boolean execute(final File exe, final File param, final File area) throws IOException, InterruptedException;
 }

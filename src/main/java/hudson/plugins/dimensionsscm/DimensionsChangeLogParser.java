@@ -1,6 +1,7 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.RepositoryBrowser;
 import hudson.util.Digester2;
@@ -31,11 +32,9 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
      * }
      * </pre>
      */
-    @Deprecated
     @Override
-    public DimensionsChangeLogSet parse(@SuppressWarnings("rawtypes") AbstractBuild build, File changelogFile)
+    public DimensionsChangeLogSet parse(Run build, RepositoryBrowser<?> browser, File changelogFile)
             throws IOException, SAXException {
-        RepositoryBrowser<?> browser = build.getProject().getScm().getEffectiveBrowser();
         return new DimensionsChangeLogSet(build, browser, digest(changelogFile));
     }
 

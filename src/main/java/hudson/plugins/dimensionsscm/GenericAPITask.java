@@ -31,7 +31,7 @@ abstract class GenericAPITask extends BaseCallable {
 
         // Server details.
         userName = parent.getJobUserName();
-        passwd = parent.getJobPasswd();
+        passwd = Secret.decrypt(parent.getJobPasswd());
         database = parent.getJobDatabase();
         server = parent.getJobServer();
     }
@@ -67,5 +67,5 @@ abstract class GenericAPITask extends BaseCallable {
     /**
      * Template method for subclasses to override.
      */
-    abstract Boolean execute(File area, VirtualChannel channel);
+    abstract Boolean execute(File area, VirtualChannel channel) throws IOException, InterruptedException;
 }

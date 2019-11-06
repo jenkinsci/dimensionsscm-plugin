@@ -11,6 +11,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+import hudson.util.Secret;
 import hudson.util.VariableResolver;
 import java.io.IOException;
 import java.io.Serializable;
@@ -208,7 +209,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                     listener.getLogger().println("[DIMENSIONS] Running checkin on slave...");
                     listener.getLogger().flush();
 
-                    CheckInCmdTask task = new CheckInCmdTask(scm.getJobUserName(), scm.getJobPasswd(),
+                    CheckInCmdTask task = new CheckInCmdTask(scm.getJobUserName(), Secret.decrypt(scm.getJobPasswd()),
                             scm.getJobDatabase(), scm.getJobServer(), scm.getProjectName(build, listener), requests,
                             isForceCheckIn(), isForceTip(), getPatterns(), getPatternType(), version, isStream,
                             buildNo, projectName, getOwningPart(), workspace, listener, getPatternsExc());

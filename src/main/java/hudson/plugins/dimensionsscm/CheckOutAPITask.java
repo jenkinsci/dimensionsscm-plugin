@@ -2,11 +2,17 @@ package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.plugins.dimensionsscm.model.StringVarStorage;
 import hudson.remoting.VirtualChannel;
 import hudson.util.VariableResolver;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.util.List;
 
 /**
  * Update local work area using Java API.
@@ -20,17 +26,17 @@ public class CheckOutAPITask extends GenericAPITask {
     private final boolean isNoMetadata;
     private final boolean isNoTouch;
 
-    private final VariableResolver<String> myResolver;
-
     private final String projectId;
-    private final String[] folders;
+    private final List<StringVarStorage> folders;
     private final String permissions;
     private final String eol;
 
     private final int version;
+    private String request;
+    private String baseline;
 
-    public CheckOutAPITask(AbstractBuild<?, ?> build, DimensionsSCM parent, FilePath workspace, TaskListener listener,
-            int version) {
+    public CheckOutAPITask(Run<?, ?> build, DimensionsSCM parent, FilePath workspace, TaskListener listener,
+                           int version) {
         super(parent, workspace, listener);
         Logger.debug("Creating task - " + this.getClass().getName());
 
@@ -52,11 +58,24 @@ public class CheckOutAPITask extends GenericAPITask {
 
         // Build details.
         this.bFreshBuild = (build.getPreviousBuild() == null);
-        this.myResolver = build.getBuildVariableResolver();
+
+        this.baseline = null;
+        this.request = null;
+
+        if (build instanceof AbstractBuild) {
+
+            VariableResolver<String> myResolver = ((AbstractBuild<?, ?>) build).getBuildVariableResolver();
+
+            this.baseline = myResolver.resolve("DM_BASELINE");
+            this.request = myResolver.resolve("DM_REQUEST");
+        } else if (build instanceof WorkflowRun) {
+            this.baseline = parent.getParameterFromBuild((WorkflowRun) build, "DM_BASELINE");
+            this.request = parent.getParameterFromBuild((WorkflowRun) build, "DM_REQUEST");
+        }
     }
 
     @Override
-    public Boolean execute(File area, VirtualChannel channel) {
+    public Boolean execute(File area, VirtualChannel channel) throws IOException, InterruptedException {
         boolean bRet = true;
         try {
             StringBuffer cmdOutput = new StringBuffer();
@@ -77,8 +96,8 @@ public class CheckOutAPITask extends GenericAPITask {
                 wa.deleteContents();
             }
 
-            String baseline = myResolver.resolve("DM_BASELINE");
-            String requests = myResolver.resolve("DM_REQUEST");
+            String baseline = this.baseline;
+            String requests = this.request;
 
             if (baseline != null) {
                 baseline = baseline.trim();
@@ -113,7 +132,7 @@ public class CheckOutAPITask extends GenericAPITask {
             if (version == 10 && requests != null) {
                 String[] requestsProcess = requests.split(",");
                 if (requestsProcess.length == 0) {
-                    requestsProcess = new String[] { requests };
+                    requestsProcess = new String[]{requests};
                 }
 
                 listener.getLogger().println("[DIMENSIONS] Defaulting to read-only permissions as this is the only available mode...");
@@ -145,7 +164,9 @@ public class CheckOutAPITask extends GenericAPITask {
                 }
             } else {
                 // Iterate through the project folders and process them in Dimensions.
-                for (String folderN : folders) {
+                for (StringVarStorage folderStrg : folders) {
+
+                    String folderN = folderStrg.getValue();
                     if (!bRet) {
                         break;
                     }
@@ -190,12 +211,13 @@ public class CheckOutAPITask extends GenericAPITask {
                 log.println("[DIMENSIONS] that may have been detected.");
                 log.println("[DIMENSIONS] ==========================================================");
                 log.flush();
+                throw new IOException("Error: the Dimensions checkout command returned a failure status.");
             }
         } catch (Exception e) {
             String message = Values.exceptionMessage("Unable to run checkout callout", e, "no message - try again");
             listener.fatalError(message);
             Logger.debug(message, e);
-            bRet = false;
+            throw new IOException(message);
         }
         return bRet;
     }
