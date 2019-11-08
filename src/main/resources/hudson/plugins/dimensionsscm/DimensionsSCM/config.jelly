@@ -8,8 +8,6 @@
     </f:entry>
 
 
-    <f:block>
-        <table style="width:100%">
             <f:entry  title="${%Choose appropriate credential type:}">
                 <f:entry></f:entry>
 
@@ -20,10 +18,10 @@
                             <c:select/>
                         </f:entry>
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-                            <f:textbox name="dimensionsscm.pluginServer" value="${instance.jobServer}"/>
+                            <f:textbox name="dimensionsscm.pluginServer" value="${instance.getServer()}"/>
                         </f:entry>
                         <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-                            <f:textbox name="dimensionsscm.pluginDatabase" value="${instance.jobDatabase}"/>
+                            <f:textbox name="dimensionsscm.pluginDatabase" value="${instance.getDatabase()}"/>
                             <i>(the format used must be database@dsn)</i>
                         </f:entry>
                         <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig"
@@ -52,16 +50,16 @@
                             </p>
                         </f:entry>
                         <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-                            <f:textbox name="dimensionsscm.userName" value="${instance.jobUserName}"/>
+                            <f:textbox name="dimensionsscm.userName" value="${instance.getUserName()}"/>
                         </f:entry>
                         <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-                            <input type="password" class="setting-input" name="dimensionsscm.password" value="${instance.jobPasswd}"/>
+                            <input type="password" class="setting-input" name="dimensionsscm.password" value="${instance.getPassword()}"  placeholder="Enter user password here"/>
                         </f:entry>
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-                            <f:textbox name="dimensionsscm.userServer" value="${instance.jobServer}"/>
+                            <f:textbox name="dimensionsscm.userServer" value="${instance.getServer()}"/>
                         </f:entry>
                         <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-                            <f:textbox name="dimensionsscm.userDatabase" value="${instance.jobDatabase}"/>
+                            <f:textbox name="dimensionsscm.userDatabase" value="${instance.getDatabase()}"/>
                             <i>(the format used must be database@dsn)</i>
                         </f:entry>
                         <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig"
@@ -69,36 +67,51 @@
                     </f:nested>
                 </f:radioBlock>
 
-            <f:radioBlock name="credentialsType" checked="${instance.isChecked('keystoreDefined')}" title="Keystore authentication" value="keystoreDefined" inline="true">
+            <f:radioBlock name="credentialsType" checked="${instance.isChecked('keystoreDefined')}" title="Keystore authentication" value="keystoreDefined"
+               help="/plugin/dimensionsscm/keystoreDefined.html" inline="true">
                   <f:nested>
                 <f:entry></f:entry>
-                 <f:entry title="Keystore path">
-                     <f:textbox name="dimensionsscm.keystorePath" value="${h.defaulted(instance.keystorePath, 'Enter path to keystore here')}"/>
+                 <f:entry title="Keystore path" help="/plugin/dimensionsscm/keystorePath.html">
+                     <f:textbox name="dimensionsscm.keystorePath" value="${h.defaulted(instance.getKeystorePath(), 'Enter path to keystore here')}"/>
                  </f:entry>
 
-                 <f:entry title="Certificate alias">
-                     <f:textbox name="dimensionsscm.certificateAlias" value="${h.defaulted(instance.certificateAlias, 'Enter alias to your certificate within jks')}"/>
+                 <f:entry title="Certificate alias" help="/plugin/dimensionsscm/certificateAlias.html">
+                     <f:textbox name="dimensionsscm.certificateAlias" value="${h.defaulted(instance.getCertificateAlias(), 'Enter alias to your certificate within jks')}"/>
                  </f:entry>
 
-                 <f:entry title="Keystore password">
-                     <input type="password" class="setting-input" name="dimensionsscm.keystorePassword" value="${instance.keystorePassword}"/>
+                 <f:entry title="Keystore password" help="/plugin/dimensionsscm/keystorePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.keystorePassword" value="${instance.getKeystorePassword()}"  placeholder="Enter keystore password here"/>
                  </f:entry>
 
-                <f:entry title="Certificate password">
-                     <input type="password" class="setting-input" name="dimensionsscm.certificatePassword" value="${instance.certificatePassword}"/>
+                <f:entry title="Certificate password" help="/plugin/dimensionsscm/certificatePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.certificatePassword" value="${instance.getCertificatePassword()}"  placeholder="Enter certificate password here"/>
                  </f:entry>
 
 
             <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-            <f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(instance.jobServer, 'Enter your Dimensions server here')}"
+            <f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(instance.getServer(), 'Enter your Dimensions server here')}"
                  checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
             </f:entry>
 
             <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-            <f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(instance.jobDatabase, 'Enter your Dimensions database here')}"
+            <f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(instance.getDatabase(), 'Enter your Dimensions database here')}"
                  checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
             <i>(the format used must be database@dsn)</i>
             </f:entry>
+
+        <f:optionalBlock name="dimensionsscm.secureAgentAuth" title="Secure agent authentication"
+                               checked="${instance.isSecureAgentAuth()}" default="false" inline="true"
+                                help="/plugin/dimensionsscm/secureAgentAuth.html">
+                <f:entry></f:entry>
+                 <f:entry title="Remote certificate path" help="/plugin/dimensionsscm/remoteCertificatePath.html">
+                     <f:textbox name="dimensionsscm.certificatePath" value="${h.defaulted(instance.getCertificatePath(), 'Enter path to certificate here')}"/>
+                 </f:entry>
+
+                <f:entry title="Remote certificate password" help="/plugin/dimensionsscm/remoteCertificatePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.remoteCertificatePassword" value="${instance.getRemoteCertificatePassword()}" placeholder="Enter certificate password here"/>
+                 </f:entry>
+
+        </f:optionalBlock>
 
             <f:entry>
                 <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore"
@@ -109,8 +122,7 @@
 
                 <f:entry></f:entry>
             </f:entry>
-        </table>
-    </f:block>
+
 
     <f:entry title="${%Folders To Monitor}" field="folders">
        <f:repeatable noAddButton="true" minimum="1" field="folders">
@@ -204,14 +216,14 @@
         </f:optionalBlock>
 
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
-            <f:textbox name="dimensionsscm.timeZone" value="${instance.jobTimeZone}"/>
+            <f:textbox name="dimensionsscm.timeZone" value="${instance.getTimeZone()}"/>
         </f:entry>
 
             <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
                   with="dimensionsscm.timeZone"/>
 
         <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
-            <f:textbox name="dimensionsscm.webUrl" value="${instance.jobWebUrl}"/>
+            <f:textbox name="dimensionsscm.webUrl" value="${instance.getWebUrl()}"/>
         </f:entry>
     </f:advanced>
 

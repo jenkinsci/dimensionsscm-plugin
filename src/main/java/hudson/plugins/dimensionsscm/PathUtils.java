@@ -1,5 +1,6 @@
 package hudson.plugins.dimensionsscm;
 
+import org.apache.commons.lang.StringUtils;
 import java.io.File;
 
 /**
@@ -48,5 +49,9 @@ final class PathUtils {
             Logger.debug("getExecutable file [" + exec + "] not found in path [" + path + "]");
         }
         return exe;
+    }
+
+     static String normalizePath(String path) {
+        return path.contains("@") ? StringUtils.replace(path, "@", "@@") : path;
     }
 }

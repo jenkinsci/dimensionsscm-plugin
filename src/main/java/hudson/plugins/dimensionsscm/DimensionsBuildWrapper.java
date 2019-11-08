@@ -53,8 +53,8 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             if (scm == null) {
                 scm = (DimensionsSCM) build.getProject().getScm();
             }
-            Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is "
-                    + scm.getJobServer());
+            Logger.debug("Dimensions user is " + scm.getUserName() + " , Dimensions installation is "
+                    + scm.getServer());
             try {
                 key = scm.getAPI().login(scm, build);
                 if (key > 0L) {
@@ -164,8 +164,8 @@ public class DimensionsBuildWrapper extends BuildWrapper {
             long key = -1L;
             if (scm != null) {
                 Logger.debug("Invoking build tearDown callout " + this.getClass().getName());
-                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is "
-                        + scm.getJobServer());
+                Logger.debug("Dimensions user is " + scm.getUserName() + " , Dimensions installation is "
+                        + scm.getServer());
                 try {
                     key = scm.getAPI().login(scm, build);
                     if (key > 0L) {

@@ -21,6 +21,9 @@ abstract class GenericCmdTask extends BaseCallable {
     private final String database;
     private final String server;
 
+    private final String certificatePath;
+    private final Secret certificatePassword;
+    private final boolean isSecureAgentAuth;
     /** version is used by CheckInCmdTask and CheckOutCmdTask subclasses. */
     final int version;
 
@@ -46,9 +49,17 @@ abstract class GenericCmdTask extends BaseCallable {
             // dmcli parameter file in platform-default encoding.
             fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
             fmtWriter.println("-host " + server);
-            fmtWriter.println("-user " + userName);
-            fmtWriter.println("-pass " + passwd);
             fmtWriter.println("-dbname " + database);
+
+            if (isSecureAgentAuth) {
+                fmtWriter.println("-cac_cert_file " + certificatePath);
+                fmtWriter.println("-cac_key_password " + certificatePassword.getPlainText());
+            } else {
+                fmtWriter.println("-user " + userName);
+                fmtWriter.println("-pass " + passwd);
+            }
+
+
             fmtWriter.flush();
         } catch (IOException e) {
             throw new IOException(Values.exceptionMessage("Unable to write dmcli parameter file: " + tmpFile, e,
@@ -62,7 +73,7 @@ abstract class GenericCmdTask extends BaseCallable {
     }
 
     GenericCmdTask(String userName, Secret passwd, String database, String server, int version,
-            FilePath workspace, TaskListener listener) {
+                   String certificatePath, Secret certificatePassword, boolean isSecureAgentAuth, FilePath workspace, TaskListener listener) {
         this.listener = listener;
 
         // Server details.
@@ -71,6 +82,9 @@ abstract class GenericCmdTask extends BaseCallable {
         this.database = database;
         this.server = server;
         this.version = version;
+        this.certificatePath = certificatePath;
+        this.certificatePassword = certificatePassword;
+        this.isSecureAgentAuth = isSecureAgentAuth;
     }
 
     @Override

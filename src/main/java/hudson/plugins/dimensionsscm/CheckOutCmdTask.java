@@ -4,7 +4,6 @@ import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.plugins.dimensionsscm.model.StringVarStorage;
 import hudson.util.Secret;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -122,8 +121,9 @@ public class CheckOutCmdTask extends GenericCmdTask {
     public CheckOutCmdTask(String userName, Secret passwd, String database, String server, String projectId,
                            String baselineId, String requestId, boolean isDelete, boolean isRevert, boolean isForce, boolean isExpand,
                            boolean isNoMetadata, boolean isNoTouch, boolean freshBuild, List<StringVarStorage> folders, int version,
-                           String permissions, String eol, FilePath workspace, TaskListener listener) {
-        super(userName, passwd, database, server, version, workspace, listener);
+                           String permissions, String eol, String certificatePath, Secret certificatePassword,
+                           boolean isSecureAgentAuth, FilePath workspace, TaskListener listener) {
+        super(userName, passwd, database, server, version, certificatePath, certificatePassword, isSecureAgentAuth, workspace, listener);
 
         // Config details.
         this.isDelete = isDelete;
@@ -217,7 +217,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
                 FilePath projectDir = new FilePath(fileName);
                 String projDir = projectDir.getRemote();
 
-                String remote = DimensionsSCM.normalizePath(area.getAbsolutePath());
+                String remote = PathUtils.normalizePath(area.getAbsolutePath());
 
                 File cmdFile = createCmdFile(reqId, projDir, new File(remote));
                 if (cmdFile == null) {
@@ -268,7 +268,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
                 FilePath projectDir = new FilePath(fileName);
                 String projDir = projectDir.getRemote();
 
-                String remote = DimensionsSCM.normalizePath(area.getAbsolutePath());
+                String remote = PathUtils.normalizePath(area.getAbsolutePath());
 
                 File cmdFile = createCmdFile(null, projDir, new File(remote));
                 if (cmdFile == null) {

@@ -13,11 +13,10 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.Secret;
 import hudson.util.VariableResolver;
-
 import java.io.IOException;
 import java.io.Serializable;
-
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -210,10 +209,21 @@ public class ArtifactUploader extends Notifier implements Serializable {
                     listener.getLogger().println("[DIMENSIONS] Running checkin on slave...");
                     listener.getLogger().flush();
 
-                    CheckInCmdTask task = new CheckInCmdTask(scm.getJobUserName(), Secret.decrypt(scm.getJobPasswd()),
-                            scm.getJobDatabase(), scm.getJobServer(), scm.getProjectName(build, listener), requests,
+                    if (Credentials.isKeystoreDefined(scm.getCredentialsType())) {
+                        if (StringUtils.isBlank(scm.getCertificatePath())) {
+                            throw new IOException("User certificate path from remote machine must be specified.");
+                        }
+                        if (scm.getRemoteCertificatePasswordSecret() == null) {
+                            throw new IOException("User certificate password from remote machine must be specified.");
+                        }
+
+                    }
+
+                    CheckInCmdTask task = new CheckInCmdTask(scm.getUserName(), Secret.decrypt(scm.getPasswordNN()),
+                            scm.getDatabase(), scm.getServer(), scm.getProjectName(build, listener), requests,
                             isForceCheckIn(), isForceTip(), getPatterns(), getPatternType(), version, isStream,
-                            buildNo, projectName, getOwningPart(), workspace, listener, getPatternsExc());
+                            buildNo, projectName, getOwningPart(), workspace, scm.getCertificatePath(),
+                            scm.getCertificatePasswordSecret(), scm.isSecureAgentAuth(), listener, getPatternsExc());
                     bRet = workspace.act(task);
                 }
             } else {

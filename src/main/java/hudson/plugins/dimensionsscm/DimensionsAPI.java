@@ -23,6 +23,7 @@ import com.serena.dmclient.objects.DimensionsObject;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.util.Secret;
+import org.apache.commons.lang.StringUtils;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -328,6 +329,19 @@ public class DimensionsAPI implements Serializable {
 
     public final long login(String server, String database, String certificateAlias, Secret certificatePassword, String keystorePath, Secret keystorePassword) {
         try {
+
+            if (StringUtils.isBlank(keystorePath)) {
+                throw new IllegalArgumentException("Keystore path must be specified.");
+            }
+
+            if (StringUtils.isBlank(certificateAlias)) {
+                throw new IllegalArgumentException("Certificate alias must be specified.");
+            }
+
+            if (StringUtils.isBlank(keystorePassword.getPlainText()) || StringUtils.isBlank(certificatePassword.getPlainText())) {
+                throw new IllegalArgumentException("Keystore and certificate passwords  must be specified.");
+            }
+
             KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             keyStore.load(new FileInputStream(keystorePath), keystorePassword.getPlainText().toCharArray());
 
@@ -359,10 +373,10 @@ public class DimensionsAPI implements Serializable {
         if (build != null)
             Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \"" + build.getParent().getName() + "\"");
 
-        if (DimensionsSCM.KEYSTORE_DEFINED.equalsIgnoreCase(scm.getCredentialsType()))
-            return login(scm.getJobServer(), scm.getJobDatabase(), scm.getCertificateAlias(), scm.getCertificatePasswordSecret(), scm.getKeystorePath(), scm.getKeystorePasswordSecret());
+        if (Credentials.isKeystoreDefined(scm.getCredentialsType()))
+            return login(scm.getServer(), scm.getDatabase(), scm.getCertificateAlias(), scm.getCertificatePasswordSecret(), scm.getKeystorePath(), scm.getKeystorePasswordSecret());
         else
-            return login(scm.getJobUserName(), Secret.fromString(scm.getJobPasswd()), scm.getJobDatabase(), scm.getJobServer());
+            return login(scm.getUserName(), Secret.fromString(scm.getPasswordNN()), scm.getDatabase(), scm.getServer());
     }
 
 
@@ -563,7 +577,7 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-                String remote = DimensionsSCM.normalizePath(workspaceName.getRemote());
+                String remote = PathUtils.normalizePath(workspaceName.getRemote());
 
                 cmd += "/USER_DIR=\"" + remote + "\" ";
 

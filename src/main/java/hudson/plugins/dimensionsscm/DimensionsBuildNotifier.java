@@ -214,7 +214,7 @@ public class DimensionsBuildNotifier extends Notifier implements Serializable {
                 if (scm == null) {
                     scm = (DimensionsSCM) build.getProject().getScm();
                 }
-                Logger.debug("Dimensions user is " + scm.getJobUserName() + " , Dimensions installation is " + scm.getJobServer());
+                Logger.debug("Dimensions user is " + scm.getUserName() + " , Dimensions installation is " + scm.getServer());
                 key = scm.getAPI().login(scm, build);
                 if (key > 0L) {
                     VariableResolver<String> myResolver = build.getBuildVariableResolver();
