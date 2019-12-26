@@ -10,7 +10,7 @@
 
 	<f:entry  title="${%Choose appropriate credential type:}">
 
-		<form>
+
 			<table>
 				<f:entry></f:entry>
 				<f:radioBlock  name="credentialsType" checked="${instance.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined"  inline="true"
@@ -126,7 +126,7 @@
 
 				<f:entry></f:entry>
 
-			</table></form>
+			</table>
 	</f:entry>
 
 

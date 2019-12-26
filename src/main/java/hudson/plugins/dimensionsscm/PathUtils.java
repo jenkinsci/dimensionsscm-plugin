@@ -1,6 +1,7 @@
 package hudson.plugins.dimensionsscm;
 
 import org.apache.commons.lang.StringUtils;
+
 import java.io.File;
 
 /**
@@ -51,7 +52,15 @@ final class PathUtils {
         return exe;
     }
 
-     static String normalizePath(String path) {
+    static String normalizePath(String path) {
         return path.contains("@") ? StringUtils.replace(path, "@", "@@") : path;
     }
+
+    static String normalizeSlashes(String path) {
+        String newPath = path.replaceAll("\\\\", "/");
+        newPath = StringUtils.removeStart(newPath, "/");
+        newPath = StringUtils.removeEnd(newPath, "/");
+        return newPath;
+    }
+
 }

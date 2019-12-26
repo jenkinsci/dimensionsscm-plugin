@@ -9,6 +9,7 @@ import com.serena.dmclient.api.Project;
 import com.serena.dmclient.api.Request;
 import com.serena.dmclient.api.SystemAttributes;
 import hudson.FilePath;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,9 +38,11 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
             if (changeSteps != null) {
                 PathMatcher pathMatcher = dimensionsAPI.getPathMatcher();
                 for (DimensionsChangeStep changeStep : changeSteps) {
+                    String projectPath = PathUtils.normalizeSlashes(changeStep.getProjectPath());
+                    String remotePath = PathUtils.normalizeSlashes(workspace.getRemote());
                     String fullPathName = changeStep.getProjectPath();
                     // Match when fullPathName is not ignored, false otherwise.
-                    if (pathMatcher.match(fullPathName)) {
+                    if (pathMatcher.match(fullPathName) && projectPath.contains(remotePath)) {
                         Logger.debug("Found " + changeSteps.size() + " changed item(s), "
                                 + "and at least one ('" + fullPathName + "') passed the " + pathMatcher);
                         return true;
@@ -106,7 +109,7 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
             Map<String, DimensionsChangeLogEntry> changeLogEntryMap = new HashMap<String, DimensionsChangeLogEntry>();
 
             if (!changeSteps.isEmpty()) {
-                createChangeListFromChangeSteps(dimensionsAPI, changeSteps, tz, url, changeLogEntryMap, items);
+                createChangeListFromChangeSteps(dimensionsAPI, projectDir, changeSteps, tz, url, changeLogEntryMap, items);
             }
 
             if (!changeLogEntryMap.isEmpty()) {
@@ -125,18 +128,22 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
         }
     }
 
-    private boolean notMoveOrDeleteOpType(STEP_TYPE stepType){
+    private boolean notMoveOrDeleteOpType(STEP_TYPE stepType) {
         return !stepType.equals(STEP_TYPE.REMOVE) && !stepType.equals(STEP_TYPE.MOVE);
     }
 
-    private void createChangeListFromChangeSteps(DimensionsAPI dimensionsAPI, List<DimensionsChangeStep> dimensionsChangeSteps, TimeZone tz, final String url, Map<String, DimensionsChangeLogEntry> entries, List<ItemRevision> items) {
+    private void createChangeListFromChangeSteps(DimensionsAPI dimensionsAPI, FilePath projectDir, List<DimensionsChangeStep> dimensionsChangeSteps, TimeZone tz, final String url, Map<String, DimensionsChangeLogEntry> entries, List<ItemRevision> items) {
 
         Map<Long, ItemRevision> itemRevisionToUidMap = createItemRevisionMap(items);
 
         for (DimensionsChangeStep changeStep : dimensionsChangeSteps) {
 
+            String projectPath = PathUtils.normalizeSlashes(changeStep.getProjectPath());
+            String remotePath = PathUtils.normalizeSlashes(projectDir.getRemote());
+            if (!projectPath.contains(remotePath))
+                continue;
+
             String revision = changeStep.getRevision();
-            String projectPath = changeStep.getProjectPath();
             String fileName = projectPath + ";" + revision;
             String author = changeStep.getChangeSet().getUserName();
             String comment = changeStep.getChangeSet().getComment();

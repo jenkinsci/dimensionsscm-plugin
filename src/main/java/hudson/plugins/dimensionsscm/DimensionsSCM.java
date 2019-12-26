@@ -335,7 +335,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             if (pathsToExcludeList == null) {
                 pathsToExcludeList = new ArrayList<StringVarStorage>();
             }
-            pathsToExcludeList.addAll(Values.convertArrayToList(folders));
+            pathsToExcludeList.addAll(Values.convertArrayToList(pathsToExclude));
             pathsToExclude = null;
         }
 
@@ -859,7 +859,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     /**
      * Generate the changeset.
      */
-    private void generateChangeSet(final Run<?, ?> build, final TaskListener listener, final File changelogFile) {
+    private void generateChangeSet(final Run<?, ?> build, final TaskListener listener, final File changelogFile) throws IOException {
         long key = -1L;
         DimensionsAPI dmSCM = newDimensionsAPIWithCheck();
 
@@ -961,6 +961,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             String message = Values.exceptionMessage("Unable to run changelog callout", e, "no message - try again");
             listener.fatalError(message);
             Logger.debug(message, e);
+            throw new IOException(e);
         } finally {
             dmSCM.logout(key, build);
         }

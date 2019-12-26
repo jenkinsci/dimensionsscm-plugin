@@ -10,7 +10,6 @@
 
 	<f:block>
 		<f:entry  title="${%Choose appropriate credential type:}">
-			<form>
 				<table style="width:100%">
 
 					<f:entry/>
@@ -128,7 +127,6 @@
 
 					<f:entry/>
 				</table>
-			</form>
 		</f:entry>
 	</f:block>
 
@@ -137,7 +135,7 @@
 		<f:repeatable noAddButton="true" minimum="1" field="folders">
 			<table width="98%" cellpadding="2" cellspacing="2">
 				<f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
-					<f:textbox field="strVar" />
+					<f:textbox field="value" />
 				</f:entry>
 				<f:entry>
 					<div align="right">
@@ -153,7 +151,7 @@
 		<f:repeatable noAddButton="true" minimum="1" field="pathsToExclude">
 			<table width="98%" cellpadding="2" cellspacing="2">
 				<f:entry title="Path" help="/plugin/dimensionsscm/excludedPaths.html">
-					<f:textbox field="strVar" />
+					<f:textbox field="value" />
 				</f:entry>
 				<f:entry>
 					<div align="right">
