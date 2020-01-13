@@ -16,6 +16,7 @@ import hudson.util.VariableResolver;
 import java.io.IOException;
 import java.io.Serializable;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -24,8 +25,8 @@ import org.kohsuke.stapler.StaplerRequest;
  * as a post-build step in a Jenkins build.
  */
 public class ArtifactUploader extends Notifier implements Serializable {
-    private static final String[] DEFAULT_INCLUDES_REGEX = new String[] { ".*" };
-    private static final String[] DEFAULT_INCLUDES_ANT = new String[] { "**/*" };
+    private static final String[] DEFAULT_INCLUDES_REGEX = new String[]{".*"};
+    private static final String[] DEFAULT_INCLUDES_ANT = new String[]{"**/*"};
 
     private final String[] patternsRegEx;
     private final String[] patternsAnt;
@@ -40,7 +41,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
     @DataBoundConstructor
     public ArtifactUploader(String[] pregEx, boolean fTip, boolean fMerge, String part, boolean fAsSlave,
-            String patternType, String[] pAnt, String[] pregExExc, String[] pAntExc) {
+                            String patternType, String[] pAnt, String[] pregExExc, String[] pAntExc) {
         this.patternsRegEx = Values.notEmptyOrElse(Values.trimCopy(pregEx), DEFAULT_INCLUDES_REGEX);
         this.patternsAnt = Values.notEmptyOrElse(Values.trimCopy(pAnt), DEFAULT_INCLUDES_ANT);
         this.patternsRegExExc = Values.trimCopy(pregExExc);
@@ -158,8 +159,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
                 Logger.debug("Calculating version of Dimensions...");
 
                 int version = 2009;
-                long key = dmSCM.login(scm.getJobUserName(), scm.getJobPasswd(), scm.getJobDatabase(), scm.getJobServer(),
-                        build);
+                long key = dmSCM.login(scm, build);
 
                 if (key > 0L) {
                     // Get the server version.
@@ -209,10 +209,21 @@ public class ArtifactUploader extends Notifier implements Serializable {
                     listener.getLogger().println("[DIMENSIONS] Running checkin on slave...");
                     listener.getLogger().flush();
 
-                    CheckInCmdTask task = new CheckInCmdTask(scm.getJobUserName(), Secret.decrypt(scm.getJobPasswd()),
-                            scm.getJobDatabase(), scm.getJobServer(), scm.getProjectName(build, listener), requests,
+                    if (Credentials.isKeystoreDefined(scm.getCredentialsType())) {
+                        if (StringUtils.isBlank(scm.getCertificatePath())) {
+                            throw new IOException("User certificate path from remote machine must be specified.");
+                        }
+                        if (scm.getRemoteCertificatePasswordSecret() == null) {
+                            throw new IOException("User certificate password from remote machine must be specified.");
+                        }
+
+                    }
+
+                    CheckInCmdTask task = new CheckInCmdTask(scm.getUserName(), Secret.decrypt(scm.getPasswordNN()),
+                            scm.getDatabase(), scm.getServer(), scm.getProjectName(build, listener), requests,
                             isForceCheckIn(), isForceTip(), getPatterns(), getPatternType(), version, isStream,
-                            buildNo, projectName, getOwningPart(), workspace, listener, getPatternsExc());
+                            buildNo, projectName, getOwningPart(), workspace, scm.getCertificatePath(),
+                            scm.getCertificatePasswordSecret(), scm.isSecureAgentAuth(), listener, getPatternsExc());
                     bRet = workspace.act(task);
                 }
             } else {

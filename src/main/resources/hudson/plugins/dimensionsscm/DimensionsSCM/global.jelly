@@ -6,7 +6,8 @@
 
    <f:entry title="${%Choose appropriate credential type:}">
 
-        <f:radioBlock  name="credentialsType" checked="${descriptor.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined">
+        <f:radioBlock  name="credentialsType" checked="${descriptor.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined"
+        help="/plugin/dimensionsscm/pluginDefined.html">
               <f:entry field="credentialsId">
                     <c:select />
               </f:entry>
@@ -29,15 +30,16 @@
 
         </f:radioBlock>
 
-        <f:radioBlock name="credentialsType" checked="${descriptor.isChecked('userDefined')}" title="Legacy username/password" value="userDefined">
+        <f:radioBlock name="credentialsType" checked="${descriptor.isChecked('userDefined')}" title="Legacy username/password"
+          help="/plugin/dimensionsscm/userDefined.html" value="userDefined">
                 <f:entry></f:entry>
                  <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-                     <f:textbox name="dimensionsscm.userName" value="${h.defaulted(descriptor.userName, 'Enter your Dimensions user here')}"
+                     <f:textbox name="dimensionsscm.userName" value="${h.defaulted(descriptor.getUserName(), 'Enter your Dimensions user here')}"
                               checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
                  </f:entry>
 
                  <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-                     <input type="password" class="setting-input" name="dimensionsscm.passwd" value="${descriptor.passwd}"/>
+                     <input type="password" class="setting-input" name="dimensionsscm.passwd" value="${descriptor.getPassword()}"  placeholder="Enter user password here"/>
                  </f:entry>
 
         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
@@ -54,6 +56,58 @@
             <f:entry>
                 <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerGlobal"
                      with="dimensionsscm.userName,dimensionsscm.passwd,dimensionsscm.serverUser,dimensionsscm.databaseUser,credentialsType"/>
+            </f:entry>
+
+        </f:radioBlock>
+
+        <f:radioBlock name="credentialsType" checked="${descriptor.isChecked('keystoreDefined')}" title="Keystore authentication"
+         help="/plugin/dimensionsscm/keystoreDefined.html" value="keystoreDefined">
+                <f:entry></f:entry>
+                 <f:entry title="Keystore path" help="/plugin/dimensionsscm/keystorePath.html">
+                     <f:textbox name="dimensionsscm.keystorePath" value="${h.defaulted(descriptor.getKeystorePath(), 'Enter path to keystore here')}"/>
+                 </f:entry>
+
+                 <f:entry title="Certificate alias" help="/plugin/dimensionsscm/certificateAlias.html">
+                     <f:textbox name="dimensionsscm.certificateAlias" value="${h.defaulted(descriptor.getCertificateAlias(), 'Enter alias to your certificate within jks')}"/>
+                 </f:entry>
+
+                 <f:entry title="Keystore password" help="/plugin/dimensionsscm/keystorePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.keystorePassword" value="${descriptor.getKeystorePassword()}" placeholder="Enter keystore password here"/>
+                 </f:entry>
+
+                <f:entry title="Certificate password" help="/plugin/dimensionsscm/certificatePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.certificatePassword" value="${descriptor.getCertificatePassword()}" placeholder="Enter certificate password here"/>
+                 </f:entry>
+
+
+            <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+            <f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(descriptor.server, 'Enter your Dimensions server here')}"
+                 checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+            </f:entry>
+
+            <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+            <f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(descriptor.database, 'Enter your Dimensions database here')}"
+                 checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+            <i>(the format used must be database@dsn)</i>
+            </f:entry>
+
+        <f:optionalBlock name="dimensionsscm.secureAgentAuth" title="Secure agent authentication"
+                               checked="${descriptor.isSecureAgentAuth()}" default="false"
+                               help="/plugin/dimensionsscm/secureAgentAuth.html" inline="true">
+                <f:entry></f:entry>
+                 <f:entry title="Remote certificate path" help="/plugin/dimensionsscm/remoteCertificatePath.html">
+                     <f:textbox name="dimensionsscm.certificatePath" value="${h.defaulted(descriptor.getCertificatePath(), 'Enter path to certificate here')}"/>
+                 </f:entry>
+
+                <f:entry title="Remote certificate password" help="/plugin/dimensionsscm/remoteCertificatePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.remoteCertificatePassword" value="${descriptor.getRemoteCertificatePassword()}" placeholder="Enter certificate password here"/>
+                 </f:entry>
+
+        </f:optionalBlock>
+
+            <f:entry>
+                <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore"
+                     with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias"/>
             </f:entry>
 
         </f:radioBlock>
@@ -77,14 +131,14 @@
 
     <f:advanced>
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
-        <f:textbox name="dimensionsscm.timeZone" value="${descriptor.timeZone}"/>
+        <f:textbox name="dimensionsscm.timeZone" value="${descriptor.getTimeZone()}"/>
         </f:entry>
 
         <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
               with="dimensionsscm.timeZone"/>
 
         <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
-        <f:textbox name="dimensionsscm.webUrl" value="${descriptor.webUrl}"/>
+        <f:textbox name="dimensionsscm.webUrl" value="${descriptor.getWebUrl()}"/>
         </f:entry>
     </f:advanced>
 

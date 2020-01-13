@@ -81,10 +81,11 @@ public class CheckInCmdTask extends GenericCmdTask {
     }
 
     public CheckInCmdTask(String userName, Secret passwd, String database, String server, String projectId,
-            String requestId, boolean forceCheckIn, boolean forceTip, String[] patterns, String patternType,
-            int version, boolean isStream, int buildNo, String jobId, String owningPart, FilePath workspace,
-            TaskListener listener, String[] patternsExc) {
-        super(userName, passwd, database, server, version, workspace, listener);
+                          String requestId, boolean forceCheckIn, boolean forceTip, String[] patterns, String patternType,
+                          int version, boolean isStream, int buildNo, String jobId, String owningPart, FilePath workspace,
+                          String certificatePath, Secret certificatePassword, boolean isSecureAgentAuth, TaskListener listener,
+                          String[] patternsExc) {
+        super(userName, passwd, database, server, version, certificatePath, certificatePassword, isSecureAgentAuth, workspace, listener);
         this.isStream = isStream;
 
         // Config details.

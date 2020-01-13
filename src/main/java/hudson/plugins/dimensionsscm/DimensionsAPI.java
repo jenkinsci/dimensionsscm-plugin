@@ -21,18 +21,24 @@ import com.serena.dmclient.api.SystemAttributes;
 import com.serena.dmclient.api.SystemRelationship;
 import com.serena.dmclient.objects.DimensionsObject;
 import hudson.FilePath;
-import hudson.model.AbstractBuild;
-import hudson.model.Node;
 import hudson.model.Run;
 import hudson.util.Secret;
 import org.apache.commons.lang.StringUtils;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.X509KeyManager;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.Provider;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -211,24 +217,21 @@ public class DimensionsAPI implements Serializable {
     /**
      * Creates a Dimensions session using the supplied login credentials and server details.
      *
-     * @param userID   Dimensions user ID
-     * @param password Dimensions password
+     * @param details  Dimensions connection details
      * @param database Base database name
      * @param server   Hostname of the remote Dimensions server
      * @return A long key for the connection
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    public final long login(String userID, Secret password, String database, String server) {
+    private long login(DimensionsConnectionDetails details, String database, String server) {
         long key = sequence.getAndIncrement();
 
         dmServer = server;
         dmDb = database;
-        dmUser = userID;
 
         Logger.debug("Checking Dimensions login parameters...");
 
-        if (dmServer == null || dmServer.length() == 0 || dmDb == null || dmDb.length() == 0
-                || dmUser == null || dmUser.length() == 0 || password == null) {
+        if (dmServer == null || dmServer.length() == 0 || dmDb == null || dmDb.length() == 0) {
             throw new IllegalArgumentException("Invalid or not parameters have been specified");
         }
         try {
@@ -238,12 +241,10 @@ public class DimensionsAPI implements Serializable {
             dbConn = dbCompts[1];
             Logger.debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dmDb);
 
-            DimensionsConnectionDetails details = new DimensionsConnectionDetails();
-            details.setUsername(dmUser);
-            details.setPassword(Secret.toString(password));
             details.setDbName(dbName);
             details.setDbConn(dbConn);
             details.setServer(dmServer);
+
             Logger.debug("Getting Dimensions connection...");
             DimensionsConnection connection = DimensionsConnectionManager.getConnection(details);
             if (connection != null) {
@@ -309,29 +310,88 @@ public class DimensionsAPI implements Serializable {
         return -1L;
     }
 
-    /**
-     * Creates a Dimensions session using the supplied login credentials and server details. With additional tracing
-     * from supplied build details.
-     *
-     * @param userID   Dimensions user ID
-     * @param password Dimensions password
-     * @param database base database name
-     * @param server   hostname of the remote Dimensions server
-     * @param build    details of the invoking build run
-     * @return a long
-     * @throws DimensionsRuntimeException, IllegalArgumentException
-     */
-    public final long login(String userID, String password, String database, String server, Run<?, ?> build) {
-        Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \""
-                + build.getParent().getName() + "\"");
-        if (build instanceof AbstractBuild) {
-            Node node = ((AbstractBuild<?, ?>) build).getBuiltOn();
-            String nodeName = node != null ? node.getNodeName() : null;
-            Logger.debug("  build getBuiltOn().getNodeName(): " + (nodeName != null ? ("\"" + nodeName + "\"") : null));
+    public final long login(String userID, Secret password, String database, String server) {
+
+        dmUser = userID;
+
+        if (dmUser == null || dmUser.length() == 0 || password == null) {
+            throw new IllegalArgumentException("Invalid or not parameters have been specified");
         }
-        final long key = login(userID, Secret.decrypt(password), database, server);
+
+        DimensionsConnectionDetails details = new DimensionsConnectionDetails();
+        details.setUsername(dmUser);
+        details.setPassword(Secret.toString(password));
+
+        final long key = login(details, database, server);
         Logger.debug("  key: \"" + key + "\"");
         return key;
+    }
+
+    public final long login(String server, String database, String certificateAlias, Secret certificatePassword, String keystorePath, Secret keystorePassword) {
+        try {
+
+            if (StringUtils.isBlank(keystorePath)) {
+                throw new IllegalArgumentException("Keystore path must be specified.");
+            }
+
+            if (StringUtils.isBlank(certificateAlias)) {
+                throw new IllegalArgumentException("Certificate alias must be specified.");
+            }
+
+            if (StringUtils.isBlank(keystorePassword.getPlainText()) || StringUtils.isBlank(certificatePassword.getPlainText())) {
+                throw new IllegalArgumentException("Keystore and certificate passwords  must be specified.");
+            }
+
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(new FileInputStream(keystorePath), keystorePassword.getPlainText().toCharArray());
+
+            KeyStore.PrivateKeyEntry pkEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(certificateAlias,
+                    new KeyStore.PasswordProtection(certificatePassword.getPlainText().toCharArray()));
+
+            KeyManager keyManager = getKeyManager(keyStore, certificateAlias, certificatePassword.getPlainText());
+
+            X509Certificate x509Certificate = (X509Certificate) pkEntry.getCertificate();
+            KeyPairGenerator kpgen = KeyPairGenerator.getInstance(pkEntry.getPrivateKey().getAlgorithm());
+            Provider kpgenProv = kpgen.getProvider();
+
+            final DimensionsConnectionDetails details = new DimensionsConnectionDetails();
+            details.setCertificate(x509Certificate);
+            details.setCertificateProver(new CertificateProver(pkEntry.getPrivateKey(), kpgenProv,
+                    x509Certificate.getSigAlgName()));
+            details.setKeyManager(keyManager);
+
+            final long key = login(details, database, server);
+            Logger.debug("  key: \"" + key + "\"");
+            return key;
+        } catch (Exception e) {
+            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Login to Dimensions failed",
+                    e, "no message")).initCause(e);
+        }
+    }
+
+    public final long login(DimensionsSCM scm, Run<?, ?> build) {
+        if (build != null)
+            Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \"" + build.getParent().getName() + "\"");
+
+        if (Credentials.isKeystoreDefined(scm.getCredentialsType()))
+            return login(scm.getServer(), scm.getDatabase(), scm.getCertificateAlias(), scm.getCertificatePasswordSecret(), scm.getKeystorePath(), scm.getKeystorePasswordSecret());
+        else
+            return login(scm.getUserName(), Secret.fromString(scm.getPasswordNN()), scm.getDatabase(), scm.getServer());
+    }
+
+
+    private KeyManager getKeyManager(KeyStore keyStore, String alias, String passwd) throws Exception {
+        KeyManagerFactory kmfactory = KeyManagerFactory.getInstance("SunX509");
+        kmfactory.init(keyStore, passwd.toCharArray());
+
+        int n = kmfactory.getKeyManagers().length;
+        if (n > 0) {
+            KeyManager keyManager = kmfactory.getKeyManagers()[0];
+            if (keyManager instanceof X509KeyManager)
+                return new LabeledKeyManager((X509KeyManager) keyManager, alias);
+        }
+
+        return null;
     }
 
     /**
@@ -517,7 +577,7 @@ public class DimensionsAPI implements Serializable {
                     }
                 }
 
-                String remote = DimensionsSCM.normalizePath(workspaceName.getRemote());
+                String remote = PathUtils.normalizePath(workspaceName.getRemote());
 
                 cmd += "/USER_DIR=\"" + remote + "\" ";
 

@@ -69,6 +69,58 @@
                     </f:nested>
                 </f:radioBlock>
 
+            <f:radioBlock name="credentialsType" checked="${instance.isChecked('keystoreDefined')}" title="Keystore authentication" value="keystoreDefined" inline="true"
+                            help="/plugin/dimensionsscm/keystoreDefined.html">
+                  <f:nested>
+                <f:entry></f:entry>
+                 <f:entry title="Keystore path" help="/plugin/dimensionsscm/keystorePath.html">
+                     <f:textbox name="dimensionsscm.keystorePath" />
+                 </f:entry>
+
+                 <f:entry title="Certificate alias" help="/plugin/dimensionsscm/certificateAlias.html">
+                     <f:textbox name="dimensionsscm.certificateAlias" />
+                 </f:entry>
+
+                 <f:entry title="Keystore password" help="/plugin/dimensionsscm/keystorePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.keystorePassword"  placeholder="Enter keystore password here"/>
+                 </f:entry>
+
+                <f:entry title="Certificate password" help="/plugin/dimensionsscm/certificatePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.certificatePassword"  placeholder="Enter certificate password here"/>
+                 </f:entry>
+
+
+            <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+            <f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(instance.jobServer, 'Enter your Dimensions server here')}"
+                 checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+            </f:entry>
+
+            <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+            <f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(instance.jobDatabase, 'Enter your Dimensions database here')}"
+                 checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)"/>
+            <i>(the format used must be database@dsn)</i>
+            </f:entry>
+                 <f:optionalBlock name="dimensionsscm.secureAgentAuth" title="Secure agent authentication"
+                               checked="${instance.secureAgentAuth}" inline="true" help="/plugin/dimensionsscm/secureAgentAuth.html">
+                <f:entry></f:entry>
+                 <f:entry title="Remote certificate path" help="/plugin/dimensionsscm/remoteCertificatePath.html">
+                     <f:textbox name="dimensionsscm.certificatePath" />
+                 </f:entry>
+
+                <f:entry title="Remote certificate password" help="/plugin/dimensionsscm/remoteCertificatePassword.html">
+                     <input type="password" class="setting-input" name="dimensionsscm.remoteCertificatePassword"  placeholder="Enter certificate password here"/>
+                 </f:entry>
+
+        </f:optionalBlock>
+
+            <f:entry>
+                <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore"
+                     with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias"/>
+            </f:entry>
+            </f:nested>
+        </f:radioBlock>
+
+
                 <f:entry></f:entry>
             </f:entry>
         </table>
@@ -167,14 +219,14 @@
         </f:optionalBlock>
 
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
-            <f:textbox name="dimensionsscm.timeZone" value="${instance.timeZone}"/>
+            <f:textbox name="dimensionsscm.timeZone"/>
         </f:entry>
 
             <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz"
                   with="dimensionsscm.timeZone"/>
 
         <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
-            <f:textbox name="dimensionsscm.webUrl" value="${instance.webUrl}"/>
+            <f:textbox name="dimensionsscm.webUrl" />
         </f:entry>
     </f:advanced>
 
