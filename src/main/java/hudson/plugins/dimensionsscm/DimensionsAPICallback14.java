@@ -39,10 +39,10 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
                 PathMatcher pathMatcher = dimensionsAPI.getPathMatcher();
                 for (DimensionsChangeStep changeStep : changeSteps) {
                     String projectPath = PathUtils.normalizeSlashes(changeStep.getProjectPath());
-                    String remotePath = PathUtils.normalizeSlashes(workspace.getRemote());
+                    String monitoredPath = PathUtils.normalizeSlashes(workspace.getRemote());
                     String fullPathName = changeStep.getProjectPath();
                     // Match when fullPathName is not ignored, false otherwise.
-                    if (pathMatcher.match(fullPathName) && projectPath.contains(remotePath)) {
+                    if (pathMatcher.match(fullPathName) && projectPath.contains(monitoredPath)) {
                         Logger.debug("Found " + changeSteps.size() + " changed item(s), "
                                 + "and at least one ('" + fullPathName + "') passed the " + pathMatcher);
                         return true;
@@ -139,8 +139,8 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
         for (DimensionsChangeStep changeStep : dimensionsChangeSteps) {
 
             String projectPath = PathUtils.normalizeSlashes(changeStep.getProjectPath());
-            String remotePath = PathUtils.normalizeSlashes(projectDir.getRemote());
-            if (!projectPath.contains(remotePath))
+            String monitoredPath = PathUtils.normalizeSlashes(projectDir.getRemote());
+            if (!projectPath.contains(monitoredPath))
                 continue;
 
             String revision = changeStep.getRevision();

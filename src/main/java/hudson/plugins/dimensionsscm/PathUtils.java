@@ -57,7 +57,7 @@ final class PathUtils {
     }
 
     static String normalizeSlashes(String path) {
-        String newPath = path.replaceAll("\\\\", "/");
+        String newPath = path.replace("\\", "/");
         newPath = StringUtils.removeStart(newPath, "/");
         newPath = StringUtils.removeEnd(newPath, "/");
         return newPath;
