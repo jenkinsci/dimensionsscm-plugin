@@ -2,7 +2,11 @@ If your Dimensions server or database is in a different timezone, then please
 specify that timezone here. This value will be used to apply any timezone corrections
 when polling the repository for code changes.
 
-If no value is specified, then the plugin will assume your local timezone.
+If no value is specified and global configuration has timezone value, then the plugin
+will assume timezone from global configuration automatically.
+
+If no value is specified and global configuration doesn't have timezone value,
+then the plugin will assume your local timezone.
 
 Examples of valid timezone formats are <b>GMT</b>, <b>PST</b> and <b>America/Los_Angeles</b>.
 
