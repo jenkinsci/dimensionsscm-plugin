@@ -103,7 +103,6 @@ public class DimensionsSCM extends SCM implements Serializable {
     private boolean canJobExpand;
     private boolean canJobNoMetadata;
     private boolean canJobNoTouch;
-    private boolean forceAsSlave;
     private boolean secureAgentAuth;
 
 
@@ -599,13 +598,6 @@ public class DimensionsSCM extends SCM implements Serializable {
         return this.canJobRevert;
     }
 
-    /**
-     * Gets force as slave flag.
-     */
-    public boolean isForceAsSlave() {
-        return this.forceAsSlave;
-    }
-
     @DataBoundSetter
     public void setFolders(List<StringVarStorage> folders) {
         this.foldersList = Values.notBlankOrElseList(folders, DEFAULT_FOLDERS);
@@ -670,11 +662,6 @@ public class DimensionsSCM extends SCM implements Serializable {
     @DataBoundSetter
     public void setCanJobNoTouch(boolean canJobNoTouch) {
         this.canJobNoTouch = canJobUpdate && canJobNoTouch;
-    }
-
-    @DataBoundSetter
-    public void setForceAsSlave(boolean forceAsSlave) {
-        this.forceAsSlave = canJobUpdate && forceAsSlave;
     }
 
 
@@ -764,8 +751,6 @@ public class DimensionsSCM extends SCM implements Serializable {
         DimensionsBuildNotifier.DescriptorImpl bnplugin = (DimensionsBuildNotifier.DescriptorImpl)
                 Jenkins.getInstance().getDescriptor(DimensionsBuildNotifier.class);
 
-        String nodeName = build.getEnvironment(listener).get("NODE_NAME");
-
         if (DimensionsChecker.isValidPluginCombination(build, listener)) {
             Logger.debug("Plugins are ok");
         } else {
@@ -773,7 +758,6 @@ public class DimensionsSCM extends SCM implements Serializable {
             listener.fatalError("\n[DIMENSIONS] Please review online help to determine valid plugin uses.");
             throw new IOException("Error: you have selected wrong plugin combinations.");
         }
-
 
         if (isCanJobUpdate()) {
             DimensionsAPI dmSCM = getAPI();
@@ -791,19 +775,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                 dmSCM.logout(key, build);
             }
 
-            boolean master = true;
-            if (isForceAsSlave()) {
-                master = false;
-                Logger.debug("Forced processing as slave...");
-            } else {
-                Logger.debug("Checking if master or slave...");
-                if (nodeName != null && !nodeName.equalsIgnoreCase("master")) {
-                    master = false;
-                }
-            }
-
-            if (master) {
+            if (!workspace.isRemote()) {
                 // Running on master...
+                Logger.debug("Checking if master or slave...");
                 listener.getLogger().println("[DIMENSIONS] Running checkout on master...");
                 listener.getLogger().flush();
                 // Using Java API because this allows the plugin to work on platforms where Dimensions has not
@@ -814,7 +788,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 // Running on slave... Have to use the command line as Java API will not work on remote hosts.
                 // Cannot serialise it...
                 // VariableResolver does not appear to be serialisable either, so...
-
+                Logger.debug("Forced processing as slave...");
                 String baseline = null;
                 String request = null;
 
