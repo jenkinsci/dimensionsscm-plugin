@@ -216,10 +216,6 @@
 				</select>
 			</f:entry>
 
-			<f:entry title="${%Use slave based checkout}" help="/plugin/dimensionsscm/forceAsSlave.html">
-				<f:checkbox name="dimensionsscm.forceAsSlave" default="false" checked="${instance.forceAsSlave}"/>
-			</f:entry>
-
 		</f:optionalBlock>
 
 		<f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">

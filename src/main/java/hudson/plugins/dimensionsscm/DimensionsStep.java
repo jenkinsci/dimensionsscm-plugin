@@ -10,6 +10,7 @@ import hudson.util.Secret;
 import org.jenkinsci.plugins.workflow.steps.scm.SCMStep;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.interceptor.RequirePOST;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.List;
@@ -45,59 +46,94 @@ public final class DimensionsStep extends SCMStep {
     private boolean canJobExpand;
     private boolean canJobNoMetadata;
     private boolean canJobNoTouch;
-    private boolean forceAsSlave;
     private boolean canJobUpdate;
     private boolean secureAgentAuth;
 
 
     @DataBoundConstructor
-    public DimensionsStep(String credentialsId, String userName, String userServer, String pluginServer,
-                          String userDatabase, String pluginDatabase,  String keystoreServer, String keystoreDatabase, String password,
-                          String credentialsType, String keystorePath, String certificateAlias, String certificatePassword,
-                          String keystorePassword, boolean secureAgentAuth, String certificatePath, String remoteCertificatePassword) {
-
-        this.credentialsId = null;
-        this.pluginServer = null;
-        this.pluginDatabase = null;
-        this.userName = null;
-        this.userServer = null;
-        this.userDatabase = null;
-        this.password = null;
-        this.keystorePath = null;
-        this.certificateAlias = null;
-        this.keystoreServer = null;
-        this.keystoreDatabase = null;
-        this.certificatePassword = null;
-        this.keystorePassword = null;
-        this.certificatePath = null;
-        this.remoteCertificatePassword = null;
-
-        if (Credentials.isPluginDefined(credentialsType)) {
-            this.credentialsId = credentialsId;
-            this.pluginServer = pluginServer;
-            this.pluginDatabase = pluginDatabase;
-        } else if (Credentials.isUserDefined(credentialsType)) {
-            this.userName = userName;
-            this.userServer = userServer;
-            this.userDatabase = userDatabase;
-            this.password = password;
-        } else if (Credentials.isKeystoreDefined(credentialsType)) {
-            this.keystorePath = keystorePath;
-            this.certificateAlias = certificateAlias;
-            this.keystoreServer = keystoreServer;
-            this.keystoreDatabase = keystoreDatabase;
-            this.certificatePassword = certificatePassword;
-            this.keystorePassword = keystorePassword;
-            this.secureAgentAuth = secureAgentAuth;
-            this.certificatePath = certificatePath;
-            this.remoteCertificatePassword = remoteCertificatePassword;
-        }
-
-        this.credentialsType = credentialsType;
+    public DimensionsStep(String project, String credentialsType) {
+        this.project = Values.textOrElse(project, null);
+        this.credentialsType = Values.textOrElse(credentialsType, null);
     }
 
-    public String getTimeZone() {
-        return timeZone;
+    @DataBoundSetter
+    public void setCredentialsId(String credentialsId) {
+        this.credentialsId = credentialsId;
+    }
+
+    @DataBoundSetter
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    @DataBoundSetter
+    public void setUserServer(String userServer) {
+        this.userServer = userServer;
+    }
+
+    @DataBoundSetter
+    public void setPluginServer(String pluginServer) {
+        this.pluginServer = pluginServer;
+    }
+
+    @DataBoundSetter
+    public void setUserDatabase(String userDatabase) {
+        this.userDatabase = userDatabase;
+    }
+
+    @DataBoundSetter
+    public void setPluginDatabase(String pluginDatabase) {
+        this.pluginDatabase = pluginDatabase;
+    }
+
+    @DataBoundSetter
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    @DataBoundSetter
+    public void setCertificatePassword(String certificatePassword) {
+        this.certificatePassword = certificatePassword;
+    }
+
+    @DataBoundSetter
+    public void setRemoteCertificatePassword(String remoteCertificatePassword) {
+        this.remoteCertificatePassword = remoteCertificatePassword;
+    }
+
+    @DataBoundSetter
+    public void setKeystorePassword(String keystorePassword) {
+        this.keystorePassword = keystorePassword;
+    }
+
+    @DataBoundSetter
+    public void setKeystoreServer(String keystoreServer) {
+        this.keystoreServer = keystoreServer;
+    }
+
+    @DataBoundSetter
+    public void setKeystoreDatabase(String keystoreDatabase) {
+        this.keystoreDatabase = keystoreDatabase;
+    }
+
+    @DataBoundSetter
+    public void setKeystorePath(String keystorePath) {
+        this.keystorePath = keystorePath;
+    }
+
+    @DataBoundSetter
+    public void setCertificateAlias(String certificateAlias) {
+        this.certificateAlias = certificateAlias;
+    }
+
+    @DataBoundSetter
+    public void setCertificatePath(String certificatePath) {
+        this.certificatePath = certificatePath;
+    }
+
+    @DataBoundSetter
+    public void setSecureAgentAuth(boolean secureAgentAuth) {
+        this.secureAgentAuth = secureAgentAuth;
     }
 
     @DataBoundSetter
@@ -105,26 +141,9 @@ public final class DimensionsStep extends SCMStep {
         this.timeZone = Values.textOrElse(timeZone, null);
     }
 
-    public String getWebUrl() {
-        return webUrl;
-    }
-
     @DataBoundSetter
     public void setWebUrl(String webUrl) {
         this.webUrl = Values.textOrElse(webUrl, null);
-    }
-
-    public String getProject() {
-        return project;
-    }
-
-    @DataBoundSetter
-    public void setProject(String project) {
-        this.project = Values.textOrElse(project, null);
-    }
-
-    public List<StringVarStorage> getFolders() {
-        return folders;
     }
 
     @DataBoundSetter
@@ -132,8 +151,9 @@ public final class DimensionsStep extends SCMStep {
         this.folders = Values.notBlankOrElseList(folders, null);
     }
 
-    public List<StringVarStorage> getPathsToExclude() {
-        return pathsToExclude;
+    @DataBoundSetter
+    public void setCanJobRevert(boolean canJobRevert) {
+        this.canJobRevert = canJobRevert;
     }
 
     @DataBoundSetter
@@ -141,17 +161,9 @@ public final class DimensionsStep extends SCMStep {
         this.pathsToExclude = Values.notBlankOrElseList(pathsToExclude, null);
     }
 
-    public boolean isCanJobDelete() {
-        return canJobDelete;
-    }
-
     @DataBoundSetter
     public void setCanJobDelete(boolean canJobDelete) {
         this.canJobDelete = canJobDelete;
-    }
-
-    public boolean isCanJobForce() {
-        return canJobForce;
     }
 
     @DataBoundSetter
@@ -159,26 +171,9 @@ public final class DimensionsStep extends SCMStep {
         this.canJobForce = canJobForce;
     }
 
-    public boolean isCanJobRevert() {
-        return canJobRevert;
-    }
-
-    @DataBoundSetter
-    public void setCanJobRevert(boolean canJobRevert) {
-        this.canJobRevert = canJobRevert;
-    }
-
-    public String getPermissions() {
-        return permissions;
-    }
-
     @DataBoundSetter
     public void setPermissions(String permissions) {
         this.permissions = permissions;
-    }
-
-    public String getEol() {
-        return eol;
     }
 
     @DataBoundSetter
@@ -186,8 +181,9 @@ public final class DimensionsStep extends SCMStep {
         this.eol = eol;
     }
 
-    public boolean isCanJobExpand() {
-        return canJobExpand;
+    @DataBoundSetter
+    public void setCanJobNoMetadata(boolean canJobNoMetadata) {
+        this.canJobNoMetadata = canJobNoMetadata;
     }
 
     @DataBoundSetter
@@ -195,35 +191,9 @@ public final class DimensionsStep extends SCMStep {
         this.canJobExpand = canJobExpand;
     }
 
-    public boolean isCanJobNoMetadata() {
-        return canJobNoMetadata;
-    }
-
-    @DataBoundSetter
-    public void setCanJobNoMetadata(boolean canJobNoMetadata) {
-        this.canJobNoMetadata = canJobNoMetadata;
-    }
-
-    public boolean isCanJobNoTouch() {
-        return canJobNoTouch;
-    }
-
     @DataBoundSetter
     public void setCanJobNoTouch(boolean canJobNoTouch) {
         this.canJobNoTouch = canJobNoTouch;
-    }
-
-    public boolean isForceAsSlave() {
-        return forceAsSlave;
-    }
-
-    @DataBoundSetter
-    public void setForceAsSlave(boolean forceAsSlave) {
-        this.forceAsSlave = forceAsSlave;
-    }
-
-    public boolean isCanJobUpdate() {
-        return canJobUpdate;
     }
 
     @DataBoundSetter
@@ -231,32 +201,88 @@ public final class DimensionsStep extends SCMStep {
         this.canJobUpdate = canJobUpdate;
     }
 
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public String getWebUrl() {
+        return webUrl;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public List<StringVarStorage> getFolders() {
+        return folders;
+    }
+
+    public List<StringVarStorage> getPathsToExclude() {
+        return pathsToExclude;
+    }
+
+    public boolean isCanJobDelete() {
+        return canJobDelete;
+    }
+
+    public boolean isCanJobForce() {
+        return canJobForce;
+    }
+
+    public boolean isCanJobRevert() {
+        return canJobRevert;
+    }
+
+    public String getPermissions() {
+        return permissions;
+    }
+
+    public String getEol() {
+        return eol;
+    }
+
+    public boolean isCanJobExpand() {
+        return canJobExpand;
+    }
+
+    public boolean isCanJobNoMetadata() {
+        return canJobNoMetadata;
+    }
+
+    public boolean isCanJobNoTouch() {
+        return canJobNoTouch;
+    }
+
+    public boolean isCanJobUpdate() {
+        return canJobUpdate;
+    }
+
     public String getCredentialsId() {
-        return credentialsId;
+        return Credentials.isPluginDefined(credentialsType) ? credentialsId : null;
     }
 
     public String getUserName() {
-        return userName;
+        return Credentials.isUserDefined(credentialsType) ? userName : null;
     }
 
     public String getUserServer() {
-        return userServer;
+        return Credentials.isUserDefined(credentialsType) ? userServer : null;
     }
 
     public String getPluginServer() {
-        return pluginServer;
+        return Credentials.isPluginDefined(credentialsType) ? pluginServer : null;
     }
 
     public String getUserDatabase() {
-        return userDatabase;
+        return Credentials.isUserDefined(credentialsType) ? userDatabase : null;
     }
 
     public String getPluginDatabase() {
-        return pluginDatabase;
+        return Credentials.isPluginDefined(credentialsType) ? pluginDatabase : null;
     }
 
     public String getPassword() {
-        return password != null ? Secret.fromString(password).getEncryptedValue() : null;
+        return password != null && Credentials.isUserDefined(credentialsType) ? Secret.fromString(password).getEncryptedValue() : null;
     }
 
     public String getCredentialsType() {
@@ -264,39 +290,39 @@ public final class DimensionsStep extends SCMStep {
     }
 
     public String getCertificatePassword() {
-        return certificatePassword != null ? Secret.fromString(certificatePassword).getEncryptedValue() : null;
+        return certificatePassword != null && Credentials.isKeystoreDefined(credentialsType) ? Secret.fromString(certificatePassword).getEncryptedValue() : null;
     }
 
     public String getRemoteCertificatePassword() {
-        return remoteCertificatePassword;
+        return Credentials.isKeystoreDefined(credentialsType) ? remoteCertificatePassword : null;
     }
 
     public String getCertificatePath() {
-        return certificatePath;
+        return Credentials.isKeystoreDefined(credentialsType) ? certificatePath : null;
     }
 
     public boolean isSecureAgentAuth() {
-        return secureAgentAuth;
+        return Credentials.isKeystoreDefined(credentialsType) && secureAgentAuth;
     }
 
     public String getKeystorePassword() {
-        return keystorePassword != null ? Secret.fromString(keystorePassword).getEncryptedValue() : null;
+        return keystorePassword != null && Credentials.isKeystoreDefined(credentialsType) ? Secret.fromString(keystorePassword).getEncryptedValue() : null;
     }
 
     public String getKeystoreServer() {
-        return keystoreServer;
+        return Credentials.isKeystoreDefined(credentialsType) ? keystoreServer : null;
     }
 
     public String getKeystoreDatabase() {
-        return keystoreDatabase;
+        return Credentials.isKeystoreDefined(credentialsType) ? keystoreDatabase : null;
     }
 
     public String getKeystorePath() {
-        return keystorePath;
+        return Credentials.isKeystoreDefined(credentialsType) ? keystorePath : null;
     }
 
     public String getCertificateAlias() {
-        return certificateAlias;
+        return Credentials.isKeystoreDefined(credentialsType) ? certificateAlias : null;
     }
 
     @Nonnull
@@ -318,7 +344,6 @@ public final class DimensionsStep extends SCMStep {
         scm.setCanJobUpdate(canJobUpdate);
         scm.setCanJobNoMetadata(canJobNoMetadata);
         scm.setCanJobNoTouch(canJobNoTouch);
-        scm.setForceAsSlave(forceAsSlave);
         return scm;
     }
 

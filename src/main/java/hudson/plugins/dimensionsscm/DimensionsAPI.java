@@ -315,7 +315,7 @@ public class DimensionsAPI implements Serializable {
         dmUser = userID;
 
         if (dmUser == null || dmUser.length() == 0 || password == null) {
-            throw new IllegalArgumentException("Invalid or not parameters have been specified");
+            throw new IllegalArgumentException("Invalid or not user/password parameters have been specified");
         }
 
         DimensionsConnectionDetails details = new DimensionsConnectionDetails();
