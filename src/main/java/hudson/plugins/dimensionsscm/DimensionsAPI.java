@@ -356,8 +356,7 @@ public class DimensionsAPI implements Serializable {
 
             final DimensionsConnectionDetails details = new DimensionsConnectionDetails();
             details.setCertificate(x509Certificate);
-            details.setCertificateProver(new CertificateProver(pkEntry.getPrivateKey(), kpgenProv,
-                    x509Certificate.getSigAlgName()));
+            details.setCertificateProver(new CertificateProver(pkEntry.getPrivateKey(), kpgenProv));
             details.setKeyManager(keyManager);
 
             final long key = login(details, database, server);
