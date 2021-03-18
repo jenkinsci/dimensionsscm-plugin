@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>2.29</version>
+        <version>4.14</version>
         <relativePath />
     </parent>
 
@@ -45,11 +45,12 @@
     </issueManagement>
 
     <properties>
-        <jenkins.version>1.609.3</jenkins.version>
-        <java.level>6</java.level>
+        <jenkins.version>2.235.5</jenkins.version>
+        <java.level>8</java.level>
         <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
-        <findbugs.skip>true</findbugs.skip>
+        <!-- TODO: Enable once FindBugs issues are fixed -->
+        <spotbugs.skip>true</spotbugs.skip>
     </properties>
 
     <profiles>
@@ -87,6 +88,24 @@
         </pluginRepository>
     </pluginRepositories>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-2.235.x</artifactId>
+                <version>19</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <!-- 1.9.4 when this merged https://github.com/stapler/stapler/pull/211 -->
+                <version>1.9.3</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <!--
@@ -111,9 +130,14 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-digester3</artifactId>
+            <version>3.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>2.1.11</version>
         </dependency>
 
         <dependency>
@@ -137,7 +161,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
-            <version>1.10</version>
         </dependency>
 
         <dependency>
@@ -149,14 +172,12 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-durable-task-step</artifactId>
-            <version>1.10</version>
         </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-cps-global-lib</artifactId>
             <version>1.10</version>
-
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.commons</groupId>
@@ -168,7 +189,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-api</artifactId>
-            <version>1.10</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -179,7 +199,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-support</artifactId>
-            <version>1.10</version>
         </dependency>
 
         <dependency>

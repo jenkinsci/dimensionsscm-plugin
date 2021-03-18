@@ -1,10 +1,8 @@
 package hudson.plugins.dimensionsscm;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.RepositoryBrowser;
-import hudson.util.Digester2;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -14,7 +12,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.digester.Digester;
+import org.apache.commons.digester3.Digester;
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
 
@@ -73,14 +71,14 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
     }
 
     private List<DimensionsChangeLogEntry> digest(Reader reader) throws IOException, SAXException {
-        List<DimensionsChangeLogEntry> entries = new ArrayList<DimensionsChangeLogEntry>();
+        List<DimensionsChangeLogEntry> entries = new ArrayList<>();
         Digester digester = createDigester(entries);
         digester.parse(reader);
         return entries;
     }
 
     private Digester createDigester(Object top) {
-        Digester digester = new Digester2();
+        Digester digester = new Digester();
         digester.push(top);
 
         digester.addObjectCreate("*/changeset", DimensionsChangeLogEntry.class);
