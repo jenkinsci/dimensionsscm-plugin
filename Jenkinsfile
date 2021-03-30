@@ -1,5 +1,1 @@
-buildPlugin(
-    findbugs: [
-        run: false
-    ]
-)
+buildPlugin()
