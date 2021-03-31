@@ -1,77 +1,82 @@
- <?jelly escape-by-default='true'?>
- <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:local="local">
+    <d:taglib uri="local">
+        <d:tag name="blockWrapper">
+            <j:choose>
+                <j:when test="${divBasedFormLayout}">
+                    <div>
+                        <d:invokeBody/>
+                    </div>
+                </j:when>
+                <j:otherwise>
+                    <table style="width:100%">
+                        <d:invokeBody/>
+                    </table>
+                </j:otherwise>
+            </j:choose>
+        </d:tag>
+    </d:taglib>
     <f:block>
-      <table width="100%" style="border:none" tooltip="Advanced options that maybe used on the tagged baseline">
-          <f:advanced>
-              <f:entry title="Owning part for baseline">
-               <f:textbox name="dimensionsbuildnotifier.blnOwningPart" value="${instance.blnOwningPart}" />
-              </f:entry>
-              <f:entry title="Baseline Template">
-               <f:textbox name="dimensionsbuildnotifier.blnTemplate" value="${instance.blnTemplate}" />
-              </f:entry>
-              <f:entry title="Baseline Type">
-               <f:textbox name="dimensionsbuildnotifier.blnType" value="${instance.blnType}" />
-              </f:entry>
-              <f:entry title="Baseline Scope" field="blnScope"
-                    help="/plugin/dimensionsscm/blnScope.html">
-                <select class="setting-input" name="dimensionsbuildnotifier.blnScope">
-                    <f:option value="WORKSET" selected="${'WORKSET'==instance.blnScope}">Project</f:option>
-                    <f:option value="PART" selected="${'PART'==instance.blnScope}">Part</f:option>
-                    <f:option value="REVISED" selected="${'REVISED'==instance.blnScope}">Revised</f:option>
-                </select>
-              </f:entry>
-              <f:entry>
-                 <p>
-                 (Note - The above options can be used to configure the type of baseline that is
-                         used to tag this build. You should only change these options if you are
-                         a knowledgeable Dimensions user).
-                 </p>
-              </f:entry>
-              <f:entry title="Baseline Name Template" help="/plugin/dimensionsscm/blnName.html">
-               <f:textbox name="dimensionsbuildnotifier.blnName" value="${instance.blnName}" />
-              </f:entry>
-          </f:advanced>
-
-          <f:optionalBlock name="dimensionsbuildnotifier.canBaselineDeploy" title="Automatically deploy the baseline"
-                               checked="${instance.canBaselineDeploy}" help="/plugin/dimensionsscm/candeploy.html">
-            <f:entry title="Stage" help="/plugin/dimensionsscm/stage.html">
-             <f:textbox name="dimensionsbuildnotifier.deployState" value="${instance.deployState}" />
-            </f:entry>
-          </f:optionalBlock>
-
-           <f:optionalBlock name="dimensionsbuildnotifier.canBaselineBuild" title="Automatically build the baseline"
-                               checked="${instance.canBaselineBuild}" help="/plugin/dimensionsscm/canbuild.html">
-            <f:entry title="Area" help="/plugin/dimensionsscm/area.html">
-             <f:textbox name="dimensionsbuildnotifier.area" value="${instance.area}" />
-            </f:entry>
-            <f:entry title="Build Configuration" help="/plugin/dimensionsscm/buildConfig.html">
-             <f:textbox name="dimensionsbuildnotifier.buildConfig" value="${instance.buildConfig}" />
-            </f:entry>
-            <f:entry title="Build Options" help="/plugin/dimensionsscm/buildOptions.html">
-             <f:textbox name="dimensionsbuildnotifier.buildOptions" value="${instance.buildOptions}" />
-            </f:entry>
-            <f:entry title="Build Targets" help="/plugin/dimensionsscm/buildTargets.html">
-             <f:textbox name="dimensionsbuildnotifier.buildTargets" value="${instance.buildTargets}" />
-            </f:entry>
-
-            <f:entry title="${%Run the build in background}" help="/plugin/dimensionsscm/batch.html">
-            <f:checkbox name="dimensionsbuildnotifier.batch" default="true" checked="${instance.batch}"/>
-            </f:entry>
-            <f:entry title="${%Clear the contents of the build area}" help="/plugin/dimensionsscm/buildClean.html">
-            <f:checkbox name="dimensionsbuildnotifier.buildClean" default="false" checked="${instance.buildClean}"/>
-            </f:entry>
-            <f:entry title="${%Capture build outputs}" help="/plugin/dimensionsscm/capture.html">
-            <f:checkbox name="dimensionsbuildnotifier.capture" default="false" checked="${instance.capture}"/>
-            </f:entry>
-          </f:optionalBlock>
-
-          <f:optionalBlock name="dimensionsbuildnotifier.canBaselineAction" title="Automatically action the baseline"
-                               checked="${instance.canBaselineAction}" help="/plugin/dimensionsscm/canaction.html">
-            <f:entry title="Status" help="/plugin/dimensionsscm/state.html">
-             <f:textbox name="dimensionsbuildnotifier.actionState" value="${instance.actionState}" />
-            </f:entry>
-          </f:optionalBlock>
-
-      </table>
+        <local:blockWrapper>
+            <f:advanced>
+                <f:entry title="Owning part for baseline">
+                    <f:textbox name="dimensionsbuildnotifier.blnOwningPart" value="${instance.blnOwningPart}" />
+                </f:entry>
+                <f:entry title="Baseline Template">
+                    <f:textbox name="dimensionsbuildnotifier.blnTemplate" value="${instance.blnTemplate}" />
+                </f:entry>
+                <f:entry title="Baseline Type">
+                    <f:textbox name="dimensionsbuildnotifier.blnType" value="${instance.blnType}" />
+                </f:entry>
+                <f:entry title="Baseline Scope" field="blnScope" help="/plugin/dimensionsscm/blnScope.html">
+                    <select class="setting-input" name="dimensionsbuildnotifier.blnScope">
+                        <f:option value="WORKSET" selected="${'WORKSET'==instance.blnScope}">Project</f:option>
+                        <f:option value="PART" selected="${'PART'==instance.blnScope}">Part</f:option>
+                        <f:option value="REVISED" selected="${'REVISED'==instance.blnScope}">Revised</f:option>
+                    </select>
+                </f:entry>
+                <f:entry>
+                    <p>(Note - The above options can be used to configure the type of baseline that is
+                    used to tag this build. You should only change these options if you are
+                    a knowledgeable Dimensions user).</p>
+                </f:entry>
+                <f:entry title="Baseline Name Template" help="/plugin/dimensionsscm/blnName.html">
+                    <f:textbox name="dimensionsbuildnotifier.blnName" value="${instance.blnName}" />
+                </f:entry>
+            </f:advanced>
+            <f:optionalBlock name="dimensionsbuildnotifier.canBaselineDeploy" title="Automatically deploy the baseline" checked="${instance.canBaselineDeploy}" help="/plugin/dimensionsscm/candeploy.html">
+                <f:entry title="Stage" help="/plugin/dimensionsscm/stage.html">
+                    <f:textbox name="dimensionsbuildnotifier.deployState" value="${instance.deployState}" />
+                </f:entry>
+            </f:optionalBlock>
+            <f:optionalBlock name="dimensionsbuildnotifier.canBaselineBuild" title="Automatically build the baseline" checked="${instance.canBaselineBuild}" help="/plugin/dimensionsscm/canbuild.html">
+                <f:entry title="Area" help="/plugin/dimensionsscm/area.html">
+                    <f:textbox name="dimensionsbuildnotifier.area" value="${instance.area}" />
+                </f:entry>
+                <f:entry title="Build Configuration" help="/plugin/dimensionsscm/buildConfig.html">
+                    <f:textbox name="dimensionsbuildnotifier.buildConfig" value="${instance.buildConfig}" />
+                </f:entry>
+                <f:entry title="Build Options" help="/plugin/dimensionsscm/buildOptions.html">
+                    <f:textbox name="dimensionsbuildnotifier.buildOptions" value="${instance.buildOptions}" />
+                </f:entry>
+                <f:entry title="Build Targets" help="/plugin/dimensionsscm/buildTargets.html">
+                    <f:textbox name="dimensionsbuildnotifier.buildTargets" value="${instance.buildTargets}" />
+                </f:entry>
+                <f:entry title="${%Run the build in background}" help="/plugin/dimensionsscm/batch.html">
+                    <f:checkbox name="dimensionsbuildnotifier.batch" default="true" checked="${instance.batch}" />
+                </f:entry>
+                <f:entry title="${%Clear the contents of the build area}" help="/plugin/dimensionsscm/buildClean.html">
+                    <f:checkbox name="dimensionsbuildnotifier.buildClean" default="false" checked="${instance.buildClean}" />
+                </f:entry>
+                <f:entry title="${%Capture build outputs}" help="/plugin/dimensionsscm/capture.html">
+                    <f:checkbox name="dimensionsbuildnotifier.capture" default="false" checked="${instance.capture}" />
+                </f:entry>
+            </f:optionalBlock>
+            <f:optionalBlock name="dimensionsbuildnotifier.canBaselineAction" title="Automatically action the baseline" checked="${instance.canBaselineAction}" help="/plugin/dimensionsscm/canaction.html">
+                <f:entry title="Status" help="/plugin/dimensionsscm/state.html">
+                    <f:textbox name="dimensionsbuildnotifier.actionState" value="${instance.actionState}" />
+                </f:entry>
+            </f:optionalBlock>
+        </local:blockWrapper>
     </f:block>
 </j:jelly>

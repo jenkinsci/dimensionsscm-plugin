@@ -1,52 +1,63 @@
- <?jelly escape-by-default='true'?>
- <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:local="local">
+    <d:taglib uri="local">
+        <d:tag name="blockWrapper">
+            <j:choose>
+                <j:when test="${divBasedFormLayout}">
+                    <div>
+                        <d:invokeBody/>
+                    </div>
+                </j:when>
+                <j:otherwise>
+                    <table style="width:100%">
+                        <d:invokeBody/>
+                    </table>
+                </j:otherwise>
+            </j:choose>
+        </d:tag>
+    </d:taglib>
     <f:block>
-      <table width="100%" style="border:none" tooltip="Build options for a Dimensions Build">
-        <f:entry title="Area" help="/plugin/dimensionsscm/area.html">
-         <f:textbox name="dimensionsbuilder.projectArea" value="${instance.projectArea}" />
-        </f:entry>
-        <f:entry title="Build Configuration" help="/plugin/dimensionsscm/buildConfig.html">
-         <f:textbox name="dimensionsbuilder.projectConfig" value="${instance.projectConfig}" />
-        </f:entry>
-        <f:entry title="Build Options" help="/plugin/dimensionsscm/buildOptions.html">
-         <f:textbox name="dimensionsbuilder.projectOptions" value="${instance.projectOptions}" />
-        </f:entry>
-        <f:entry title="Build Targets" help="/plugin/dimensionsscm/buildTargets.html">
-         <f:textbox name="dimensionsbuilder.projectTargets" value="${instance.projectTargets}" />
-        </f:entry>
-        <f:entry title="Build Stage" help="/plugin/dimensionsscm/buildStage.html">
-         <f:textbox name="dimensionsbuilder.projectStage" value="${instance.projectStage}" />
-        </f:entry>
-
-        <f:entry title="Area Type" field="projectType"
-                help="/plugin/dimensionsscm/buildType.html">
-            <select class="setting-input" name="dimensionsbuilder.projectType">
-                <f:option value="NONE" selected="${'NONE'==instance.projectType}">(None)</f:option>
-                <f:option value="WORK" selected="${'WORK'==instance.projectType}">Work</f:option>
-                <f:option value="DEPLOYMENT" selected="${'DEPLOYMENT'==instance.projectType}">Deployment</f:option>
-            </select>
-        </f:entry>
-
-        <f:entry title="${%Run the build in background}" help="/plugin/dimensionsscm/batch.html">
-        <f:checkbox name="dimensionsbuilder.projectBatch" default="true" checked="${instance.projectBatch}"/>
-        </f:entry>
-        <f:entry title="${%Clear the contents of the build area}" help="/plugin/dimensionsscm/buildClean.html">
-        <f:checkbox name="dimensionsbuilder.projectClean" default="false" checked="${instance.projectClean}"/>
-        </f:entry>
-        <f:entry title="${%Capture build outputs}" help="/plugin/dimensionsscm/capture.html">
-        <f:checkbox name="dimensionsbuilder.projectCapture" default="false" checked="${instance.projectCapture}"/>
-        </f:entry>
-
-        <f:entry title="${%Audit the build area}" help="/plugin/dimensionsscm/audit.html">
-        <f:checkbox name="dimensionsbuilder.projectAudit" default="false" checked="${instance.projectAudit}"/>
-        </f:entry>
-        <f:entry title="${%Populate the build area}" help="/plugin/dimensionsscm/populate.html">
-        <f:checkbox name="dimensionsbuilder.projectPopulate" default="false" checked="${instance.projectPopulate}"/>
-        </f:entry>
-        <f:entry title="${%Touch files}" help="/plugin/dimensionsscm/touch.html">
-        <f:checkbox name="dimensionsbuilder.projectTouch" default="false" checked="${instance.projectTouch}"/>
-        </f:entry>
-
-      </table>
+        <local:blockWrapper>
+            <f:entry title="Area" help="/plugin/dimensionsscm/area.html">
+                <f:textbox name="dimensionsbuilder.projectArea" value="${instance.projectArea}" />
+            </f:entry>
+            <f:entry title="Build Configuration" help="/plugin/dimensionsscm/buildConfig.html">
+                <f:textbox name="dimensionsbuilder.projectConfig" value="${instance.projectConfig}" />
+            </f:entry>
+            <f:entry title="Build Options" help="/plugin/dimensionsscm/buildOptions.html">
+                <f:textbox name="dimensionsbuilder.projectOptions" value="${instance.projectOptions}" />
+            </f:entry>
+            <f:entry title="Build Targets" help="/plugin/dimensionsscm/buildTargets.html">
+                <f:textbox name="dimensionsbuilder.projectTargets" value="${instance.projectTargets}" />
+            </f:entry>
+            <f:entry title="Build Stage" help="/plugin/dimensionsscm/buildStage.html">
+                <f:textbox name="dimensionsbuilder.projectStage" value="${instance.projectStage}" />
+            </f:entry>
+            <f:entry title="Area Type" field="projectType" help="/plugin/dimensionsscm/buildType.html">
+                <select class="setting-input" name="dimensionsbuilder.projectType">
+                    <f:option value="NONE" selected="${'NONE'==instance.projectType}">(None)</f:option>
+                    <f:option value="WORK" selected="${'WORK'==instance.projectType}">Work</f:option>
+                    <f:option value="DEPLOYMENT" selected="${'DEPLOYMENT'==instance.projectType}">Deployment</f:option>
+                </select>
+            </f:entry>
+            <f:entry title="${%Run the build in background}" help="/plugin/dimensionsscm/batch.html">
+                <f:checkbox name="dimensionsbuilder.projectBatch" default="true" checked="${instance.projectBatch}" />
+            </f:entry>
+            <f:entry title="${%Clear the contents of the build area}" help="/plugin/dimensionsscm/buildClean.html">
+                <f:checkbox name="dimensionsbuilder.projectClean" default="false" checked="${instance.projectClean}" />
+            </f:entry>
+            <f:entry title="${%Capture build outputs}" help="/plugin/dimensionsscm/capture.html">
+                <f:checkbox name="dimensionsbuilder.projectCapture" default="false" checked="${instance.projectCapture}" />
+            </f:entry>
+            <f:entry title="${%Audit the build area}" help="/plugin/dimensionsscm/audit.html">
+                <f:checkbox name="dimensionsbuilder.projectAudit" default="false" checked="${instance.projectAudit}" />
+            </f:entry>
+            <f:entry title="${%Populate the build area}" help="/plugin/dimensionsscm/populate.html">
+                <f:checkbox name="dimensionsbuilder.projectPopulate" default="false" checked="${instance.projectPopulate}" />
+            </f:entry>
+            <f:entry title="${%Touch files}" help="/plugin/dimensionsscm/touch.html">
+                <f:checkbox name="dimensionsbuilder.projectTouch" default="false" checked="${instance.projectTouch}" />
+            </f:entry>
+        </local:blockWrapper>
     </f:block>
 </j:jelly>
