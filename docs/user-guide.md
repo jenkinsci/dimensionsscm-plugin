@@ -15,6 +15,8 @@ The plugin currently supports
 -   Artifact Upload
 -   Tag Deployment
 -   Launching Tagged Builds via Dimensions Builder
+-   Credential plugin
+-   Pipeline job type
 
 ## Pre-requisites
 
@@ -74,15 +76,28 @@ the Dimensions configuration pane shown below.
 #### Dimensions Login Details
 
 The standard Dimensions login details need to be provided in the above
-fields. This is the Dimensions login that will be used by Jenkins to
-connect to the Dimensions repository and retrieve any updated files. A
+fields. This is the Dimensions login details that will be used by Jenkins
+to connect to the Dimensions repository and retrieve any updated files. A
 *Check Connection...* button is provided for your convenience to ensure
 the connection details you have specified are correct and can be used by
 Jenkins.
 
+We have several ways of specifying global login details. If you specify
+login details in Credentials section you should use credentials plugin
+and choose login/password from the list of credentials.
+
 ------------------------------------------------------------------------
 
-![System configuration form](/docs/system-config.jpg)
+![global credentials login](/docs/images/global-credentials-login.png)
+
+------------------------------------------------------------------------
+
+In case of specifying login details in *Legacy username/password*
+section you should type all credentials manually.
+
+------------------------------------------------------------------------
+
+![global legacy login](/docs/images/global-legacy-login.png)
 
 ------------------------------------------------------------------------
 
@@ -100,7 +115,7 @@ geographically distributed environment.
 
 ------------------------------------------------------------------------
 
-![System configuration form's Advanced fields](/docs/system-config-advanced.jpg)
+![global configuration advanced fields](/docs/images/system-config-advanced.jpg)
 
 ------------------------------------------------------------------------
 
@@ -108,11 +123,11 @@ The *Advanced...* tag also allows you to specify an optional Dimensions
 Web client installation that can be used to directly access files in
 Dimensions to perform Dimensions operations on them via the Web client.
 
-### Job Configuration
+### Freestyle Job Configuration
 
 When you create a new Jenkins job, you need to configure the Dimensions
 stream or project that this job will be monitoring. This can be done
-using the standard job *Configure*. page.
+using the standard job *Configure* page.
 
 Using the *Source Code Management* pane, select the Dimensions option
 and fill in the details shown below with the Dimensions project that
@@ -120,12 +135,22 @@ this job will use.
 
 ------------------------------------------------------------------------
 
-![Job configuration form](/docs/job-config-scm.jpg)
+![job SCM configuration](/docs/images/job-scm-configuration.png)
 
 ------------------------------------------------------------------------
 
 The *Project Name* must refer to the Dimensions project or stream that
 this job will monitor. This is a mandatory field.
+
+*Credential type* allows you specify the login details for the
+Dimensions server in a number of different ways:
+-   *Credentials*: If you use this way of specifying credentials then
+    you will be using the Credentials plugin. Just choose login/password
+    from the list of credentials.
+-   *Global configuration*: In this case Jenkins will use the login
+    details specified in the *Configure System* section.
+-   *Legacy username/password*: In this case you should specify all
+    credentials settings manually.
 
 The *Folder Name* refers to a specific folder name in the Dimensions
 project or stream that the job can monitor. This should be specified in
@@ -135,12 +160,9 @@ contents of the project/stream will be monitored. You can specify
 multiple folders to monitor or just leave it blank to monitor
 everything.
 
-The *Workspace Location* specifies a particular workspace location to
-which Dimensions will put any updated files. If this field is left
-blank, then the default Jenkins-provided workspace will be used.
-(*Note:* As of release 0.7.7, this option has been removed from the GUI
-and is now ignored. You can configure a custom workspace location using
-the Jenkins **Advanced Project Options**).
+The *Path Name* refers to a specific folder name in the Dimensions
+project or stream that should be excluded from job monitoring.
+If you leave this field blank than no folders will be excluded.
 
 A number of options are provided that can be used to control the
 behavior of the plugin. These are:
@@ -163,16 +185,63 @@ behavior of the plugin. These are:
 
 An *Advanced...* tag allows you to override any of the default
 Dimensions installation details specified in the system configuration.
-The options provided are the same as document in the *System
+The options provided are the same as documented in the *System
 Configuration* section above. Options are also provided to control the
 permissions on files that are checked out into the Jenkins workspace and
 specify if item header substitution is to be used.
 
+### Pipeline Job Configuration
+
+To specify pipeline job with help of Dimensions plugin in
+*Pipeline/Workflow* section you can:
+
+1)  Choose *Pipeline/Workflow script* option in the *Definition*
+    drop-down list and specify step to checkout from Dimensions CM
+    project or stream. This step you can generate with the help of
+    the *Pipeline Syntax/Snippet Generator* section, or you can enter
+    it manually.
+    
+    **Syntax**:
+    
+    The name of the command is **dimensionsscm**. Also you should
+    specify the required parameters: project name, credentials type
+    and login details. Login details can be specified in 3 ways:
+    
+    1.  Credentials type **'pluginDefined'**. You need to specify
+        *credentialsId*, *pluginServer*, *pluginDatabase* parameters.
+        
+        Ex.: **dimensionsscm credentialsId:** 'cred_id'**,**
+        **credentialsType:** 'pluginDefined'**, pluginDatabase:**
+        'cm_typical@DIM10'**, pluginServer:** 'stl-ta-vcw1-9'**,**
+        **project:** 'PROD_ID:STREAM_NAME'
+        
+    2.  Credentials type **'userDefined'**. You need to specify
+        *userName*, *password*, *userServer*, *userDatabase*
+        parameters.
+        
+        Ex.: **dimensionsscm credentialsType:** 'userDefined'**,**
+        **password:** 'pass_value'**, project:**
+        'PROD_ID:STREAM_NAME'**, userDatabase:**
+        'cm_typical@DIM12'**, userName:** 'user_name'**,**
+        **userServer:** 'stl-ta-vcw12-9'
+        
+    3.  Credentials type **'globalDefined'**. No additional
+        parameters required. In this case all credential details will
+        be taken from *Configure system* page.
+        
+        Ex.: **dimensionsscm credentialsType:** 'globalDefined'**,**
+        **project:** 'PROD_ID:STREAM_NAME'
+        
+2)  Choose *Pipeline/Workflow script from SCM* option in the
+    *Definition* drop-down list. This means that you can add a file
+    with the Pipeline script to your Dimensions stream or project
+    and when the job runs, it will be executed from the script in
+    the file. Configuration of Pipeline/Workflow job is the same as
+    in Freestyle project.
+
 #### Job Build Options
 
-In version 0.6 onwards of the plugin, enhanced support has been added
-for release builds that provide tighter control over the content that
-goes into a Jenkins build. Options have been added that allow you to:
+Options are also available that allow you to:
 
 -   Lock a project or stream while a build is in progress
 -   *Tag* a successful build such that a baseline is automatically
@@ -372,8 +441,7 @@ you wish to specify a request to save these changes against, then you
 should set a project default request using SCWS or use
 DM\_TARGET\_REQUEST as commented on above.
 
-In version 0.6.8 of the plugin onwards, you can specify the following
-advanced options when checking in a file
+You can specify the following advanced options when checking in a file
 
 -   Force files to be checked onto the tip - This will force
     uncontrolled files with the same name as existing Dimensions files
@@ -435,7 +503,7 @@ actually match the files you expect them to.
 
 **Ant-Style Pattern Matches**
 
-In version 0.8.5 of the plugin onwards, you also have the option to use
+Instead of using regular expression matching, you may prefer to use
 Ant-style pattern matches for saving assets to Dimensions. As with the
 Java style regular expressions, this option allows you to enter a number
 of patterns based on Ant-style pattern matches. Ant-style patterns can
@@ -445,9 +513,8 @@ operating systems for you).
 
 **Inclusion and Exclusion Patterns**
 
-As of version 0.8.6 of the plugin onwards, you can now also specify file
-exclusions as well as inclusions to apply to the files selected for
-upload.
+You can specify file exclusions as well as inclusions to apply to the
+files selected for upload.
 
 ##### Specifying Dimensions Requests to Capture Uploaded Artifacts or Build Assets
 
@@ -462,9 +529,8 @@ Dimensions commands.
 
 ##### Specifying Permissions of Checked Files
 
-In version 0.6.8 of the plugin onwards, it is possible to specify the
-permissions of the files which are being checked out as part of the job
-configuration. This includes
+It is possible to specify the permissions of the files which are being
+checked out as part of the job configuration. This includes
 
 -   Default permissions - the file's default permissions stored in
     Dimensions
@@ -476,10 +542,9 @@ configuration.
 
 ## Distributed Build Support
 
-In version 0.6.7 onwards of the plugin, support has been added for using
-the distributed build facilities within Jenkins. There are two main
-capabilities that the plugin provides which can potentially be run on a
-remote node. These are
+The plugin supports the distributed build facilities within Jenkins.
+There are two main capabilities that the plugin provides which can
+potentially be run on a remote node. These are
 
 -   Checking files out of the project/stream being monitored into a
     workspace, and
@@ -496,28 +561,6 @@ support is Java based, so as long as that platform supports Java (and
 Jenkins), it should work. However, running the plugin on an unsupported
 platform in this way is purely at your own risk. No responsibility is
 taken or implied about how the plugin will behave in these conditions.
-
-#### Security limitations
-
-If you run in a secure environment, then you need to be aware of one
-current limitation which is present in the plugin for distributed
-support. As the plugin is using *dmcli* on the slave to run Dimensions
-commands, the login details of the Dimensions user configured in the
-build job are temporarily written to a parameter file on the slave which
-is then used to run Dimensions commands. This parameter file is
-persisted until the job finishes. The location of this parameter file is
-displayed as the build progresses, so a knowledgeable individual with
-access to the slave could access this file whilst the job is in progress
-and obtain these login credentials. If this is a security concern, then
-it is advised that either:-
-
--   you make the slave machine user's default temporary-file directory
-    inaccessible to unauthorized users
--   configure the Dimensions user referenced in the job to have a very
-    limited set of privileges, or
--   run the build on the master only
-
-This limitation is resolved in version 0.7.1 of the plugin.
 
 ## Troubleshooting
 
@@ -546,8 +589,8 @@ This limitation is resolved in version 0.7.1 of the plugin.
     is a bug which has been around a for a while, but only seems to
     surface occasionally. When using the regex option, it would be best
     to be very specific in the artifacts that you wish to check in.
--   To use Serena SSO to authenticate interactive users logging into
-    Jenkins, protect the Jenkins application in your deployment
+-   To use Micro Focus SBM SSO to authenticate interactive users logging
+-   into Jenkins, protect the Jenkins application in your deployment
     container (e.g. Tomcat) and use Jenkins' *Delegate to servlet
     container* authentication model. Polling and updating by the
     Dimensions Plugin will still use the user account configured as the
