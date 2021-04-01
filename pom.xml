@@ -14,7 +14,7 @@
     <packaging>hpi</packaging>
     <name>Jenkins Dimensions Plugin</name>
     <description>This plugin integrates the Dimensions CM SCM with Jenkins.</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin</url>
+    <url>https://github.com/jenkinsci/dimensionsscm-plugin</url>
 
     <licenses>
         <license>
