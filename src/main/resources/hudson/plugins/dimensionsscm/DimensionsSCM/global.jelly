@@ -1,24 +1,8 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:local="local">
-    <d:taglib uri="local">
-        <d:tag name="blockWrapper">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <table style="width:100%">
-                        <d:invokeBody/>
-                    </table>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-    </d:taglib>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:dm="/lib/dimensionsscm">
     <f:section title="Dimensions">
         <f:entry title="${%Choose appropriate credential type:}">
-            <local:blockWrapper>
+            <dm:blockWrapper>
                 <f:radioBlock name="credentialsType" checked="${descriptor.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined" help="/plugin/dimensionsscm/pluginDefined.html">
                     <f:entry field="credentialsId">
                         <c:select />
@@ -92,14 +76,14 @@
                     </f:entry>
                 </f:radioBlock>
                 <f:entry></f:entry>
-            </local:blockWrapper>
+            </dm:blockWrapper>
         </f:entry>
         <f:entry title="${%Use update}">
             <f:checkbox name="dimensionsscm.canUpdate" default="true" checked="${descriptor.canUpdate}" />
             <p>If this option is checked, then new jobs will populate the workspace with changed files from Dimensions.
-            Use the job configuration page to re-configure an existing job.</p>
+                Use the job configuration page to re-configure an existing job.</p>
             <p>Note: The installation details entered above is the default Dimensions SCM repository for new jobs.
-            Use the job configuration page to re-configure an existing job.</p>
+                Use the job configuration page to re-configure an existing job.</p>
         </f:entry>
         <f:advanced>
             <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">

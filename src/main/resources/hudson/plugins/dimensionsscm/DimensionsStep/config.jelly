@@ -1,191 +1,175 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:local="local">
-    <d:taglib uri="local">
-        <d:tag name="blockWrapper">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:dm="/lib/dimensionsscm">
+    <f:entry title="Project Name" help="/plugin/dimensionsscm/project.html" field="project">
+        <f:textbox default="Enter your projectId here" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
+        <i>(the format used must be PRODUCT_ID:PROJECT_NAME even for streams)</i>
+    </f:entry>
+    <f:block>
+        <f:entry title="${%Choose appropriate credential type:}">
+            <dm:blockWrapper>
+                <f:entry />
+                <f:radioBlock name="credentialsType" checked="${instance.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined" inline="true" help="/plugin/dimensionsscm/pluginDefined.html">
+                    <f:nested>
+                        <f:entry field="credentialsId">
+                            <c:select />
+                        </f:entry>
+                        <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+                            <f:textbox name="dimensionsscm.pluginServer" />
+                        </f:entry>
+                        <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                            <f:textbox name="dimensionsscm.pluginDatabase" />
+                            <i>(the format used must be database@dsn)</i>
+                        </f:entry>
+                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="dimensionsscm.pluginServer,dimensionsscm.pluginDatabase,credentialsId,credentialsType" />
+                    </f:nested>
+                </f:radioBlock>
+                <f:radioBlock name="credentialsType" checked="${instance.isChecked('globalDefined')}" title="Global configuration" value="globalDefined" inline="true" help="/plugin/dimensionsscm/globalDefined.html">
+                    <f:nested>
+                        <f:entry />
+                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="credentialsType" />
+                    </f:nested>
+                </f:radioBlock>
+                <f:radioBlock name="credentialsType" checked="${instance.isChecked('userDefined')}" title="Legacy username/password" value="userDefined" inline="true" help="/plugin/dimensionsscm/userDefined.html">
+                    <f:nested>
+                        <f:entry>
+                            <p>Don't use credential plugin for this job. Specify the username and password directly here.</p>
+                        </f:entry>
+                        <f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
+                            <f:textbox name="dimensionsscm.userName" />
+                        </f:entry>
+                        <f:entry title="Password" help="/plugin/dimensionsscm/password.html">
+                            <input type="password" class="setting-input" name="dimensionsscm.password" />
+                        </f:entry>
+                        <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+                            <f:textbox name="dimensionsscm.userServer" />
+                        </f:entry>
+                        <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                            <f:textbox name="dimensionsscm.userDatabase" />
+                            <i>(the format used must be database@dsn)</i>
+                        </f:entry>
+                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="dimensionsscm.userName,dimensionsscm.password,dimensionsscm.userServer,dimensionsscm.userDatabase,credentialsType" />
+                    </f:nested>
+                </f:radioBlock>
+                <f:radioBlock name="credentialsType" checked="${instance.isChecked('keystoreDefined')}" title="Keystore authentication" value="keystoreDefined" inline="true" help="/plugin/dimensionsscm/keystoreDefined.html">
+                    <f:nested>
+                        <f:entry />
+                        <f:entry title="Keystore path" help="/plugin/dimensionsscm/keystorePath.html">
+                            <f:textbox name="dimensionsscm.keystorePath" />
+                        </f:entry>
+                        <f:entry title="Certificate alias" help="/plugin/dimensionsscm/certificateAlias.html">
+                            <f:textbox name="dimensionsscm.certificateAlias" />
+                        </f:entry>
+                        <f:entry title="Keystore password" help="/plugin/dimensionsscm/keystorePassword.html">
+                            <input type="password" class="setting-input" name="dimensionsscm.keystorePassword" placeholder="Enter keystore password here" />
+                        </f:entry>
+                        <f:entry title="Certificate password" help="/plugin/dimensionsscm/certificatePassword.html">
+                            <input type="password" class="setting-input" name="dimensionsscm.certificatePassword" placeholder="Enter certificate password here" />
+                        </f:entry>
+                        <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
+                            <f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(instance.jobServer, 'Enter your Dimensions server here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
+                        </f:entry>
+                        <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                            <f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(instance.jobDatabase, 'Enter your Dimensions database here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
+                            <i>(the format used must be database@dsn)</i>
+                        </f:entry>
+                        <f:nested>
+                            <dm:blockWrapper>
+                                <f:optionalBlock name="dimensionsscm.secureAgentAuth" title="Secure agent authentication" checked="${instance.secureAgentAuth}" inline="true" help="/plugin/dimensionsscm/secureAgentAuth.html">
+                                    <f:entry />
+                                    <f:entry title="Remote certificate path" help="/plugin/dimensionsscm/remoteCertificatePath.html">
+                                        <f:textbox name="dimensionsscm.certificatePath" />
+                                    </f:entry>
+                                    <f:entry title="Remote certificate password" help="/plugin/dimensionsscm/remoteCertificatePassword.html">
+                                        <input type="password" class="setting-input" name="dimensionsscm.remoteCertificatePassword" placeholder="Enter certificate password here" />
+                                    </f:entry>
+                                </f:optionalBlock>
+                            </dm:blockWrapper>
+                        </f:nested>
+                        <f:entry>
+                            <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore" with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias" />
+                        </f:entry>
+                    </f:nested>
+                </f:radioBlock>
+                <f:entry />
+            </dm:blockWrapper>
+        </f:entry>
+    </f:block>
+    <f:entry title="${%Folders To Monitor}" field="folders">
+        <f:repeatable noAddButton="true" minimum="1" field="folders">
+            <dm:blockWrapper>
+                <f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
+                    <f:textbox field="value" />
+                </f:entry>
+                <f:entry>
+                    <div align="right">
+                        <input type="button" value="${%Add folder...}" class="repeatable-add show-if-last" />
+                        <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                     </div>
-                </j:when>
-                <j:otherwise>
-                    <table style="width:100%">
-                        <d:invokeBody/>
-                    </table>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-    </d:taglib>
-	<f:entry title="Project Name" help="/plugin/dimensionsscm/project.html" field="project">
-		<f:textbox default="Enter your projectId here" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
-		<i>(the format used must be PRODUCT_ID:PROJECT_NAME even for streams)</i>
-	</f:entry>
-	<f:block>
-		<f:entry title="${%Choose appropriate credential type:}">
-			<local:blockWrapper>
-				<f:entry />
-				<f:radioBlock name="credentialsType" checked="${instance.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined" inline="true" help="/plugin/dimensionsscm/pluginDefined.html">
-					<f:nested>
-						<f:entry field="credentialsId">
-							<c:select />
-						</f:entry>
-						<f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-							<f:textbox name="dimensionsscm.pluginServer" />
-						</f:entry>
-						<f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-							<f:textbox name="dimensionsscm.pluginDatabase" />
-							<i>(the format used must be database@dsn)</i>
-						</f:entry>
-						<f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="dimensionsscm.pluginServer,dimensionsscm.pluginDatabase,credentialsId,credentialsType" />
-					</f:nested>
-				</f:radioBlock>
-				<f:radioBlock name="credentialsType" checked="${instance.isChecked('globalDefined')}" title="Global configuration" value="globalDefined" inline="true" help="/plugin/dimensionsscm/globalDefined.html">
-					<f:nested>
-						<f:entry />
-						<f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="credentialsType" />
-					</f:nested>
-				</f:radioBlock>
-				<f:radioBlock name="credentialsType" checked="${instance.isChecked('userDefined')}" title="Legacy username/password" value="userDefined" inline="true" help="/plugin/dimensionsscm/userDefined.html">
-					<f:nested>
-						<f:entry>
-							<p>Don't use credential plugin for this job. Specify the username and password directly here.</p>
-						</f:entry>
-						<f:entry title="Login Name" help="/plugin/dimensionsscm/username.html">
-							<f:textbox name="dimensionsscm.userName" />
-						</f:entry>
-						<f:entry title="Password" help="/plugin/dimensionsscm/password.html">
-							<input type="password" class="setting-input" name="dimensionsscm.password" />
-						</f:entry>
-						<f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-							<f:textbox name="dimensionsscm.userServer" />
-						</f:entry>
-						<f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-							<f:textbox name="dimensionsscm.userDatabase" />
-							<i>(the format used must be database@dsn)</i>
-						</f:entry>
-						<f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="dimensionsscm.userName,dimensionsscm.password,dimensionsscm.userServer,dimensionsscm.userDatabase,credentialsType" />
-					</f:nested>
-				</f:radioBlock>
-				<f:radioBlock name="credentialsType" checked="${instance.isChecked('keystoreDefined')}" title="Keystore authentication" value="keystoreDefined" inline="true" help="/plugin/dimensionsscm/keystoreDefined.html">
-					<f:nested>
-						<f:entry />
-						<f:entry title="Keystore path" help="/plugin/dimensionsscm/keystorePath.html">
-							<f:textbox name="dimensionsscm.keystorePath" />
-						</f:entry>
-						<f:entry title="Certificate alias" help="/plugin/dimensionsscm/certificateAlias.html">
-							<f:textbox name="dimensionsscm.certificateAlias" />
-						</f:entry>
-						<f:entry title="Keystore password" help="/plugin/dimensionsscm/keystorePassword.html">
-							<input type="password" class="setting-input" name="dimensionsscm.keystorePassword" placeholder="Enter keystore password here" />
-						</f:entry>
-						<f:entry title="Certificate password" help="/plugin/dimensionsscm/certificatePassword.html">
-							<input type="password" class="setting-input" name="dimensionsscm.certificatePassword" placeholder="Enter certificate password here" />
-						</f:entry>
-						<f:entry title="Server" help="/plugin/dimensionsscm/server.html">
-							<f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(instance.jobServer, 'Enter your Dimensions server here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
-						</f:entry>
-						<f:entry title="Database" help="/plugin/dimensionsscm/database.html">
-							<f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(instance.jobDatabase, 'Enter your Dimensions database here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
-							<i>(the format used must be database@dsn)</i>
-						</f:entry>
-						<f:nested>
-							<local:blockWrapper>
-								<f:optionalBlock name="dimensionsscm.secureAgentAuth" title="Secure agent authentication" checked="${instance.secureAgentAuth}" inline="true" help="/plugin/dimensionsscm/secureAgentAuth.html">
-									<f:entry />
-									<f:entry title="Remote certificate path" help="/plugin/dimensionsscm/remoteCertificatePath.html">
-										<f:textbox name="dimensionsscm.certificatePath" />
-									</f:entry>
-									<f:entry title="Remote certificate password" help="/plugin/dimensionsscm/remoteCertificatePassword.html">
-										<input type="password" class="setting-input" name="dimensionsscm.remoteCertificatePassword" placeholder="Enter certificate password here" />
-									</f:entry>
-								</f:optionalBlock>
-                            </local:blockWrapper>
-						</f:nested>
-						<f:entry>
-							<f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore" with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias" />
-						</f:entry>
-					</f:nested>
-				</f:radioBlock>
-				<f:entry />
-            </local:blockWrapper>
-		</f:entry>
-	</f:block>
-	<f:entry title="${%Folders To Monitor}" field="folders">
-		<f:repeatable noAddButton="true" minimum="1" field="folders">
-			<local:blockWrapper>
-				<f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
-					<f:textbox field="value" />
-				</f:entry>
-				<f:entry>
-					<div align="right">
-						<input type="button" value="${%Add folder...}" class="repeatable-add show-if-last" />
-						<input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
-					</div>
-				</f:entry>
-            </local:blockWrapper>
-		</f:repeatable>
-	</f:entry>
-	<f:entry title="${%Paths to exclude from monitoring}" field="pathsToExclude">
-		<f:repeatable noAddButton="true" minimum="1" field="pathsToExclude">
-			<local:blockWrapper>
-				<f:entry title="Path" help="/plugin/dimensionsscm/excludedPaths.html">
-					<f:textbox field="value" />
-				</f:entry>
-				<f:entry>
-					<div align="right">
-						<input type="button" value="${%Add path...}" class="repeatable-add show-if-last" />
-						<input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
-					</div>
-				</f:entry>
-            </local:blockWrapper>
-		</f:repeatable>
-	</f:entry>
-	<f:entry field="canJobDelete" title="${%Clear the contents of the workspace}" help="/plugin/dimensionsscm/candelete.html">
-		<f:checkbox default="false" />
-	</f:entry>
-	<f:entry field="canJobForce" title="${%Always force a build to occur}" help="/plugin/dimensionsscm/canforce.html">
-		<f:checkbox default="false" />
-	</f:entry>
-	<f:entry field="canJobRevert" title="${%Overwrite any locally modified files in workspace}" help="/plugin/dimensionsscm/canrevert.html">
-		<f:checkbox default="false" />
-	</f:entry>
-	<f:advanced>
-		<f:entry>
-			<p>The installation details provided below is the Dimensions SCM repository for this job.
-            These details are used for this job regardless of the default Dimensions SCM repository.</p>
-		</f:entry>
-		<f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use update (note: overrides default setting)" checked="${instance.canJobUpdate}" default="true" help="/plugin/dimensionsscm/canupdate.html" inline="true">
-			<f:entry title="${%Expand file substitution variables}" help="/plugin/dimensionsscm/canexpand.html">
-				<f:checkbox name="dimensionsscm.canJobExpand" default="false" checked="${instance.canJobExpand}" />
-			</f:entry>
-			<f:entry title="${%Checkout files with no metadata}" help="/plugin/dimensionsscm/canexport.html">
-				<f:checkbox name="dimensionsscm.canJobNoMetadata" default="false" checked="${instance.canJobNoMetadata}" />
-			</f:entry>
-			<f:entry title="${%Maintain file timestamp from Dimensions}" help="/plugin/dimensionsscm/cannotouch.html">
-				<f:checkbox name="dimensionsscm.canJobNoTouch" default="false" checked="${instance.canJobNoTouch}" />
-			</f:entry>
-			<f:entry title="Default Permissions for updated files" field="permissions">
-				<select class="setting-input" name="dimensionsscm.permissions">
-					<f:option value="DEFAULT" selected="${'DEFAULT'==instance.permissions}">(Default)</f:option>
-					<f:option value="READONLY" selected="${'READONLY'==instance.permissions}">Read-only</f:option>
-					<f:option value="WRITABLE" selected="${'WRITABLE'==instance.permissions}">Writeable</f:option>
-				</select>
-			</f:entry>
-			<f:entry title="Perform End of Line Conversion for updated files" field="eol">
-				<select class="setting-input" name="dimensionsscm.eol">
-					<f:option value="DEFAULT" selected="${'DEFAULT'==instance.eol}">(Default)</f:option>
-					<f:option value="UNIX" selected="${'UNIX'==instance.eol}">Unix style end-of-line</f:option>
-					<f:option value="WINDOWS" selected="${'WINDOWS'==instance.eol}">Windows style end-of-line</f:option>
-					<f:option value="UNCHANGED" selected="${'UNCHANGED'==instance.eol}">Leave files as they are</f:option>
-				</select>
-			</f:entry>
-		</f:optionalBlock>
-		<f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
-			<f:textbox name="dimensionsscm.timeZone" />
-		</f:entry>
-		<f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz" with="dimensionsscm.timeZone" />
-		<f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
-			<f:textbox name="dimensionsscm.webUrl" />
-		</f:entry>
-	</f:advanced>
+                </f:entry>
+            </dm:blockWrapper>
+        </f:repeatable>
+    </f:entry>
+    <f:entry title="${%Paths to exclude from monitoring}" field="pathsToExclude">
+        <f:repeatable noAddButton="true" minimum="1" field="pathsToExclude">
+            <dm:blockWrapper>
+                <f:entry title="Path" help="/plugin/dimensionsscm/excludedPaths.html">
+                    <f:textbox field="value" />
+                </f:entry>
+                <f:entry>
+                    <div align="right">
+                        <input type="button" value="${%Add path...}" class="repeatable-add show-if-last" />
+                        <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
+                    </div>
+                </f:entry>
+            </dm:blockWrapper>
+        </f:repeatable>
+    </f:entry>
+    <f:entry field="canJobDelete" title="${%Clear the contents of the workspace}" help="/plugin/dimensionsscm/candelete.html">
+        <f:checkbox default="false" />
+    </f:entry>
+    <f:entry field="canJobForce" title="${%Always force a build to occur}" help="/plugin/dimensionsscm/canforce.html">
+        <f:checkbox default="false" />
+    </f:entry>
+    <f:entry field="canJobRevert" title="${%Overwrite any locally modified files in workspace}" help="/plugin/dimensionsscm/canrevert.html">
+        <f:checkbox default="false" />
+    </f:entry>
+    <f:advanced>
+        <f:entry>
+            <p>The installation details provided below is the Dimensions SCM repository for this job.
+                These details are used for this job regardless of the default Dimensions SCM repository.</p>
+        </f:entry>
+        <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use update (note: overrides default setting)" checked="${instance.canJobUpdate}" default="true" help="/plugin/dimensionsscm/canupdate.html" inline="true">
+            <f:entry title="${%Expand file substitution variables}" help="/plugin/dimensionsscm/canexpand.html">
+                <f:checkbox name="dimensionsscm.canJobExpand" default="false" checked="${instance.canJobExpand}" />
+            </f:entry>
+            <f:entry title="${%Checkout files with no metadata}" help="/plugin/dimensionsscm/canexport.html">
+                <f:checkbox name="dimensionsscm.canJobNoMetadata" default="false" checked="${instance.canJobNoMetadata}" />
+            </f:entry>
+            <f:entry title="${%Maintain file timestamp from Dimensions}" help="/plugin/dimensionsscm/cannotouch.html">
+                <f:checkbox name="dimensionsscm.canJobNoTouch" default="false" checked="${instance.canJobNoTouch}" />
+            </f:entry>
+            <f:entry title="Default Permissions for updated files" field="permissions">
+                <select class="setting-input" name="dimensionsscm.permissions">
+                    <f:option value="DEFAULT" selected="${'DEFAULT'==instance.permissions}">(Default)</f:option>
+                    <f:option value="READONLY" selected="${'READONLY'==instance.permissions}">Read-only</f:option>
+                    <f:option value="WRITABLE" selected="${'WRITABLE'==instance.permissions}">Writeable</f:option>
+                </select>
+            </f:entry>
+            <f:entry title="Perform End of Line Conversion for updated files" field="eol">
+                <select class="setting-input" name="dimensionsscm.eol">
+                    <f:option value="DEFAULT" selected="${'DEFAULT'==instance.eol}">(Default)</f:option>
+                    <f:option value="UNIX" selected="${'UNIX'==instance.eol}">Unix style end-of-line</f:option>
+                    <f:option value="WINDOWS" selected="${'WINDOWS'==instance.eol}">Windows style end-of-line</f:option>
+                    <f:option value="UNCHANGED" selected="${'UNCHANGED'==instance.eol}">Leave files as they are</f:option>
+                </select>
+            </f:entry>
+        </f:optionalBlock>
+        <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
+            <f:textbox name="dimensionsscm.timeZone" />
+        </f:entry>
+        <f:validateButton title="Validate Timezone..." progress="Validating..." method="checkTz" with="dimensionsscm.timeZone" />
+        <f:entry title="Dimensions Web URL" help="/plugin/dimensionsscm/dimensionsweburl.html">
+            <f:textbox name="dimensionsscm.webUrl" />
+        </f:entry>
+    </f:advanced>
 </j:jelly>

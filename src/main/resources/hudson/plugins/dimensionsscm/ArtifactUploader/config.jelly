@@ -1,26 +1,10 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:u="/util" xmlns:local="local">
-    <d:taglib uri="local">
-        <d:tag name="blockWrapper">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <table style="width:100%">
-                        <d:invokeBody/>
-                    </table>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-    </d:taglib>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:u="/util" xmlns:dm="/lib/dimensionsscm">
     <f:entry>
         <f:radioBlock default="regEx" title="Reg-ex patterns to use for uploading" name="artifactuploader.patternType" value="regEx" checked="${'regEx'==instance.patternType}" help="/plugin/dimensionsscm/helpbuploaded.html">
             <f:entry>
                 <f:repeatable var="patternsRegEx" items="${instance.patternsRegEx}" noAddButton="true" minimum="1">
-                    <local:blockWrapper>
+                    <dm:blockWrapper>
                         <f:entry title="Pattern for Inclusions">
                             <f:textbox name="artifactuploader.patternsRegEx" value="${h.defaulted(patternsRegEx, '.*')}" />
                         </f:entry>
@@ -30,12 +14,12 @@
                                 <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                             </div>
                         </f:entry>
-                    </local:blockWrapper>
+                    </dm:blockWrapper>
                 </f:repeatable>
             </f:entry>
             <f:entry>
                 <f:repeatable var="patternsRegExExc" items="${instance.patternsRegExExc}" noAddButton="true" minimum="1">
-                    <local:blockWrapper>
+                    <dm:blockWrapper>
                         <f:entry title="Pattern for Exclusions">
                             <f:textbox name="artifactuploader.patternsRegExExc" value="${h.defaulted(patternsRegExExc, '')}" />
                         </f:entry>
@@ -45,14 +29,14 @@
                                 <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                             </div>
                         </f:entry>
-                    </local:blockWrapper>
+                    </dm:blockWrapper>
                 </f:repeatable>
             </f:entry>
         </f:radioBlock>
         <f:radioBlock title="Ant patterns to use for uploading" name="artifactuploader.patternType" value="Ant" checked="${'Ant'==instance.patternType}" help="/plugin/dimensionsscm/helpbuploadedant.html">
             <f:entry>
                 <f:repeatable var="patternsAnt" items="${instance.patternsAnt}" noAddButton="true" minimum="1">
-                    <local:blockWrapper>
+                    <dm:blockWrapper>
                         <f:entry title="Pattern for Inclusions">
                             <f:textbox name="artifactuploader.patternsAnt" value="${h.defaulted(patternsAnt, '**/*')}" />
                         </f:entry>
@@ -62,12 +46,12 @@
                                 <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                             </div>
                         </f:entry>
-                    </local:blockWrapper>
+                    </dm:blockWrapper>
                 </f:repeatable>
             </f:entry>
             <f:entry>
                 <f:repeatable var="patternsAntExc" items="${instance.patternsAntExc}" noAddButton="true" minimum="1">
-                    <local:blockWrapper>
+                    <dm:blockWrapper>
                         <f:entry title="Pattern for Exclusions">
                             <f:textbox name="artifactuploader.patternsAntExc" value="${h.defaulted(patternsAntExc, '')}" />
                         </f:entry>
@@ -77,7 +61,7 @@
                                 <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                             </div>
                         </f:entry>
-                    </local:blockWrapper>
+                    </dm:blockWrapper>
                 </f:repeatable>
             </f:entry>
         </f:radioBlock>

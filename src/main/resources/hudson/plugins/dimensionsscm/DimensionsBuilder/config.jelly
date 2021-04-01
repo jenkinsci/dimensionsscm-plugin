@@ -1,23 +1,7 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:local="local">
-    <d:taglib uri="local">
-        <d:tag name="blockWrapper">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <table style="width:100%">
-                        <d:invokeBody/>
-                    </table>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-    </d:taglib>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:dm="/lib/dimensionsscm">
     <f:block>
-        <local:blockWrapper>
+        <dm:blockWrapper>
             <f:entry title="Area" help="/plugin/dimensionsscm/area.html">
                 <f:textbox name="dimensionsbuilder.projectArea" value="${instance.projectArea}" />
             </f:entry>
@@ -58,6 +42,6 @@
             <f:entry title="${%Touch files}" help="/plugin/dimensionsscm/touch.html">
                 <f:checkbox name="dimensionsbuilder.projectTouch" default="false" checked="${instance.projectTouch}" />
             </f:entry>
-        </local:blockWrapper>
+        </dm:blockWrapper>
     </f:block>
 </j:jelly>

@@ -1,23 +1,7 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:local="local">
-    <d:taglib uri="local">
-        <d:tag name="blockWrapper">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <table style="width:100%">
-                        <d:invokeBody/>
-                    </table>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-    </d:taglib>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:dm="/lib/dimensionsscm">
     <f:block>
-        <local:blockWrapper>
+        <dm:blockWrapper>
             <f:advanced>
                 <f:entry title="Owning part for baseline">
                     <f:textbox name="dimensionsbuildnotifier.blnOwningPart" value="${instance.blnOwningPart}" />
@@ -37,8 +21,8 @@
                 </f:entry>
                 <f:entry>
                     <p>(Note - The above options can be used to configure the type of baseline that is
-                    used to tag this build. You should only change these options if you are
-                    a knowledgeable Dimensions user).</p>
+                        used to tag this build. You should only change these options if you are
+                        a knowledgeable Dimensions user).</p>
                 </f:entry>
                 <f:entry title="Baseline Name Template" help="/plugin/dimensionsscm/blnName.html">
                     <f:textbox name="dimensionsbuildnotifier.blnName" value="${instance.blnName}" />
@@ -77,6 +61,6 @@
                     <f:textbox name="dimensionsbuildnotifier.actionState" value="${instance.actionState}" />
                 </f:entry>
             </f:optionalBlock>
-        </local:blockWrapper>
+        </dm:blockWrapper>
     </f:block>
 </j:jelly>

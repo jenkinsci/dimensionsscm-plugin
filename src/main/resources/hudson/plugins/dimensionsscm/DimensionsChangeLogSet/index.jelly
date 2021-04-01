@@ -4,7 +4,9 @@
     <h2>${%Summary}</h2>
     <ol>
         <j:forEach var="cs" items="${it.logs}">
-            <li><st:out value="${cs.msg}" /></li>
+            <li>
+                <st:out value="${cs.msg}" />
+            </li>
         </j:forEach>
     </ol>
     <table class="pane" style="border:none">
@@ -13,7 +15,8 @@
                 <td colspan="3" class="changeset">
                     <a name="detail${loop.index}"></a>
                     <div class="changeset-message">
-                        <b>Commit by <a href="${rootURL}/${cs.author.url}/">${cs.author}</a> :</b><br />
+                        <b>Commit by <a href="${rootURL}/${cs.author.url}/">${cs.author}</a> :</b>
+                        <br />
                         ${cs.msgAnnotated}
                     </div>
                 </td>
@@ -24,7 +27,9 @@
                         <tr>
                             <td></td>
                             <j:if test="${req.url!=null}">
-                                <td><a href="${req.url}">${req.identifier}</a></td>
+                                <td>
+                                    <a href="${req.url}">${req.identifier}</a>
+                                </td>
                             </j:if>
                             <j:if test="${req.url==null}">
                                 <td>${req.identifier}</td>
@@ -48,7 +53,9 @@
                                     <t:editTypeIcon type="${item.editType}" />
                                 </td>
                                 <j:if test="${item.url!=null}">
-                                    <td><a href="${item.url}">${item.file}</a></td>
+                                    <td>
+                                        <a href="${item.url}">${item.file}</a>
+                                    </td>
                                 </j:if>
                                 <j:if test="${item.url==null}">
                                     <td>${item.file}</td>

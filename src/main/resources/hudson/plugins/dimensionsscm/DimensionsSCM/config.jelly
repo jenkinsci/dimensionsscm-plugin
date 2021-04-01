@@ -1,27 +1,11 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:local="local">
-    <d:taglib uri="local">
-        <d:tag name="blockWrapper">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <table style="width:100%">
-                        <d:invokeBody/>
-                    </table>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-    </d:taglib>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:dm="/lib/dimensionsscm">
     <f:entry title="Project Name" help="/plugin/dimensionsscm/project.html" field="project">
         <f:textbox default="Enter your projectId here" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
         <i>(the format used must be PRODUCT_ID:PROJECT_NAME even for streams)</i>
     </f:entry>
     <f:entry title="${%Choose appropriate credential type:}">
-        <local:blockWrapper>
+        <dm:blockWrapper>
             <f:entry></f:entry>
             <f:radioBlock name="credentialsType" checked="${instance.isChecked('pluginDefined')}" title="Credentials" value="pluginDefined" inline="true" help="/plugin/dimensionsscm/pluginDefined.html">
                 <f:nested>
@@ -88,7 +72,7 @@
                         <i>(the format used must be database@dsn)</i>
                     </f:entry>
                     <f:nested>
-                        <local:blockWrapper>
+                        <dm:blockWrapper>
                             <f:optionalBlock name="dimensionsscm.secureAgentAuth" title="Secure agent authentication" checked="${instance.isSecureAgentAuth()}" default="false" inline="true" help="/plugin/dimensionsscm/secureAgentAuth.html">
                                 <f:entry></f:entry>
                                 <f:entry title="Remote certificate path" help="/plugin/dimensionsscm/remoteCertificatePath.html">
@@ -98,7 +82,7 @@
                                     <input type="password" class="setting-input" name="dimensionsscm.remoteCertificatePassword" value="${instance.getRemoteCertificatePassword()}" placeholder="Enter certificate password here" />
                                 </f:entry>
                             </f:optionalBlock>
-                        </local:blockWrapper>
+                        </dm:blockWrapper>
                     </f:nested>
                     <f:entry>
                         <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore" with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias" />
@@ -106,11 +90,11 @@
                 </f:nested>
             </f:radioBlock>
             <f:entry></f:entry>
-        </local:blockWrapper>
+        </dm:blockWrapper>
     </f:entry>
     <f:entry title="${%Folders To Monitor}" field="folders">
         <f:repeatable noAddButton="true" minimum="1" field="folders">
-            <local:blockWrapper>
+            <dm:blockWrapper>
                 <f:entry title="Folder" help="/plugin/dimensionsscm/directory.html">
                     <f:textbox field="value" />
                 </f:entry>
@@ -120,12 +104,12 @@
                         <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                     </div>
                 </f:entry>
-            </local:blockWrapper>
+            </dm:blockWrapper>
         </f:repeatable>
     </f:entry>
     <f:entry title="${%Paths to exclude from monitoring}" field="pathsToExclude">
         <f:repeatable noAddButton="true" minimum="1" field="pathsToExclude">
-            <local:blockWrapper>
+            <dm:blockWrapper>
                 <f:entry title="Path" help="/plugin/dimensionsscm/excludedPaths.html">
                     <f:textbox field="value" />
                 </f:entry>
@@ -135,7 +119,7 @@
                         <input type="button" value="${%Delete}" class="repeatable-delete show-if-not-only" style="margin-left: 1em;" />
                     </div>
                 </f:entry>
-            </local:blockWrapper>
+            </dm:blockWrapper>
         </f:repeatable>
     </f:entry>
     <f:entry field="canJobDelete" title="${%Clear the contents of the workspace}" help="/plugin/dimensionsscm/candelete.html">
@@ -150,7 +134,7 @@
     <f:advanced>
         <f:entry>
             <p>The installation details provided below is the Dimensions SCM repository for this job.
-            These details are used for this job regardless of the default Dimensions SCM repository.</p>
+                These details are used for this job regardless of the default Dimensions SCM repository.</p>
         </f:entry>
         <f:optionalBlock name="dimensionsscm.canJobUpdate" title="Use update (note: overrides default setting)" checked="${instance.canJobUpdate}" default="true" help="/plugin/dimensionsscm/canupdate.html" inline="true">
             <f:entry title="${%Expand file substitution variables}" help="/plugin/dimensionsscm/canexpand.html">
