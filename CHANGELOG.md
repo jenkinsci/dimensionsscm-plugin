@@ -2,7 +2,7 @@
 
 ### 0.8.19
 
--   _Released: Apr 2, 2021_
+-   _Released: Apr 6, 2021_
 -   Bugfix: tables-to-div-regression - Jenkins v2.264+ (so Jenkins LTS
     v2.277+) introduced a new form renderer which broke system and job
     configuration forms if Dimensions plugin was installed
