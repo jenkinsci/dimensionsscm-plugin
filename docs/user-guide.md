@@ -108,20 +108,20 @@ populate your workspace.
 
 #### Advanced Options
 
-The *Advanced...* tag shown below allows you to specify if the
-Dimensions server installation is running in a different time zone than
-the current Jenkins installation. This is useful if you are running in a
-geographically distributed environment.
+The *Advanced...* button shows an extra field that allows you to specify
+if the Dimensions server installation is running in a different time zone
+than the current Jenkins installation. This is useful if you are running
+in a geographically distributed environment.
 
 ------------------------------------------------------------------------
 
-![global configuration advanced fields](/docs/images/system-config-advanced.jpg)
+![global advanced configuration](/docs/images/global-advanced-configuration.png)
 
 ------------------------------------------------------------------------
 
-The *Advanced...* tag also allows you to specify an optional Dimensions
-Web client installation that can be used to directly access files in
-Dimensions to perform Dimensions operations on them via the Web client.
+The *Advanced...* button also shows a field that allows you to optionally
+specify a Dimensions Web client installation used to access the files and
+perform operations on them using the Dimensions Web client.
 
 ### Freestyle Job Configuration
 
@@ -155,7 +155,7 @@ Dimensions server in a number of different ways:
 The *Folder Name* refers to a specific folder name in the Dimensions
 project or stream that the job can monitor. This should be specified in
 UNIX format and represent the high-level folder from which files will be
-monitored. If you leave this field blank or specify '/', then all the
+monitored. If you leave this field blank or specify '`/`', then all the
 contents of the project/stream will be monitored. You can specify
 multiple folders to monitor or just leave it blank to monitor
 everything.
@@ -201,36 +201,39 @@ To specify pipeline job with help of Dimensions plugin in
     the *Pipeline Syntax/Snippet Generator* section, or you can enter
     it manually.
     
-    **Syntax**:
+    <span style="text-decoration:underline">Syntax:</span>
     
     The name of the command is **dimensionsscm**. Also you should
     specify the required parameters: project name, credentials type
     and login details. Login details can be specified in 3 ways:
     
-    1.  Credentials type **'pluginDefined'**. You need to specify
-        *credentialsId*, *pluginServer*, *pluginDatabase* parameters.
-        
-        Ex.: **dimensionsscm credentialsId:** 'cred_id'**,**
-        **credentialsType:** 'pluginDefined'**, pluginDatabase:**
-        'cm_typical@DIM10'**, pluginServer:** 'stl-ta-vcw1-9'**,**
-        **project:** 'PROD_ID:STREAM_NAME'
-        
-    2.  Credentials type **'userDefined'**. You need to specify
-        *userName*, *password*, *userServer*, *userDatabase*
+    1.  `credentialsType: 'pluginDefined'`. You need to specify
+        the `credentialsId`, `pluginServer` and `pluginDatabase`
         parameters.
         
-        Ex.: **dimensionsscm credentialsType:** 'userDefined'**,**
-        **password:** 'pass_value'**, project:**
-        'PROD_ID:STREAM_NAME'**, userDatabase:**
-        'cm_typical@DIM12'**, userName:** 'user_name'**,**
-        **userServer:** 'stl-ta-vcw12-9'
+        Ex.: `dimensionsscm credentialsType: 'pluginDefined', `
+        `credentialsId: 'credentialname', `
+        `pluginDatabase: 'cm_typical@DIM14', `
+        `pluginServer: 'stl-ta-vcw1-9', `
+        `project: 'PRODNAME:STREAMNAME'`
         
-    3.  Credentials type **'globalDefined'**. No additional
-        parameters required. In this case all credential details will
-        be taken from *Configure system* page.
+    2.  `credentialsType: 'userDefined'`. You need to specify
+        the `userName`, `password`, `userServer` and `userDatabase`
+        parameters.
         
-        Ex.: **dimensionsscm credentialsType:** 'globalDefined'**,**
-        **project:** 'PROD_ID:STREAM_NAME'
+        Ex.: `dimensionsscm credentialsType: 'userDefined', `
+        `userName: 'username', `
+        `password: 'P@ssw0rd', `
+        `userDatabase: 'cm_typical@DIM14', `
+        `userServer: 'stl-ta-vcw12-9', `
+        `project: 'PRODNAME:STREAMNAME'`
+        
+    3.  `credentialsType: 'globalDefined'`. No additional
+        parameters are required. In this case all credential
+        details will be taken from *Configure System* page.
+        
+        Ex.: `dimensionsscm credentialsType: 'globalDefined', `
+        `project: 'PRODNAME:STREAMNAME'`
         
 2)  Choose *Pipeline/Workflow script from SCM* option in the
     *Definition* drop-down list. This means that you can add a file
@@ -239,7 +242,7 @@ To specify pipeline job with help of Dimensions plugin in
     the file. Configuration of Pipeline/Workflow job is the same as
     in Freestyle project.
 
-#### Job Build Options
+### Job Build Options
 
 Options are also available that allow you to:
 
@@ -596,20 +599,9 @@ taken or implied about how the plugin will behave in these conditions.
     Dimensions Plugin will still use the user account configured as the
     *Login Name* and *Password* in the *Advanced* view of the **Source
     Code Management** section.
--   Jenkins 2.9 - 2.11 are affected by *JENKINS-35906* (causes
+-   Jenkins v2.9 - v2.11 were affected by *JENKINS-35906* (causes
     `java.lang.IllegalArgumentException: Failed to instantiate class hudson.scm.SCM`).
-    Workaround is to upgrade to Jenkins 2.12 or later.
-
-## Possible future changes
-
-The following are a list of possible future changes to the plugin
-
--   Documentation: Update the wiki with new screen dumps for improved
-    options and document best practices
--   Enhancement: Code diff'ing from the change logs
--   Enhancement: Timeout on job polling
--   Bugfix: Change-set generation to handle HTTPS
--   Enhancement: Upload artifacts to support requests
+    Workaround is to upgrade to Jenkins v2.12 or later.
 
 ## Releases
 
