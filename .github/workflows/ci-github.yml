@@ -1,5 +1,5 @@
 # GitHub Action based CI build
-name: Maven Build
+name: ci github
 on: [push, pull_request]
 jobs:
   build:

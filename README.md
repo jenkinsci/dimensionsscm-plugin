@@ -1,11 +1,11 @@
 # Jenkins Dimensions Plugin
 
-[![plugin version](https://img.shields.io/jenkins/plugin/v/dimensionsscm.svg?color=blue)](https://plugins.jenkins.io/dimensionsscm) <!--
-[![changelog](https://img.shields.io/github/release/jenkinsci/dimensionsscm-plugin.svg?color=blue&label=changelog)](/CHANGELOG.md)
-[![installs](https://img.shields.io/jenkins/plugin/i/dimensionsscm.svg?color=blue)](https://plugins.jenkins.io/dimensionsscm) -->
-[![jenkins version](https://img.shields.io/badge/jenkins-v2.222.4-blue.svg)](https://jenkins.io/download/lts)
+[![plugin version](https://img.shields.io/jenkins/plugin/v/dimensionsscm.svg?color=blue)](https://plugins.jenkins.io/dimensionsscm)
+[![changelog](https://img.shields.io/github/v/tag/jenkinsci/dimensionsscm-plugin.svg?color=blue&label=changelog)](/CHANGELOG.md)
+[![installs](https://img.shields.io/jenkins/plugin/i/dimensionsscm.svg?color=blue)](https://plugins.jenkins.io/dimensionsscm)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE.txt)
-[![build status](https://ci.jenkins.io/buildStatus/icon?job=Plugins%2Fdimensionsscm-plugin%2Fmaster&subject=jenkins%20ci)](https://ci.jenkins.io/job/Plugins/job/dimensionsscm-plugin/job/master/)
+[![ci jenkins.io](https://ci.jenkins.io/buildStatus/icon?job=Plugins%2Fdimensionsscm-plugin%2Fmaster&subject=ci%20jenkins.io)](https://ci.jenkins.io/job/Plugins/job/dimensionsscm-plugin/job/master/)
+[![ci github](https://github.com/jenkinsci/dimensionsscm-plugin/actions/workflows/ci-github.yml/badge.svg)](https://github.com/jenkinsci/dimensionsscm-plugin/actions/workflows/ci-github.yml)
 
 This plugin integrates the
 [Dimensions CM](https://www.microfocus.com/products/dimensions-cm/)
