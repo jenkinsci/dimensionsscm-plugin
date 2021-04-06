@@ -720,8 +720,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Lock a project.
-     *
-     * @throws DimensionsRuntimeException
      */
     public DimensionsResult lockProject(long key, String projectId) {
         DimensionsConnection connection = getCon(key);
@@ -747,8 +745,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Unlock a project.
-     *
-     * @throws DimensionsRuntimeException
      */
     public DimensionsResult unlockProject(long key, String projectId) {
         DimensionsConnection connection = getCon(key);
@@ -774,8 +770,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Build a baseline.
-     *
-     * @throws DimensionsRuntimeException
      */
     public DimensionsResult buildBaseline(long key, String area, String projectId, boolean batch, boolean buildClean,
                                           String buildConfig, String options, boolean capture, String requests, String targets, Run<?, ?> build,
@@ -848,8 +842,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Build a project.
-     *
-     * @throws DimensionsRuntimeException
      */
     public DimensionsResult buildProject(long key, String area, String projectId, boolean batch, boolean buildClean,
                                          String buildConfig, String options, boolean capture, String requests, String targets, String stage,
@@ -938,8 +930,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Upload files.
-     *
-     * @throws DimensionsRuntimeException
      */
     public DimensionsResult UploadFiles(long key, FilePath rootDir, String projectId, File cmdFile, String projectName,
                                         int buildNo, String requests, boolean forceCheckIn, boolean forceTip, String owningPart) {
@@ -996,8 +986,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Create a project tag.
-     *
-     * @throws DimensionsRuntimeException
      */
     public DimensionsResult createBaseline(long key, String dcmProjectVersion, Run<?, ?> build, String blnScope,
                                            String blnTemplate, String blnOwningPart, String blnType, String requestId, String blnId, String blnName,
@@ -1102,8 +1090,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Deploy a baseline.
-     *
-     * @throws DimensionsRuntimeException
      */
     public DimensionsResult deployBaseline(long key, String projectId, Run<?, ?> build, String state,
                                            String blnName) {
@@ -1141,8 +1127,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Action a baseline.
-     *
-     * @throws DimensionsRuntimeException
      */
     public DimensionsResult actionBaseline(long key, String projectId, Run<?, ?> build, String state,
                                            String blnName) {
@@ -1180,8 +1164,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Construct the change list.
-     *
-     * @throws DimensionsRuntimeException
      */
     Map<String, DimensionsChangeLogEntry> createChangeList(List<ItemRevision> items, TimeZone tz, String url) {
         Map<String, DimensionsChangeLogEntry> entries = new HashMap<String, DimensionsChangeLogEntry>();
@@ -1555,8 +1537,6 @@ public class DimensionsAPI implements Serializable {
 
     /**
      * Flatten the list of related requests.
-     *
-     * @throws DimensionsRuntimeException
      */
     private void addDmChildRequests(Request request, List<? super Request> requestList) {
         try {
@@ -1689,7 +1669,6 @@ public class DimensionsAPI implements Serializable {
      * @param dateAfter   Date filter
      * @param dateBefore  Date filter
      * @return List
-     * @throws DimensionsRuntimeException
      */
     public List<ItemRevision> getItemsInRequests(DimensionsConnection connection, final String projectName, final String requests,
                                                  final String dateAfter, final String dateBefore) {

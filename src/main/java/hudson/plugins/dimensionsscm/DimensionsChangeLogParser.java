@@ -27,7 +27,7 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
      *
      * <pre>
      * \@Override
-     * public DimensionsChangeLogSet parse(Run run, RepositoryBrowser<?> browser, File changelogFile) throws IOException, SAXException {
+     * public DimensionsChangeLogSet parse(Run run, RepositoryBrowser&lt;?&gt; browser, File changelogFile) throws IOException, SAXException {
      *     return new DimensionsChangeLogSet(run, browser, digest(changelogFile));
      * }
      * </pre>
