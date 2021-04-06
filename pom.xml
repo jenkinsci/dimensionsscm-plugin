@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>dimensionsscm</artifactId>
-    <version>0.8.20-SNAPSHOT</version>
+    <version>0.8.19-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Jenkins Dimensions Plugin</name>
     <description>This plugin integrates the Dimensions CM SCM with Jenkins.</description>
