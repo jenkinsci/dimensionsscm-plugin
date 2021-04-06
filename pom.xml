@@ -151,7 +151,7 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>display-info</id>
+                        <id>no-snapshots-in-release</id>
                         <configuration>
                             <rules>
                                 <requireReleaseDeps>
