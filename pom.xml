@@ -25,7 +25,6 @@
     </licenses>
 
     <developers>
-        <!-- Tim Payne (`tpayne`) created the original Jenkins Dimensions Plugin -->
         <developer>
             <id>dconneely</id>
             <name>David Conneely</name>
@@ -51,18 +50,6 @@
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
         <spotbugs.skip>true</spotbugs.skip>
     </properties>
-
-    <profiles>
-        <profile>
-            <id>disable-doclint-java8</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <properties>
-                <additionalparam>-Xdoclint:none</additionalparam>
-            </properties>
-        </profile>
-    </profiles>
 
     <repositories>
         <repository>

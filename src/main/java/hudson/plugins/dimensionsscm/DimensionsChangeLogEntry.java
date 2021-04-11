@@ -7,9 +7,15 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import static java.util.Comparator.*;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
@@ -23,8 +29,8 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
     private final String identifier;
     private Calendar date;
     private String version;
-    private final Collection<FileChange> fileChanges;
-    private final Collection<IRTRequest> irtRequests;
+    private final Set<FileChange> fileChanges;
+    private final Set<IRTRequest> irtRequests;
 
     // Digester class seems to need a no-parameter constructor else it crashes
     public DimensionsChangeLogEntry() {
@@ -36,15 +42,15 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
      * Note that `file` is a path name and revision, separated by a ';' character.
      */
     public DimensionsChangeLogEntry(String file, String developer, String op, String revision, String comment, String url,
-                                    Calendar date) {
+            Calendar date) {
         this.identifier = file;
         this.developer = developer;
         this.message = comment;
         this.date = date;
         this.version = revision;
-        this.fileChanges = new HashSet<FileChange>();
+        this.fileChanges = new HashSet<>();
         this.fileChanges.add(new FileChange(file, op, url));
-        this.irtRequests = new HashSet<IRTRequest>();
+        this.irtRequests = new HashSet<>();
     }
 
     @Override
@@ -71,24 +77,28 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
     }
 
     public Collection<FileChange> getFiles() {
-        return this.fileChanges;
+        List<FileChange> list = new ArrayList<>();
+        list.addAll(this.fileChanges);
+        Collections.sort(list);
+        return list;
     }
 
     public Collection<IRTRequest> getRequests() {
-        return this.irtRequests;
+        List<IRTRequest> list = new ArrayList<>();
+        list.addAll(this.irtRequests);
+        Collections.sort(list);
+        return list;
     }
 
     @Override
     public Collection<FileChange> getAffectedFiles() {
-        return Collections.unmodifiableCollection(fileChanges);
+        return Collections.unmodifiableCollection(getFiles());
     }
 
     @Override
     public Collection<String> getAffectedPaths() {
-        Collection<String> paths = new ArrayList<String>(fileChanges.size());
-        for (FileChange fileChange : fileChanges) {
-            paths.add(fileChange.getFile());
-        }
+        List<String> paths = getFiles().stream().map(FileChange::getFile).collect(Collectors.toList());
+        Collections.sort(paths);
         return paths;
     }
 
@@ -175,7 +185,7 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
      * An individual file-change made in the repository for this entry.
      */
     @ExportedBean(defaultVisibility = 999)
-    public static class FileChange implements ChangeLogSet.AffectedFile {
+    public static final class FileChange implements ChangeLogSet.AffectedFile, Comparable<FileChange> {
         private String file;
         private String operation;
         private String url;
@@ -191,6 +201,35 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
             this.file = file;
             this.url = url;
             this.operation = operation;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (this == obj) {
+                return true;
+            } else if (!(obj instanceof FileChange)) {
+                return false;
+            } else {
+                FileChange that = (FileChange) obj;
+                return Objects.equals(this.file, that.file)
+                        && Objects.equals(this.operation, that.operation)
+                        && Objects.equals(this.url, that.url);
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(file, operation, url);
+        }
+
+        private static final Comparator<FileChange> COMPARATOR = nullsFirst(
+                comparing(FileChange::getFile, nullsFirst(naturalOrder()))
+                        .thenComparing(FileChange::getOperation, nullsFirst(naturalOrder()))
+                        .thenComparing(FileChange::getUrl, nullsFirst(naturalOrder())));
+
+        @Override
+        public int compareTo(final FileChange that) {
+            return COMPARATOR.compare(this, that);
         }
 
         @Exported
@@ -271,7 +310,7 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
     }
 
     @ExportedBean(defaultVisibility = 999)
-    public static class IRTRequest {
+    public static final class IRTRequest implements Comparable<IRTRequest> {
         private String identifier;
         private String url;
         private String title;
@@ -290,6 +329,33 @@ public class DimensionsChangeLogEntry extends ChangeLogSet.Entry {
             this.identifier = objectID;
             this.url = url;
             this.title = title;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj instanceof IRTRequest) {
+                IRTRequest that = (IRTRequest) obj;
+                return Objects.equals(this.identifier, that.identifier)
+                        && Objects.equals(this.title, that.title)
+                        && Objects.equals(this.url, that.url);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(identifier, title, url);
+        }
+
+        private static final Comparator<IRTRequest> COMPARATOR = nullsFirst(
+                comparing(IRTRequest::getIdentifier, nullsFirst(naturalOrder()))
+                        .thenComparing(IRTRequest::getTitle, nullsFirst(naturalOrder()))
+                        .thenComparing(IRTRequest::getUrl, nullsFirst(naturalOrder())));
+
+        @Override
+        public int compareTo(final IRTRequest that) {
+            return COMPARATOR.compare(this, that);
         }
 
         @Exported

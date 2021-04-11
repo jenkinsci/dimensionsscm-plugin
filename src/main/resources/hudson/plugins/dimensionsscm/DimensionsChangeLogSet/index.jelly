@@ -1,76 +1,85 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <j:set var="browser" value="${it.build.parent.scm.effectiveBrowser}" />
+    <j:set var="browser" value="${it.browser}" />
     <h2>${%Summary}</h2>
     <ol>
-        <j:forEach var="cs" items="${it.logs}">
+        <j:forEach var="cs" items="${it.items}" varStatus="loop">
             <li>
-                <st:out value="${cs.msg}" />
+                <j:out value="${cs.msgAnnotated}"/>
+                (<a href="#detail${loop.index}">${%detail}</a>)
             </li>
         </j:forEach>
     </ol>
     <table class="pane" style="border:none">
         <j:forEach var="cs" items="${it.items}" varStatus="loop">
             <tr class="pane">
-                <td colspan="3" class="changeset">
-                    <a name="detail${loop.index}"></a>
+                <td colspan="4" class="changeset">
                     <div class="changeset-message">
-                        <b>Commit by <a href="${rootURL}/${cs.author.url}/">${cs.author}</a> :</b>
-                        <br />
-                        ${cs.msgAnnotated}
+                        <a name="detail${loop.index}" id="detail${loop.index}">
+                            <strong>
+                                Commit
+                                by <a href="${rootURL}/${cs.author.url}/">${cs.author.displayName}</a>
+                            </strong>
+                        </a>
+                        <pre>
+                            <j:out value="${cs.msgAnnotated}"/>
+                        </pre>
                     </div>
                 </td>
             </tr>
             <j:if test="${cs.requests.size()>0}">
-                <f:section title="Requests used for this Commit">
-                    <j:forEach var="req" items="${cs.requests}">
+                <j:forEach var="item" items="${cs.requests}">
+                    <j:if test="${item!=null and item.identifier!=null}">
                         <tr>
-                            <td></td>
-                            <j:if test="${req.url!=null}">
-                                <td>
-                                    <a href="${req.url}">${req.identifier}</a>
-                                </td>
-                            </j:if>
-                            <j:if test="${req.url==null}">
-                                <td>${req.identifier}</td>
-                            </j:if>
-                            <j:if test="${req.title==null}">
-                                <td></td>
-                            </j:if>
-                            <j:if test="${req.title!=null}">
-                                <td>${req.title}</td>
-                            </j:if>
-                        </tr>
-                    </j:forEach>
-                </f:section>
-            </j:if>
-            <f:section title="Files that changed in this Commit">
-                <f:advanced title="Files">
-                    <j:forEach var="item" items="${cs.files}">
-                        <tr>
-                            <j:if test="${item.file!=null}">
-                                <td style="width:16px;">
-                                    <t:editTypeIcon type="${item.editType}" />
-                                </td>
-                                <j:if test="${item.url!=null}">
-                                    <td>
-                                        <a href="${item.url}">${item.file}</a>
-                                    </td>
+                            <td style="width:16px;">
+                                <l:icon src="${resURL}/plugin/dimensionsscm/images/request-16x16.png"/>
+                            </td>
+                            <td style="width:10em;">
+                                <j:set var="rlink" value="${browser.getRequestLink(item)}" />
+                                <j:if test="${rlink!=null}">
+                                    <a href="${rlink}">${item.identifier}</a>
                                 </j:if>
-                                <j:if test="${item.url==null}">
-                                    <td>${item.file}</td>
+                                <j:if test="${rlink==null}">
+                                    ${item.identifier}
                                 </j:if>
-                            </j:if>
+                            </td>
                             <td>
-                                <j:set var="diff" value="${browser.getDiffLink(item)}" />
-                                <j:if test="${diff!=null}">
-                                    <a href="${diff}">(diff)</a>
+                                <j:if test="${item.title!=null}">
+                                    ${item.title}
+                                </j:if>
+                            </td>
+                            <td style="width:5em;">
+                            </td>
+                        </tr>
+                    </j:if>
+                </j:forEach>
+            </j:if>
+            <j:if test="${cs.files.size()>0}">
+                <j:forEach var="item" items="${cs.files}">
+                    <j:if test="${item!=null and item.file!=null}">
+                        <tr>
+                            <td style="width:16px;">
+                                <t:editTypeIcon type="${item.editType}" />
+                            </td>
+                            <td colspan="2">
+                                <j:set var="flink" value="${browser.getFileLink(item)}" />
+                                <j:if test="${flink!=null}">
+                                    <a href="${flink}">${item.file}</a>
+                                </j:if>
+                                <j:if test="${flink==null}">
+                                    ${item.file}
+                                </j:if>
+                            </td>
+                            <td style="width:5em;">
+                                <j:set var="dlink" value="${browser.getDiffLink(item)}" />
+                                <j:if test="${dlink!=null}">
+                                    (<a href="${dlink}">diff</a>)
                                 </j:if>
                             </td>
                         </tr>
-                    </j:forEach>
-                </f:advanced>
-            </f:section>
+                    </j:if>
+                </j:forEach>
+            </j:if>
         </j:forEach>
     </table>
 </j:jelly>
