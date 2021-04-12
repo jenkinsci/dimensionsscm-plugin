@@ -1,6 +1,5 @@
 package hudson.plugins.dimensionsscm;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.RepositoryBrowser;
@@ -15,33 +14,21 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.digester.Digester;
-import org.apache.commons.io.IOUtils;
 import org.xml.sax.SAXException;
 
 /**
  * Parses a changelog file.
  */
 public class DimensionsChangeLogParser extends ChangeLogParser {
-    /**
-     * When move to 1.568+, deprecate the AbstractBuild method and add the following method signature:
-     *
-     * <pre>
-     * \@Override
-     * public DimensionsChangeLogSet parse(Run run, RepositoryBrowser&lt;?&gt; browser, File changelogFile) throws IOException, SAXException {
-     *     return new DimensionsChangeLogSet(run, browser, digest(changelogFile));
-     * }
-     * </pre>
-     */
     @Override
-    public DimensionsChangeLogSet parse(Run build, RepositoryBrowser<?> browser, File changelogFile)
-            throws IOException, SAXException {
-        return new DimensionsChangeLogSet(build, browser, digest(changelogFile));
+    public DimensionsChangeLogSet parse(final Run run, final RepositoryBrowser<?> browser, final File changelogFile) throws IOException, SAXException {
+        return new DimensionsChangeLogSet(run, browser, digest(changelogFile));
     }
 
-    private List<DimensionsChangeLogEntry> digest(File changelogFile) throws IOException, SAXException {
+    private List<DimensionsChangeLogEntry> digest(final File changelogFile) throws IOException, SAXException {
         Logger.debug("Looking for '" + changelogFile.getPath() + "'");
         if (!changelogFile.canRead()) {
-            String message = "Specified changelog file does not exist or is not readable: " + changelogFile.getPath();
+            final String message = "Specified changelog file does not exist or is not readable: " + changelogFile.getPath();
             Logger.debug(message);
             throw new FileNotFoundException(message);
         }
@@ -57,46 +44,36 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
         return entries;
     }
 
-    private List<DimensionsChangeLogEntry> digest(File changelogFile, String charEncoding)
-            throws IOException, SAXException {
-        Reader reader;
-        if (charEncoding != null) {
-            reader = new InputStreamReader(new FileInputStream(changelogFile), charEncoding);
-        } else {
-            reader = new FileReader(changelogFile);
-        }
-        try {
+    private List<DimensionsChangeLogEntry> digest(final File changelogFile, final String charEncoding) throws IOException, SAXException {
+        try (final Reader reader = (charEncoding != null)
+                ? new InputStreamReader(new FileInputStream(changelogFile), charEncoding)
+                : new FileReader(changelogFile)) {
             return digest(reader);
-        } finally {
-            IOUtils.closeQuietly(reader);
         }
     }
 
-    private List<DimensionsChangeLogEntry> digest(Reader reader) throws IOException, SAXException {
-        List<DimensionsChangeLogEntry> entries = new ArrayList<DimensionsChangeLogEntry>();
-        Digester digester = createDigester(entries);
+    private List<DimensionsChangeLogEntry> digest(final Reader reader) throws IOException, SAXException {
+        final List<DimensionsChangeLogEntry> entries = new ArrayList<>();
+        final Digester digester = createDigester(entries);
         digester.parse(reader);
         return entries;
     }
 
-    private Digester createDigester(Object top) {
-        Digester digester = new Digester2();
+    private Digester createDigester(final Object top) {
+        final Digester digester = new Digester2();
         digester.push(top);
-
         digester.addObjectCreate("*/changeset", DimensionsChangeLogEntry.class);
         digester.addSetProperties("*/changeset");
         digester.addBeanPropertySetter("*/changeset/date", "dateString");
         digester.addBeanPropertySetter("*/changeset/user");
         digester.addBeanPropertySetter("*/changeset/comment");
         digester.addSetNext("*/changeset", "add");
-
         digester.addObjectCreate("*/changeset/items/item", DimensionsChangeLogEntry.FileChange.class);
         digester.addSetProperties("*/changeset/items/item");
         digester.addBeanPropertySetter("*/changeset/items/item", "file");
         digester.addBeanPropertySetter("*/changeset/items/item/editType", "operation");
         digester.addBeanPropertySetter("*/changeset/items/item/url", "url");
         digester.addSetNext("*/changeset/items/item", "add");
-
         digester.addObjectCreate("*/changeset/requests/request", DimensionsChangeLogEntry.IRTRequest.class);
         digester.addSetProperties("*/changeset/requests/request");
         digester.addBeanPropertySetter("*/changeset/requests/request", "identifier");

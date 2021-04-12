@@ -1,22 +1,18 @@
 package hudson.plugins.dimensionsscm;
 
-
 import com.serena.dmclient.api.DimensionsConnection;
 import com.serena.dmclient.api.DimensionsObjectFactory;
-import junit.framework.TestCase;
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-
+import junit.framework.TestCase;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.MatcherAssert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +22,7 @@ public class CallbackInstanceVersionTest extends TestCase {
     private String serverVersion;
     private Class callbackClass;
 
-    public CallbackInstanceVersionTest(String serverVersion, Class callbackClass) {
+    public CallbackInstanceVersionTest(final String serverVersion, final Class callbackClass) {
         this.callbackClass = callbackClass;
         this.serverVersion = serverVersion;
     }
@@ -46,27 +42,22 @@ public class CallbackInstanceVersionTest extends TestCase {
         });
     }
 
-
     @Before
     public void resetSingleton() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
-        Field instance = CallbackInstance.class.getDeclaredField("dimensionsAPICallback");
+        final Field instance = CallbackInstance.class.getDeclaredField("dimensionsAPICallback");
         instance.setAccessible(true);
         instance.set(null, null);
     }
 
     @Test
     public void getInstanceTest() {
-        DimensionsConnection dimensionsConnection = mock(DimensionsConnection.class);
-        DimensionsObjectFactory dimensionsObjectFactory = mock(DimensionsObjectFactory.class);
-
+        final DimensionsConnection dimensionsConnection = mock(DimensionsConnection.class);
+        final DimensionsObjectFactory dimensionsObjectFactory = mock(DimensionsObjectFactory.class);
         when(dimensionsConnection.getObjectFactory()).thenReturn(dimensionsObjectFactory);
         when(dimensionsConnection.getObjectFactory().getServerVersion(0)).thenReturn(Collections.singletonList(this.serverVersion));
-
-        DimensionsAPICallback apiCallback = CallbackInstance.getInstance(dimensionsConnection, null, null);
+        final DimensionsAPICallback apiCallback = CallbackInstance.getInstance(dimensionsConnection, null, null);
         assertThat(apiCallback, instanceOf(this.callbackClass));
-
-        DimensionsAPICallback apiCallbackSameObject = CallbackInstance.getInstance(dimensionsConnection, null, null);
+        final DimensionsAPICallback apiCallbackSameObject = CallbackInstance.getInstance(dimensionsConnection, null, null);
         assertEquals(apiCallback, apiCallbackSameObject);
     }
-
 }

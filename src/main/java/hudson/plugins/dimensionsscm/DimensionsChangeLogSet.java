@@ -3,6 +3,7 @@ package hudson.plugins.dimensionsscm;
 import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.RepositoryBrowser;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -13,27 +14,13 @@ import java.util.List;
 public final class DimensionsChangeLogSet extends ChangeLogSet<DimensionsChangeLogEntry> {
     private final List<DimensionsChangeLogEntry> entries;
 
-    /**
-     * When move to 1.568+, modify the following constructor:
-     *
-     * <pre>
-     * DimensionsChangeLogSet(Run run, RepositoryBrowser<?> browser, List<DimensionsChangeLogEntry> entries) {
-     *     super(run, browser);
-     *     this.entries = incorporateChanges(entries, this);
-     * }
-     * </pre>
-     */
-    DimensionsChangeLogSet(Run<?, ?> build, RepositoryBrowser<?> browser, List<DimensionsChangeLogEntry> entries) {
-        super(build, browser);
-        this.entries = incorporateChanges(entries, this);
-    }
-
-    private static List<DimensionsChangeLogEntry> incorporateChanges(List<? extends DimensionsChangeLogEntry> entries, DimensionsChangeLogSet parent) {
-        Collections.reverse(entries);
-        for (DimensionsChangeLogEntry entry : entries) {
-            entry.setParent(parent);
-        }
-        return Collections.unmodifiableList(entries);
+    DimensionsChangeLogSet(final Run<?, ?> run, final RepositoryBrowser<?> browser, final List<DimensionsChangeLogEntry> entries) {
+        super(run, browser);
+        final List<DimensionsChangeLogEntry> list = new ArrayList<>(entries.size());
+        list.addAll(entries);
+        Collections.reverse(list);
+        list.forEach(entry -> entry.setParent(this));
+        this.entries = list;
     }
 
     @Override
