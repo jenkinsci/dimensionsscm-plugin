@@ -3,7 +3,6 @@ package hudson.plugins.dimensionsscm;
 import hudson.model.Run;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.RepositoryBrowser;
-import hudson.util.Digester2;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -15,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.digester.Digester;
 import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Parses a changelog file.
@@ -59,8 +60,20 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
         return entries;
     }
 
-    private Digester createDigester(final Object top) {
-        final Digester digester = new Digester2();
+    private Digester createDigester(final Object top) throws SAXException {
+        final Digester digester = new Digester();
+        digester.setXIncludeAware(false);
+        if (!Boolean.getBoolean(DimensionsChangeLogParser.class.getName() + ".UNSAFE")) {
+            try {
+                digester.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+                digester.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                digester.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                digester.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            }
+            catch ( ParserConfigurationException ex) {
+                throw new SAXException("Failed to securely configure Dimensions changelog parser", ex);
+            }
+        }
         digester.push(top);
         digester.addObjectCreate("*/changeset", DimensionsChangeLogEntry.class);
         digester.addSetProperties("*/changeset");
