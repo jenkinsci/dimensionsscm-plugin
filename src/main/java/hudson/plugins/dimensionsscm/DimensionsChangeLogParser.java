@@ -60,20 +60,25 @@ public class DimensionsChangeLogParser extends ChangeLogParser {
         return entries;
     }
 
+    private static boolean isUnsafeParser() {
+        return Boolean.getBoolean(DimensionsChangeLogParser.class.getName() + ".UNSAFE");
+    }
+
     private Digester createDigester(final Object top) throws SAXException {
         final Digester digester = new Digester();
-        digester.setXIncludeAware(false);
-        if (!Boolean.getBoolean(DimensionsChangeLogParser.class.getName() + ".UNSAFE")) {
+        if (!isUnsafeParser()) {
             try {
                 digester.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+                digester.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
                 digester.setFeature("http://xml.org/sax/features/external-general-entities", false);
                 digester.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-                digester.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            }
-            catch ( ParserConfigurationException ex) {
-                throw new SAXException("Failed to securely configure Dimensions changelog parser", ex);
+                digester.setXIncludeAware(false);
+            } catch (ParserConfigurationException e) {
+                throw new SAXException("Failed to securely configure Dimensions changelog parser", e);
             }
         }
+        // Object creation rules fail with ClassNotFoundException if use default ClassLoader
+        digester.setClassLoader(DimensionsChangeLogEntry.class.getClassLoader());
         digester.push(top);
         digester.addObjectCreate("*/changeset", DimensionsChangeLogEntry.class);
         digester.addSetProperties("*/changeset");

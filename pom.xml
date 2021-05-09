@@ -79,7 +79,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-2.222.x</artifactId>
-                <version>28</version>
+                <version>29</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -102,8 +102,8 @@
             (even without access to the CM Java API) to compile this plugin.
 
             So the plugin works at runtime (in a Jenkins installation), please
-            follow the 'Installation' steps described in the plugin wiki page:
-            https://wiki.jenkins.io/display/JENKINS/Dimensions+Plugin#DimensionsPlugin-Installation
+            follow the 'Installation' steps described in the plugin user guide:
+            https://github.com/jenkinsci/dimensionsscm-plugin/blob/master/docs/user-guide.md#Installation
 
             One way to debug the plugin is to change <version> to be a non-
             stub version (which is installed in the local Maven repository)

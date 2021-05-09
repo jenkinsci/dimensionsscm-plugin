@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.1
+📅 released: 2021-05-11.
+### 📦 Dependency updates
+* Bump actions/cache from v2.1.4 to v2.1.5 (#22) @dependabot
+* Bump plugin from 4.17 to 4.18 (#20) @dependabot
+* Bump bom-2.222.x from 27 to 28 (#19) @dependabot
+### 👻 Maintenance
+* [JENKINS-65161](https://issues.jenkins.io/browse/JENKINS-65161) -
+  remove digester 2 from core (#21) @olamy
+* Make digester 3 work correctly
+
 ## 0.9.0
 📅 released: 2021-04-12.
 ### 🚀 New features and improvements
@@ -77,22 +88,21 @@
 ## 0.8.14
 📅 released: 2018-05-03.
 ### 🚀 New features and improvements
--   [JENKINS-44583](https://issues.jenkins.io/browse/JENKINS-44583) -
-    Implemented small number of more recent SCM methods to
-    improve compatibility with other Jenkins plugins
--   Added MIT-licensed source for stub version of the Java
-    API, so Jenkins.io CI infrastructure can be used (also plugin code
-    is now licensed with simple standard MIT license)
+* [JENKINS-44583](https://issues.jenkins.io/browse/JENKINS-44583) -
+  Implemented small number of more recent SCM methods to improve
+  compatibility with other Jenkins plugins
+* Added MIT-licensed source for stub version of the Java API, so
+  Jenkins.io CI infrastructure can be used (also plugin code is
+  now licensed with simple standard MIT license)
 ### 🐛 Bug fixes
--   [JENKINS-32268](https://issues.jenkins.io/browse/JENKINS-32268) -
-    Post-build baseline operations should change the build state
--   Minor UI changes to make default repository behavior more
-    understandable
--   Changed help tip for CM server field
-    (#5) @haluz
--   [JENKINS-48645](https://issues.jenkins.io/browse/JENKINS-48645) -
-    Users without privilege to fetch request detailed
-    descriptions can run request-based builds
+* [JENKINS-32268](https://issues.jenkins.io/browse/JENKINS-32268) -
+  Post-build baseline operations should change the build state
+* Minor UI changes to make default repository behavior more
+  understandable
+* Changed help tip for CM server field (#5) @haluz
+* [JENKINS-48645](https://issues.jenkins.io/browse/JENKINS-48645) -
+  Users without privilege to fetch request detailed descriptions
+  can run request-based builds
 
 ## 0.8.13
 📅 released: 2016-01-26.
