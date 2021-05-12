@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.9.1
-📅 released: 2021-05-11.
+📅 released: 2021-05-12.
 ### 📦 Dependency updates
 * Bump actions/cache from v2.1.4 to v2.1.5 (#22) @dependabot
 * Bump plugin from 4.17 to 4.18 (#20) @dependabot
