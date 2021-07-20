@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout">
+<div class="alert alert-warning">
+    <form method="post" action="${rootURL}/${it.url}/act" name="${it.id}">
+        <f:submit name="yes" value="${%Tell me more}"/>
+        <l:isAdmin><f:submit name="no" value="${%Dismiss}"/></l:isAdmin>
+    </form>
+    <strong>The Dimensions Plugin is incompletely installed</strong>
+    <p />
+    Review the plugin's <a target="_blank" href="https://github.com/jenkinsci/dimensionsscm-plugin/blob/master/docs/user-guide.md#installation">user
+    guide and installation instructions</a> for required additional installation steps.
+    <p />
+    Until these additional steps are completed, the <a target="_blank" href="https://plugins.jenkins.io/dimensionsscm/">Dimensions Plugin</a>
+    is unable to communicate with Dimensions CM, so its SCM jobs won't work.
+</div>
+</j:jelly>
