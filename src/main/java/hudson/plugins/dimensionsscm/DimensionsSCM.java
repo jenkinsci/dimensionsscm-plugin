@@ -163,11 +163,13 @@ public class DimensionsSCM extends SCM implements Serializable {
             final Jenkins jenkins = Jenkins.getInstanceOrNull();
             final String path = jenkins != null ? new File(jenkins.getRootDir(),
                     "plugins/dimensionsscm/WEB-INF/lib").getAbsolutePath() : "$JENKINS_HOME/plugins/dimensionsscm/WEB-INF/lib";
-            throw (NoClassDefFoundError) new NoClassDefFoundError("\r\n\r\n#\r\n"
-                    + "# Check the required JAR files (darius.jar, dmclient.jar, dmfile.jar, dmnet.jar) were copied to\r\n#\r\n"
-                    + "#     '" + path + "'\r\n#\r\n"
-                    + "# directory as described in the 'Installation' section of the Dimensions Plugin wiki page:\r\n#\r\n"
-                    + "#     https://wiki.jenkins-ci.org/display/JENKINS/Dimensions+Plugin\r\n#\r\n").initCause(e);
+            throw (NoClassDefFoundError) new NoClassDefFoundError(e.getMessage() + "\r\n"
+                    + "//=================================================================================================\r\n"
+                    + "||  Check the required JAR files (darius.jar, dmclient.jar, dmfile.jar, dmnet.jar) were copied to\r\n"
+                    + "||    '" + path + "'\r\n"
+                    + "||  directory as described in the 'Installation' section of the Dimensions Plugin user guide:\r\n"
+                    + "||    https://github.com/jenkinsci/dimensionsscm-plugin/blob/master/docs/user-guide.md#installation\r\n"
+                    + "\\\\=================================================================================================\r\n");
         }
     }
 
@@ -209,7 +211,14 @@ public class DimensionsSCM extends SCM implements Serializable {
         return isActive;
     }
 
-    public DimensionsAPI getAPI() {
+    /**
+     * The fix for Jenkins SECURITY-595 caused this method to be called by
+     * Stapler when initializing the corresponding Jelly view.
+     * That lead to a NoClassDefFoundError, which broke the job configuration
+     * page. The trivial workaround was to make this method non-public.
+     * If it needs to be public in future, renaming it may be enough.
+     */
+    DimensionsAPI getAPI() {
         DimensionsAPI api = this.cachedAPI;
         if (api == null) {
             api = newDimensionsAPIWithCheck();
