@@ -31,10 +31,12 @@ public class MissingJarsAdministrativeMonitor extends AdministrativeMonitor {
         return "Dimensions Plugin Incompletely Installed Warning";
     }
 
-    //@Override
+    /* Uncomment when SYSTEM_READ becomes non-beta:
+    @Override
     public Permission getRequiredPermission() {
         return Jenkins.SYSTEM_READ;
     }
+    */
 
     /**
      * Depending on whether the user said "yes" or "no", send to the right place.
