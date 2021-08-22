@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.2
+📅 released: 2021-08-22.
+### 🚀 New features and improvements
+* [JENKINS-66107](https://issues.jenkins.io/browse/JENKINS-66107) -
+  Fixed broken config forms if the Dimensions CM Java API is not found
+* [JENKINS-66107](https://issues.jenkins.io/browse/JENKINS-66107) -
+  Implement a warning monitor if the Dimensions CM Java API is not found
+### 📦 Dependency updates
+* Bump plugin from 4.18 to 4.24 (#32, #34) @dependabot
+* Bump actions/cache from 2.1.5 to 2.1.6 (#28) @dependabot
+* Bump bom-2.222.x from 29 to 887.vae9c8ac09ff7 (#25, #31) @dependabot
+
 ## 0.9.1
 📅 released: 2021-05-12.
 ### 📦 Dependency updates
