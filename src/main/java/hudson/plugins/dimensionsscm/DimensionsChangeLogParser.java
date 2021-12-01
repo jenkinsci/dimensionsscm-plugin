@@ -12,7 +12,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.digester.Digester;
+import org.apache.commons.digester3.Digester;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;

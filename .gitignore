@@ -8,6 +8,8 @@
 .idea_modules/
 ._*
 /.classpath
+/.mvn/maven.config
+/.mvn/local-settings.xml
 /.project
 /.settings/
 /bin/
