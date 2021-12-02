@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.3
+📅 released: 2021-12-02.
+### 🐛 Bug fixes
+* For Jenkins 2.297+, fixed issue with NoClassDefFoundError for Commons
+  Digester. Unless you are affected by this (which only occurs with very recent
+  versions of Jenkins core) there is no need to update to this plugin version
+### 📦 Dependency updates
+* Bump plugin from 4.24 to 4.31
+* Bump actions/cache from 2.1.6 to 2.1.7
+
 ## 0.9.2
 📅 released: 2021-08-22.
 ### 🚀 New features and improvements
