@@ -47,8 +47,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
@@ -676,7 +676,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         return this.browser;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getKey() {
         return "dimensions " + getUserName() + "@" + getServer() + "/" + getDatabase() + "/" + getProject();
@@ -709,7 +709,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * {@inheritDoc}
      */
     @Override
-    public void checkout(@Nonnull final Run<?, ?> build, @Nonnull final Launcher launcher, @Nonnull final FilePath workspace, @Nonnull final TaskListener listener,
+    public void checkout(@NonNull final Run<?, ?> build, @NonNull final Launcher launcher, @NonNull final FilePath workspace, @NonNull final TaskListener listener,
                          @CheckForNull final File changelogFile, @CheckForNull final SCMRevisionState baseln) throws IOException, InterruptedException {
         if (!isCanJobUpdate()) {
             Logger.debug("Skipping checkout - " + this.getClass().getName());
@@ -909,7 +909,7 @@ public class DimensionsSCM extends SCM implements Serializable {
      * {@inheritDoc}
      */
     @Override
-    public boolean processWorkspaceBeforeDeletion(@Nonnull final Job<?, ?> project, @Nonnull final FilePath workspace, @Nonnull final Node node) throws IOException, InterruptedException {
+    public boolean processWorkspaceBeforeDeletion(@NonNull final Job<?, ?> project, @NonNull final FilePath workspace, @NonNull final Node node) throws IOException, InterruptedException {
         // Not used at the moment, so we have a stub...
         return true;
     }

@@ -11,7 +11,7 @@ import org.jenkinsci.plugins.workflow.steps.scm.SCMStep;
 import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.inject.Inject;
 import java.util.List;
 
@@ -325,7 +325,7 @@ public final class DimensionsStep extends SCMStep {
         return Credentials.isKeystoreDefined(credentialsType) ? certificateAlias : null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     protected SCM createSCM() {
         DimensionsSCM scm = new DimensionsSCM(project, credentialsType, userName, password, pluginServer,
