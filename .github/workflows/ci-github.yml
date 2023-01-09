@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Set up cache for ~/.m2/repository
-        uses: actions/cache@v3.0.11
+        uses: actions/cache@v3.2.3
         with:
           path: ~/.m2/repository
           key: maven-${{ matrix.os }}-${{ hashFiles('**/pom.xml') }}
