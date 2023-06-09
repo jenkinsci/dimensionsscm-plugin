@@ -18,8 +18,10 @@ import hudson.model.ModelObject;
 import hudson.model.Node;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
+import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.model.queue.Tasks;
 import hudson.plugins.dimensionsscm.model.StringVarStorage;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
@@ -35,6 +37,7 @@ import hudson.util.ListBoxModel;
 import hudson.util.Scrambler;
 import hudson.util.Secret;
 import hudson.util.VariableResolver;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -54,7 +57,7 @@ import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.kohsuke.stapler.*;
-import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 /**
  * An SCM that can poll, browse and update from Dimensions CM.
@@ -125,11 +128,6 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.jobServer = userServer;
             this.jobDatabase = userDatabase;
         } else if (Credentials.isPluginDefined(credentialsType)) {
-            final UsernamePasswordCredentials credentials = initializeCredentials(credentialsId);
-            if (credentials != null) {
-                this.jobUserName = credentials.getUsername();
-                this.jobPasswdSecret = credentials.getPassword();
-            }
             this.jobServer = pluginServer;
             this.jobDatabase = pluginDatabase;
             this.credentialsId = credentialsId;
@@ -173,19 +171,31 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
     }
 
-    private static UsernamePasswordCredentials initializeCredentials(final String credentialsId) {
+    public static UsernamePasswordCredentials credentialsFromId(final String credentialsId, final Item item) {
         UsernamePasswordCredentials credentials = null;
         if (credentialsId != null && !credentialsId.isEmpty()) {
-            Item dummy = null;
             credentials = CredentialsMatchers.firstOrNull(
                     CredentialsProvider.lookupCredentials(
-                            UsernamePasswordCredentials.class, dummy, ACL.SYSTEM,
+                            UsernamePasswordCredentials.class,
+                            item,
+                            item instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) item) : ACL.SYSTEM,
                             Collections.<DomainRequirement>emptyList()),
-                    CredentialsMatchers.allOf(
-                            CredentialsMatchers.withId(credentialsId))
+                    CredentialsMatchers.withId(credentialsId)
             );
         }
         return credentials;
+    }
+
+    /**
+     * Because we can't use the Credentials API from a remote agent, you should use this method to copy the username
+     * and password out of the Credentials into the appropriate fields (using Credentials API) _before_ remoting.
+     */
+    public void fillInCredentials(final Run<?, ?> run) {
+        if (Credentials.isPluginDefined(credentialsType) && credentialsId != null && run != null) {
+            UsernamePasswordCredentials credentials = credentialsFromId(credentialsId, run.getParent());
+            jobUserName = credentials.getUsername();
+            jobPasswdSecret = credentials.getPassword();
+        }
     }
 
     public boolean isChecked(final String type) {
@@ -774,6 +784,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                         throw new IOException("User certificate password from remote machine must be specified.");
                     }
                 }
+                fillInCredentials(build);
                 final CheckOutCmdTask task = new CheckOutCmdTask(getUserName(), Secret.decrypt(getPasswordNN()), getDatabase(),
                         getServer(), getProjectVersion(build, listener), baseline, request, isCanJobDelete(),
                         isCanJobRevert(), isCanJobForce(), isCanJobExpand(), isCanJobNoMetadata(),
@@ -946,7 +957,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                     + " (" + tz.getID() + ")");
             dmSCM.setLogger(listener.getLogger());
             // Connect to Dimensions...
-            key = dmSCM.login(this, null);
+            key = dmSCM.login(this, project);
             if (key > 0L) {
                 List<StringVarStorage> folders = getFolders();
                 // Iterate through the project folders and process them in Dimensions
@@ -1094,11 +1105,6 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.secureAgentAuth = false;
             if (Credentials.isPluginDefined(this.credentialsType)) {
                 this.credentialsId = jobj.getJSONObject("credentialsType").getString("credentialsId");
-                final UsernamePasswordCredentials credentials = initializeCredentials(this.credentialsId);
-                if (credentials != null) {
-                    this.userName = credentials.getUsername();
-                    this.passwdSecret = credentials.getPassword();
-                }
                 this.server = Values.textOrElse(req.getParameter("dimensionsscm.serverPlugin"), null);
                 this.database = Values.textOrElse(req.getParameter("dimensionsscm.databasePlugin"), null);
             } else if (Credentials.isUserDefined(this.credentialsType)) {
@@ -1169,10 +1175,16 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath final Item project, @QueryParameter final String credentialsId) {
+            if ((project == null && !Jenkins.get().hasPermission(Jenkins.ADMINISTER)) || 
+                    (project != null && !project.hasPermission(Item.EXTENDED_READ) &&
+                            !project.hasPermission(CredentialsProvider.USE_ITEM))) {
+                // shortcut if user won't be able to change the value anyway.
+                return new StandardListBoxModel().includeCurrentValue(credentialsId);
+            }
             return new StandardListBoxModel()
                     .includeEmptyValue()
                     .includeMatchingAs(
-                            ACL.SYSTEM,
+                            project instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) project) : ACL.SYSTEM,
                             project,
                             StandardUsernamePasswordCredentials.class,
                             Collections.<DomainRequirement>emptyList(),
@@ -1396,7 +1408,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         /**
          * Check if the specified Dimensions server is valid.
          */
-        @RequirePOST
+        @POST
         public FormValidation docheckTz(final StaplerRequest req, final StaplerResponse rsp,
                                         @QueryParameter("dimensionsscm.timeZone") final String timezone) {
             try {
@@ -1420,7 +1432,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         /**
          * Check if the specified Dimensions server is valid (global.jelly).
          */
-        @RequirePOST
+        @POST
         public FormValidation doCheckServerGlobal(final StaplerRequest req, final StaplerResponse rsp,
                                                   @QueryParameter("credentialsId") final String credentialsId,
                                                   @QueryParameter("credentialsType") final String credentialsType,
@@ -1431,12 +1443,17 @@ public class DimensionsSCM extends SCM implements Serializable {
                                                   @QueryParameter("dimensionsscm.databaseUser") final String databaseUser,
                                                   @QueryParameter("dimensionsscm.databasePlugin") final String databasePlugin,
                                                   @AncestorInPath final Item item) {
+            if (item == null) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                item.checkPermission(Item.CONFIGURE);
+            }
             String xuser = null;
             String xpasswd = null;
             String xserver = null;
             String xdatabase = null;
             if (Credentials.isPluginDefined(credentialsType)) {
-                UsernamePasswordCredentials credentials = initializeCredentials(credentialsId);
+                UsernamePasswordCredentials credentials = DimensionsSCM.credentialsFromId(credentialsId, item);
                 if (credentials != null) {
                     xuser = credentials.getUsername();
                     xpasswd = credentials.getPassword().getPlainText();
@@ -1452,7 +1469,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             return checkServer(item, xuser, xpasswd, xserver, xdatabase);
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckServerKeystore(final StaplerRequest req, final StaplerResponse rsp,
                                                     @QueryParameter("dimensionsscm.keystorePath") final String keystorePath,
                                                     @QueryParameter("dimensionsscm.keystorePassword") final String keystorePassword,
@@ -1461,6 +1478,11 @@ public class DimensionsSCM extends SCM implements Serializable {
                                                     @QueryParameter("dimensionsscm.certificatePassword") final String certificatePassword,
                                                     @QueryParameter("dimensionsscm.certificateAlias") final String certificateAlias,
                                                     @AncestorInPath final Item item) {
+            if (item == null) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                item.checkPermission(Item.CONFIGURE);
+            }
             try {
                 Logger.debug("Server connection check to keystore [" + keystorePath + "], certificate [" + certificateAlias + "]");
                 final Secret keystorePassSecret = Secret.fromString(keystorePassword);
@@ -1484,7 +1506,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         /**
          * Check if the specified Dimensions server is valid (config.jelly).
          */
-        @RequirePOST
+        @POST
         public FormValidation doCheckServerConfig(final StaplerRequest req, final StaplerResponse rsp,
                                                   @QueryParameter("credentialsId") final String credentialsId,
                                                   @QueryParameter("credentialsType") final String credentialsType,
@@ -1495,12 +1517,18 @@ public class DimensionsSCM extends SCM implements Serializable {
                                                   @QueryParameter("dimensionsscm.pluginServer") final String jobServerPlugin,
                                                   @QueryParameter("dimensionsscm.pluginDatabase") final String jobDatabasePlugin,
                                                   @AncestorInPath final Item item) {
+            if (item == null) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                item.checkPermission(Item.CONFIGURE);
+            }
+
             String xuser = null;
             String xpasswd = null;
             String xserver;
             String xdatabase;
             if (Credentials.isPluginDefined(credentialsType)) {
-                final UsernamePasswordCredentials credentials = initializeCredentials(credentialsId);
+                final UsernamePasswordCredentials credentials = DimensionsSCM.credentialsFromId(credentialsId, item);
                 if (credentials != null) {
                     xuser = credentials.getUsername();
                     xpasswd = credentials.getPassword().getPlainText();
@@ -1543,6 +1571,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
 
         private FormValidation checkServer(final Item item, final String xuser, final String xpasswd, final String xserver, final String xdatabase) {
+            // The public doCheckXXX method should already have done this anyway.
             if (item == null) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             } else {

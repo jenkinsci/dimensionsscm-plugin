@@ -37,7 +37,7 @@ public class CheckOutAPITask extends GenericAPITask {
 
     public CheckOutAPITask(Run<?, ?> build, DimensionsSCM parent, FilePath workspace, TaskListener listener,
                            int version) {
-        super(parent, workspace, listener);
+        super(build, parent, workspace, listener);
         Logger.debug("Creating task - " + this.getClass().getName());
 
         // Server details (see superclass).

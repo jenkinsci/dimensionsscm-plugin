@@ -1,6 +1,7 @@
 package hudson.plugins.dimensionsscm;
 
 import hudson.FilePath;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 
@@ -16,16 +17,20 @@ abstract class GenericAPITask extends BaseCallable {
 
     final DimensionsSCM scm;
 
+    final Run<?, ?> run;
+
     /** key is used by CheckInAPITask and CheckOutAPITask subclasses. */
     long key = -1L;
 
     /** scmAPI is used by CheckInAPITask and CheckOutAPITask subclasses. */
     DimensionsAPI scmAPI;
 
-    GenericAPITask(DimensionsSCM parent, FilePath workspace, TaskListener listener) {
+    GenericAPITask(Run<?, ?> run, DimensionsSCM parent, FilePath workspace, TaskListener listener) {
         Logger.debug("Creating task - " + this.getClass().getName());
         this.listener = listener;
         this.scm = parent;
+        this.run = run;
+        this.scm.fillInCredentials(this.run);
     }
 
     @Override
@@ -42,7 +47,7 @@ abstract class GenericAPITask extends BaseCallable {
             scmAPI.setLogger(listener.getLogger());
 
             // Connect to Dimensions...
-            key = scmAPI.login(scm, null);
+            key = scmAPI.login(scm, run);
             if (key > 0L) {
                 Logger.debug("Login worked.");
                 bRet = execute(area, channel);

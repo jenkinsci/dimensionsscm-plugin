@@ -1,5 +1,6 @@
 package hudson.plugins.dimensionsscm;
 
+import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.serena.dmclient.api.Baseline;
 import com.serena.dmclient.api.BulkOperator;
 import com.serena.dmclient.api.ChangeSetsQuery;
@@ -21,6 +22,7 @@ import com.serena.dmclient.api.SystemAttributes;
 import com.serena.dmclient.api.SystemRelationship;
 import com.serena.dmclient.objects.DimensionsObject;
 import hudson.FilePath;
+import hudson.model.Job;
 import hudson.model.Run;
 import hudson.util.Secret;
 import org.apache.commons.lang.StringUtils;
@@ -368,16 +370,33 @@ public class DimensionsAPI implements Serializable {
         }
     }
 
-    public final long login(DimensionsSCM scm, Run<?, ?> build) {
-        if (build != null)
-            Logger.debug("DimensionsAPI.login - build number: \"" + build.getNumber() + "\", project: \"" + build.getParent().getName() + "\"");
-
+    private final long loginImpl(DimensionsSCM scm, Job<?, ?> job) {
         if (Credentials.isKeystoreDefined(scm.getCredentialsType()))
             return login(scm.getServer(), scm.getDatabase(), scm.getCertificateAlias(), scm.getCertificatePasswordSecret(), scm.getKeystorePath(), scm.getKeystorePasswordSecret());
-        else
+        else if (Credentials.isPluginDefined(scm.getCredentialsType()) && scm.getUserName() == null) {
+            Logger.debug("DimensionsAPI.login - filling in non-prefilled credentials");
+            // only come here if username is null, remoted tasks should pre-fillInCredentials.
+            final UsernamePasswordCredentials credentials = DimensionsSCM.credentialsFromId(scm.getCredentialsId(), job);
+            return login(credentials.getUsername(), credentials.getPassword(), scm.getDatabase(), scm.getServer());
+        } else
             return login(scm.getUserName(), Secret.fromString(scm.getPasswordNN()), scm.getDatabase(), scm.getServer());
     }
 
+    public final long login(DimensionsSCM scm, Job<?, ?> job) {
+        if (job != null)
+            Logger.debug("DimensionsAPI.login - project: \"" + job.getName() + "\"");
+        else
+            Logger.debug("DimensionsAPI.login - no job");
+        return loginImpl(scm, job);
+    }
+
+    public final long login(DimensionsSCM scm, Run<?, ?> run) {
+        if (run != null)
+            Logger.debug("DimensionsAPI.login - build number: \"" + run.getNumber() + "\", project: \"" + run.getParent().getName() + "\"");
+        else
+            Logger.debug("DimensionsAPI.login - no run");
+        return loginImpl(scm, run != null ? run.getParent() : null);
+    }
 
     private KeyManager getKeyManager(KeyStore keyStore, String alias, String passwd) throws Exception {
         KeyManagerFactory kmfactory = KeyManagerFactory.getInstance("SunX509");
