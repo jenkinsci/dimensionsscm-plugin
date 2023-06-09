@@ -219,6 +219,7 @@ public class ArtifactUploader extends Notifier implements Serializable {
 
                     }
 
+                    scm.fillInCredentials(build);
                     CheckInCmdTask task = new CheckInCmdTask(scm.getUserName(), Secret.decrypt(scm.getPasswordNN()),
                             scm.getDatabase(), scm.getServer(), scm.getProjectName(build, listener), requests,
                             isForceCheckIn(), isForceTip(), getPatterns(), getPatternType(), version, isStream,

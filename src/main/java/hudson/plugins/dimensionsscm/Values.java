@@ -171,7 +171,7 @@ final class Values {
     }
 
     /**
-     * Convert a <tt>Calendar</tt> instance into a string suitable for logging.
+     * Convert a <code>Calendar</code> instance into a string suitable for logging.
      * The format is language-neutral, but includes time zone information.
      *
      * @param cal Calendar instance to convert to a String.
@@ -187,7 +187,7 @@ final class Values {
     }
 
     /**
-     * Convert a <tt>Date</tt> instance into a string suitable for logging.
+     * Convert a <code>Date</code> instance into a string suitable for logging.
      * The format is language-neutral, and is in UTC time zone (since Date instances don't have a time zone).
      *
      * @param date Date instance to convert to a String.
@@ -203,7 +203,7 @@ final class Values {
     }
 
     /**
-     * Convert a <tt>Collection</tt> instance into a string suitable for logging.
+     * Convert a <code>Collection</code> instance into a string suitable for logging.
      * The format is that of Arrays.toString.
      *
      * @param collection Collection instance to convert to a String.
@@ -217,7 +217,7 @@ final class Values {
     }
 
     /**
-     * Convert a <tt>Filter</tt> instance into a string suitable for logging.
+     * Convert a <code>Filter</code> instance into a string suitable for logging.
      *
      * @param filter Filter instance to convert to a String.
      * @return String form.
@@ -256,7 +256,7 @@ final class Values {
     }
 
     /**
-     * Convert a <tt>StringVarStorage</tt> instance into a string array.
+     * Convert a <code>StringVarStorage</code> instance into a string array.
      *
      * @param listToConvert list to convert into array.
      * @return String array.
@@ -273,7 +273,7 @@ final class Values {
     }
 
     /**
-     * Convert a string array instance into a <tt>StringVarStorage</tt>.
+     * Convert a string array instance into a <code>StringVarStorage</code>.
      *
      * @param arrayToConvert array to convert into list.
      * @return StringVarStorage list.

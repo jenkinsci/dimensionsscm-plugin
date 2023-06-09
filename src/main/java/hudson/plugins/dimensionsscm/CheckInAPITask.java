@@ -32,7 +32,7 @@ public class CheckInAPITask extends GenericAPITask {
 
     public CheckInAPITask(AbstractBuild<?, ?> build, DimensionsSCM parent, int buildNo, String jobId, int version,
             ArtifactUploader artifact, FilePath workspace, TaskListener listener) {
-        super(parent, workspace, listener);
+        super(build, parent, workspace, listener);
         Logger.debug("Creating task - " + this.getClass().getName());
 
         // Config details

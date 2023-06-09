@@ -225,7 +225,7 @@ public class DimensionsBuilder extends Builder {
         /**
          * To persist global configuration information, simply store it in a field and call save().
          * <p>
-         * If you don't want fields to be persisted, use <tt>transient</tt>.
+         * If you don't want fields to be persisted, use <code>transient</code>.
          */
         public DescriptorImpl() {
             super(DimensionsBuilder.class);
