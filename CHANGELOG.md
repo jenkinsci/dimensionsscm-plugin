@@ -3,10 +3,10 @@
 ## 0.9.3.1
 📅 released: 2023-06-14.
 ### 🐛 Bug fixes
-* [SECURITY-3138](https://www.jenkins.io/security/advisories/) -
-  Missing permission check allows enumerating credentials IDs
-* [SECURITY-1108](https://www.jenkins.io/security/advisories/) -
-  Potential exposure of system-scoped credentials
+* [SECURITY-3138](https://www.jenkins.io/security/advisories/) - Missing
+  permission check allows enumerating credentials IDs
+* [SECURITY-3143](https://www.jenkins.io/security/advisories/) - Potential
+  exposure of system-scoped credentials
 * *Important Security Note: Upgrading to this version of the plugin, in order
   to get both of these security fixes, is recommended for all users*
 ## ✍ Other changes
