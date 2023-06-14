@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.9.3.1
+📅 released: 2023-06-14.
+### 🐛 Bug fixes
+* [SECURITY-3138](https://www.jenkins.io/security/advisories/) -
+  Missing permission check allows enumerating credentials IDs
+* [SECURITY-1108](https://www.jenkins.io/security/advisories/) -
+  Potential exposure of system-scoped credentials
+* *Important Security Note: Upgrading to this version of the plugin, in order
+  to get both of these security fixes, is recommended for all users*
+## ✍ Other changes
+* Merge back 0.9.3.x into default branch (#98) @daniel-beck
+* Applied then reverted "Forward compatibility with jenkins-buttons" (#82, #88) @NotMyFault
+* Replace git.io with expanded URLs (#61) @MarkEWaite
+* Create jenkins-security-scan.yml @dconneely
+* EOL JSR 305 (#43) @basil
+## 📦 Dependency updates
+* Minor version updates to GitHub Action workflows
+  * Bump release-drafter/release-drafter from 5.15.0 to 5.21.1 (#51, #62, #79) @dependabot
+  * Bump github/codeql-action from 1 to 2 (#60) @dependabot
+  * Bump actions/cache from 2.1.7 to 3.0.11 (#58, #64, #80) @dependabot
+  * Bump actions/setup-java from 2 to 3 (#59) @dependabot
+  * Bump actions/checkout from 2 to 3 (#52) @dependabot
+* Bump plugin from 4.31 to 4.32 (#42) @dependabot
+
 ## 0.9.3
 📅 released: 2021-12-02.
 ### 🐛 Bug fixes
