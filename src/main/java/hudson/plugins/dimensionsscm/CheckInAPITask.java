@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 
 /**
  * Deliver files to Dimensions CM repository using Java API.
@@ -87,7 +88,7 @@ public class CheckInAPITask extends GenericAPITask {
                 File tmpFile = null;
 
                 try {
-                    tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
+                    tmpFile = Files.createTempFile("dmCm" + System.currentTimeMillis(), null).toFile();
                     // 'DELIVER/USER_FILELIST=' user filelist in platform-default encoding.
                     fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 

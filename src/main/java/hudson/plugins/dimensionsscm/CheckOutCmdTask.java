@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.List;
 
 /**
@@ -39,7 +40,7 @@ public class CheckOutCmdTask extends GenericCmdTask {
         File tmpFile = null;
 
         try {
-            tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
+            tmpFile = Files.createTempFile("dmCm" + System.currentTimeMillis(), null).toFile();
             // 'UPDATE' command file in platform-default encoding.
             fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
 

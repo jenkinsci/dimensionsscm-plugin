@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 
 /**
  * Base class for Callables using dmcli command-line.
@@ -45,7 +46,7 @@ abstract class GenericCmdTask extends BaseCallable {
         File tmpFile = null;
 
         try {
-            tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
+            tmpFile = Files.createTempFile("dmCm" + System.currentTimeMillis(), null).toFile();
             // dmcli parameter file in platform-default encoding.
             fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
             fmtWriter.println("-host " + server);

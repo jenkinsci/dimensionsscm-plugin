@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 
 /**
  * Launch an executable (dmcli).
@@ -40,7 +41,7 @@ class SCMLauncher implements Serializable {
         TaskListener listener = launcher.getListener();
 
         // Need to capture output into a file so I can parse it.
-        File tmpFile = File.createTempFile("dmCm" + System.currentTimeMillis(), null, null);
+        File tmpFile = Files.createTempFile("dmCm" + System.currentTimeMillis(), null).toFile();
 
         FileOutputStream fos = new FileOutputStream(tmpFile);
         StreamBuildListener os = new StreamBuildListener(fos);
