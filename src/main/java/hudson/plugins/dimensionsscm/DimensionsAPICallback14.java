@@ -160,7 +160,7 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
                 spec = (String) itemRevision.getAttribute(SystemAttributes.OBJECT_SPEC);
             }
 
-            String fileUrl = DimensionsAPI.constructURL(spec, url, dimensionsAPI.getSCMDsn(), dimensionsAPI.getSCMBaseDb());
+            String fileUrl = DimensionsAPI.constructURL(spec, url, dimensionsAPI.getSCMDbConn(), dimensionsAPI.getSCMBaseDb());
 
             if (fileUrl == null) {
                 fileUrl = "";
@@ -189,7 +189,7 @@ class DimensionsAPICallback14 implements DimensionsAPICallback {
                 });
 
                 String requestId = (String) request.getAttribute(SystemAttributes.OBJECT_SPEC);
-                String requestUrl = DimensionsAPI.constructRequestURL(requestId, url, dimensionsAPI.getSCMDsn(), dimensionsAPI.getSCMBaseDb());
+                String requestUrl = DimensionsAPI.constructRequestURL(requestId, url, dimensionsAPI.getSCMDbConn(), dimensionsAPI.getSCMBaseDb());
                 String requestTitle = (String) request.getAttribute(SystemAttributes.TITLE);
 
                 entry.addRequest(requestId, requestUrl, requestTitle);

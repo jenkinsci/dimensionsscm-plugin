@@ -77,6 +77,7 @@ public class DimensionsSCM extends SCM implements Serializable {
     private String jobUserName;
     private String jobServer;
     private String jobDatabase;
+    private String jobDbConn;
     private String project;
     private Secret jobPasswdSecret;
     private Secret certificatePassword;
@@ -106,8 +107,8 @@ public class DimensionsSCM extends SCM implements Serializable {
     @DataBoundConstructor
     public DimensionsSCM(final String project, final String credentialsType, final String userName, final String password,
                          final String pluginServer, final String userServer, final String keystoreServer,
-                         final String pluginDatabase, final String userDatabase, final String keystoreDatabase,
-                         final String keystorePath, final String certificateAlias,
+                         final String pluginDatabase, final String pluginDbConn, final String userDatabase, final String userDbConn, final String keystoreDatabase,
+                         final String keystoreDbConn, final String keystorePath, final String certificateAlias,
                          final String credentialsId, final String certificatePassword, final String keystorePassword,
                          final String certificatePath, final String remoteCertificatePassword, final boolean secureAgentAuth) {
         this.credentialsId = StringUtils.EMPTY;
@@ -127,9 +128,11 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.jobPasswdSecret = Secret.fromString(password);
             this.jobServer = userServer;
             this.jobDatabase = userDatabase;
+            this.jobDbConn = userDbConn;
         } else if (Credentials.isPluginDefined(credentialsType)) {
             this.jobServer = pluginServer;
             this.jobDatabase = pluginDatabase;
+            this.jobDbConn = pluginDbConn;
             this.credentialsId = credentialsId;
         } else if (Credentials.isKeystoreDefined(credentialsType)) {
             this.keystorePath = keystorePath;
@@ -137,6 +140,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             this.secureAgentAuth = secureAgentAuth;
             this.jobServer = keystoreServer;
             this.jobDatabase = keystoreDatabase;
+            this.jobDbConn = keystoreDbConn;
             this.certificatePassword = Secret.fromString(certificatePassword);
             this.keystorePassword = Secret.fromString(keystorePassword);
             if (this.secureAgentAuth) {
@@ -476,9 +480,23 @@ public class DimensionsSCM extends SCM implements Serializable {
         return this.jobDatabase;
     }
 
+    /**
+     * Gets the database connection for the connection.
+     */
+    public String getDbConn() {
+        if (Credentials.isGlobalDefined(credentialsType)) {
+            return getDescriptor().getDbConn();
+        }
+        return this.jobDbConn;
+    }
+
     //this getter is needed for snippet generator
     public String getUserDatabase() {
         return Credentials.isUserDefined(credentialsType) ? this.jobDatabase : null;
+    }
+
+    public String getUserDbConn() {
+        return Credentials.isUserDefined(credentialsType) ? this.jobDbConn : null;
     }
 
     //this getter is needed for snippet generator
@@ -486,9 +504,17 @@ public class DimensionsSCM extends SCM implements Serializable {
         return Credentials.isPluginDefined(credentialsType) ? this.jobDatabase : null;
     }
 
+    public String getPluginDbConn() {
+        return Credentials.isPluginDefined(credentialsType) ? this.jobDbConn : null;
+    }
+
     //this getter is needed for snippet generator
     public String getKeystoreDatabase() {
         return Credentials.isKeystoreDefined(credentialsType) ? this.jobDatabase : null;
+    }
+
+    public String getKeystoreDbConn() {
+        return Credentials.isKeystoreDefined(credentialsType) ? this.jobDbConn : null;
     }
 
     /**
@@ -786,7 +812,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 }
                 fillInCredentials(build);
                 final CheckOutCmdTask task = new CheckOutCmdTask(getUserName(), Secret.decrypt(getPasswordNN()), getDatabase(),
-                        getServer(), getProjectVersion(build, listener), baseline, request, isCanJobDelete(),
+                        getDbConn(), getServer(), getProjectVersion(build, listener), baseline, request, isCanJobDelete(),
                         isCanJobRevert(), isCanJobForce(), isCanJobExpand(), isCanJobNoMetadata(),
                         isCanJobNoTouch(), (build.getPreviousBuild() == null), getFolders(), version,
                         permissions, eol, getCertificatePath(), getRemoteCertificatePasswordSecret(),
@@ -1056,6 +1082,7 @@ public class DimensionsSCM extends SCM implements Serializable {
         private Secret certificateSecret;
         private Secret remoteCertificateSecret;
         private String database;
+        private String dbConn;
         private String credentialsId;
         private String keystorePath;
         private String certificatePath;
@@ -1107,11 +1134,13 @@ public class DimensionsSCM extends SCM implements Serializable {
                 this.credentialsId = jobj.getJSONObject("credentialsType").getString("credentialsId");
                 this.server = Values.textOrElse(req.getParameter("dimensionsscm.serverPlugin"), null);
                 this.database = Values.textOrElse(req.getParameter("dimensionsscm.databasePlugin"), null);
+                this.dbConn = Values.textOrElse(req.getParameter("dimensionsscm.dbConnPlugin"), null);
             } else if (Credentials.isUserDefined(this.credentialsType)) {
                 this.userName = Values.textOrElse(req.getParameter("dimensionsscm.userName"), null);
                 this.passwdSecret = Secret.fromString(req.getParameter("dimensionsscm.passwd"));
                 this.server = Values.textOrElse(req.getParameter("dimensionsscm.serverUser"), null);
                 this.database = Values.textOrElse(req.getParameter("dimensionsscm.databaseUser"), null);
+                this.dbConn = Values.textOrElse(req.getParameter("dimensionsscm.dbConnUser"), null);
             } else if (Credentials.isKeystoreDefined(this.credentialsType)) {
                 this.keystorePath = Values.textOrElse(req.getParameter("dimensionsscm.keystorePath"), null);
                 this.certificateAlias = Values.textOrElse(req.getParameter("dimensionsscm.certificateAlias"), null);
@@ -1119,6 +1148,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 this.certificateSecret = Secret.fromString(req.getParameter("dimensionsscm.certificatePassword"));
                 this.server = Values.textOrElse(req.getParameter("dimensionsscm.keystoreServer"), null);
                 this.database = Values.textOrElse(req.getParameter("dimensionsscm.keystoreDatabase"), null);
+                this.dbConn = Values.textOrElse(req.getParameter("dimensionsscm.keystoreDbConn"), null);
                 this.secureAgentAuth = "on".equalsIgnoreCase(req.getParameter("dimensionsscm.secureAgentAuth"));
                 if (this.secureAgentAuth) {
                     this.remoteCertificateSecret = Secret.fromString(req.getParameter("dimensionsscm.remoteCertificatePassword"));
@@ -1133,6 +1163,9 @@ public class DimensionsSCM extends SCM implements Serializable {
             }
             if (this.database != null) {
                 this.database = this.database.trim();
+            }
+            if (this.dbConn != null) {
+                this.dbConn = this.dbConn.trim();
             }
             if (this.timeZone != null) {
                 this.timeZone = this.timeZone.trim();
@@ -1242,12 +1275,21 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
 
         /**
-         * Gets the base database for the connection (as "NAME@CONNECTION").
+         * Gets the base database for the connection (as "NAME").
          *
          * @return the name of the base database to connect to
          */
         public String getDatabase() {
             return this.database;
+        }
+
+        /**
+         * Gets the base connection name.
+         *
+         * @return the name of the base connection
+         */
+        public String getDbConn() {
+            return this.dbConn;
         }
 
         /**
@@ -1359,11 +1401,19 @@ public class DimensionsSCM extends SCM implements Serializable {
         }
 
         /**
-         * Sets the base database for the connection (as "NAME@CONNECTION").
+         * Sets the base database for the connection.
          */
         public void setDatabase(final String database) {
             this.database = database;
         }
+
+        /**
+         * Sets the base connection name.
+         */
+        public void setDbConn(final String dbConn) {
+            this.dbConn = dbConn;
+        }
+
 
         /**
          * Sets the server for the connection.
@@ -1441,7 +1491,9 @@ public class DimensionsSCM extends SCM implements Serializable {
                                                   @QueryParameter("dimensionsscm.serverUser") final String serverUser,
                                                   @QueryParameter("dimensionsscm.serverPlugin") final String serverPlugin,
                                                   @QueryParameter("dimensionsscm.databaseUser") final String databaseUser,
+                                                  @QueryParameter("dimensionsscm.dbConnUser") final String dbConnUser,
                                                   @QueryParameter("dimensionsscm.databasePlugin") final String databasePlugin,
+                                                  @QueryParameter("dimensionsscm.dbConnPlugin") final String dbConnPlugin,
                                                   @AncestorInPath final Item item) {
             if (item == null) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);
@@ -1452,6 +1504,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             String xpasswd = null;
             String xserver = null;
             String xdatabase = null;
+            String xdbConn = null;
             if (Credentials.isPluginDefined(credentialsType)) {
                 UsernamePasswordCredentials credentials = DimensionsSCM.credentialsFromId(credentialsId, item);
                 if (credentials != null) {
@@ -1460,13 +1513,15 @@ public class DimensionsSCM extends SCM implements Serializable {
                 }
                 xserver = serverPlugin;
                 xdatabase = databasePlugin;
+                xdbConn = dbConnPlugin;
             } else if (Credentials.isUserDefined(credentialsType)) {
                 xuser = user;
                 xpasswd = passwd;
                 xserver = serverUser;
                 xdatabase = databaseUser;
+                xdbConn = dbConnUser;
             }
-            return checkServer(item, xuser, xpasswd, xserver, xdatabase);
+            return checkServer(item, xuser, xpasswd, xserver, xdatabase, xdbConn);
         }
 
         @POST
@@ -1475,6 +1530,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                                                     @QueryParameter("dimensionsscm.keystorePassword") final String keystorePassword,
                                                     @QueryParameter("dimensionsscm.keystoreServer") final String keystoreServer,
                                                     @QueryParameter("dimensionsscm.keystoreDatabase") final String keystoreDatabase,
+                                                    @QueryParameter("dimensionsscm.keystoreDbConn") final String keystoreDbConn,
                                                     @QueryParameter("dimensionsscm.certificatePassword") final String certificatePassword,
                                                     @QueryParameter("dimensionsscm.certificateAlias") final String certificateAlias,
                                                     @AncestorInPath final Item item) {
@@ -1488,7 +1544,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 final Secret keystorePassSecret = Secret.fromString(keystorePassword);
                 final Secret certPassSecret = Secret.fromString(certificatePassword);
                 final DimensionsAPI connectionCheck = newDimensionsAPIWithCheck();
-                final long key = connectionCheck.login(keystoreServer, keystoreDatabase, certificateAlias, certPassSecret, keystorePath, keystorePassSecret);
+                final long key = connectionCheck.login(keystoreServer, keystoreDatabase, keystoreDbConn, certificateAlias, certPassSecret, keystorePath, keystorePassSecret);
                 Logger.debug("Server connection check returned key [" + key + "]");
                 if (key < 1L) {
                     return FormValidation.error("Connection test failed");
@@ -1514,8 +1570,10 @@ public class DimensionsSCM extends SCM implements Serializable {
                                                   @QueryParameter("dimensionsscm.password") final String jobPasswd,
                                                   @QueryParameter("dimensionsscm.userServer") final String jobServerUser,
                                                   @QueryParameter("dimensionsscm.userDatabase") final String jobDatabaseUser,
+                                                  @QueryParameter("dimensionsscm.userDbConn") final String jobDbConnUser,
                                                   @QueryParameter("dimensionsscm.pluginServer") final String jobServerPlugin,
                                                   @QueryParameter("dimensionsscm.pluginDatabase") final String jobDatabasePlugin,
+                                                  @QueryParameter("dimensionsscm.pluginDbConn") final String jobDbConnPlugin,
                                                   @AncestorInPath final Item item) {
             if (item == null) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);
@@ -1527,6 +1585,7 @@ public class DimensionsSCM extends SCM implements Serializable {
             String xpasswd = null;
             String xserver;
             String xdatabase;
+            String xdbConn;
             if (Credentials.isPluginDefined(credentialsType)) {
                 final UsernamePasswordCredentials credentials = DimensionsSCM.credentialsFromId(credentialsId, item);
                 if (credentials != null) {
@@ -1535,11 +1594,13 @@ public class DimensionsSCM extends SCM implements Serializable {
                 }
                 xserver = jobServerPlugin;
                 xdatabase = jobDatabasePlugin;
+                xdbConn = jobDbConnPlugin;
             } else if (Credentials.isUserDefined(credentialsType)) {
                 xuser = jobuser;
                 xpasswd = jobPasswd;
                 xserver = jobServerUser;
                 xdatabase = jobDatabaseUser;
+                xdbConn = jobDbConnUser;
             } else {
                 final boolean keystoreDefined = Credentials.isKeystoreDefined(credentialsType);
                 final boolean globalDefined = Credentials.isGlobalDefined(credentialsType);
@@ -1548,7 +1609,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                     if (this.keystoreSecret == null || this.certificateSecret == null) {
                         return FormValidation.error("Keystore or certificate password not specified in global configuration.");
                     }
-                    return doCheckServerKeystore(req, rsp, this.keystorePath, this.keystoreSecret.getPlainText(), this.server, this.database, this.certificateSecret.getPlainText(), this.certificateAlias, item);
+                    return doCheckServerKeystore(req, rsp, this.keystorePath, this.keystoreSecret.getPlainText(), this.server, this.database, this.dbConn, this.certificateSecret.getPlainText(), this.certificateAlias, item);
                 }
                 if (this.passwdSecret == null) {
                     return FormValidation.error("Password not specified in global configuration.");
@@ -1557,6 +1618,7 @@ public class DimensionsSCM extends SCM implements Serializable {
                 xpasswd = this.passwdSecret.getPlainText();
                 xserver = this.server;
                 xdatabase = this.database;
+                xdbConn = this.dbConn;
                 if (Values.isNullOrEmpty(xuser)) {
                     return FormValidation.error("User name not specified in global configuration.");
                 }
@@ -1567,10 +1629,10 @@ public class DimensionsSCM extends SCM implements Serializable {
                     return FormValidation.error("User server not specified in global configuration.");
                 }
             }
-            return checkServer(item, xuser, xpasswd, xserver, xdatabase);
+            return checkServer(item, xuser, xpasswd, xserver, xdatabase, xdbConn);
         }
 
-        private FormValidation checkServer(final Item item, final String xuser, final String xpasswd, final String xserver, final String xdatabase) {
+        private FormValidation checkServer(final Item item, final String xuser, final String xpasswd, final String xserver, final String xdatabase, final String xdbConn) {
             // The public doCheckXXX method should already have done this anyway.
             if (item == null) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);
@@ -1583,8 +1645,8 @@ public class DimensionsSCM extends SCM implements Serializable {
                     return FormValidation.error("User name and password must be specified.");
                 }
                 Logger.debug("Server connection check to user [" + xuser
-                        + "], database [" + xdatabase + "], server [" + xserver + "]");
-                final long key = connectionCheck.login(xuser, Secret.fromString(xpasswd), xdatabase, xserver);
+                        + "], database [" + xdatabase + "], dbConn [" + xdbConn + "], server [" + xserver + "]");
+                final long key = connectionCheck.login(xuser, Secret.fromString(xpasswd), xdatabase, xdbConn, xserver);
                 Logger.debug("Server connection check returned key [" + key + "]");
                 if (key < 1L) {
                     return FormValidation.error("Connection test failed");

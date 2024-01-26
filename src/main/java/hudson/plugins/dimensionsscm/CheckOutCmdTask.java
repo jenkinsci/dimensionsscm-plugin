@@ -118,12 +118,12 @@ public class CheckOutCmdTask extends GenericCmdTask {
         return tmpFile;
     }
 
-    public CheckOutCmdTask(String userName, Secret passwd, String database, String server, String projectId,
+    public CheckOutCmdTask(String userName, Secret passwd, String database, String dbConn, String server, String projectId,
                            String baselineId, String requestId, boolean isDelete, boolean isRevert, boolean isForce, boolean isExpand,
                            boolean isNoMetadata, boolean isNoTouch, boolean freshBuild, List<StringVarStorage> folders, int version,
                            String permissions, String eol, String certificatePath, Secret certificatePassword,
                            boolean isSecureAgentAuth, FilePath workspace, TaskListener listener) {
-        super(userName, passwd, database, server, version, certificatePath, certificatePassword, isSecureAgentAuth, workspace, listener);
+        super(userName, passwd, database, dbConn, server, version, certificatePath, certificatePassword, isSecureAgentAuth, workspace, listener);
 
         // Config details.
         this.isDelete = isDelete;

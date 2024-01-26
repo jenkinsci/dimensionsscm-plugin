@@ -207,24 +207,26 @@ To specify pipeline job with help of Dimensions plugin in
     specify the required parameters: project name, credentials type
     and login details. Login details can be specified in 3 ways:
     
-    1.  `credentialsType: 'pluginDefined'`. You need to specify
-        the `credentialsId`, `pluginServer` and `pluginDatabase`
+    1. `credentialsType: 'pluginDefined'`. You need to specify
+        the `credentialsId`, `pluginServer`, `pluginDatabase` and `pluginDbConn`
         parameters.
         
         Ex.: `dimensionsscm credentialsType: 'pluginDefined', `
         `credentialsId: 'credentialname', `
-        `pluginDatabase: 'cm_typical@DIM14', `
+        `pluginDatabase: 'cm_typical', `
+        `pluginDbConn: 'DIM14', `
         `pluginServer: 'stl-ta-vcw1-9', `
         `project: 'PRODNAME:STREAMNAME'`
         
-    2.  `credentialsType: 'userDefined'`. You need to specify
-        the `userName`, `password`, `userServer` and `userDatabase`
+    2. `credentialsType: 'userDefined'`. You need to specify
+        the `userName`, `password`, `userServer`, `userDatabase` and `userDbConn`
         parameters.
         
         Ex.: `dimensionsscm credentialsType: 'userDefined', `
         `userName: 'username', `
         `password: 'P@ssw0rd', `
-        `userDatabase: 'cm_typical@DIM14', `
+        `userDatabase: 'cm_typical', `
+        `userDbConn: 'DIM14', `
         `userServer: 'stl-ta-vcw12-9', `
         `project: 'PRODNAME:STREAMNAME'`
         

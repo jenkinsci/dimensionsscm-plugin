@@ -16,11 +16,13 @@
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
                             <f:textbox name="dimensionsscm.pluginServer" />
                         </f:entry>
-                        <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                        <f:entry title="Database name" help="/plugin/dimensionsscm/database.html">
                             <f:textbox name="dimensionsscm.pluginDatabase" />
-                            <i>(the format used must be database@dsn)</i>
                         </f:entry>
-                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="dimensionsscm.pluginServer,dimensionsscm.pluginDatabase,credentialsId,credentialsType" />
+                        <f:entry title="Database connection" help="/plugin/dimensionsscm/dbConn.html">
+                             <f:textbox name="dimensionsscm.pluginDbConn" />
+                        </f:entry>
+                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="dimensionsscm.pluginServer,dimensionsscm.pluginDatabase,dimensionsscm.pluginDbConn,credentialsId,credentialsType" />
                     </f:nested>
                 </f:radioBlock>
                 <f:radioBlock name="credentialsType" checked="${instance.isChecked('globalDefined')}" title="Global configuration" value="globalDefined" inline="true" help="/plugin/dimensionsscm/globalDefined.html">
@@ -43,11 +45,13 @@
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
                             <f:textbox name="dimensionsscm.userServer" />
                         </f:entry>
-                        <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                        <f:entry title="Database name" help="/plugin/dimensionsscm/database.html">
                             <f:textbox name="dimensionsscm.userDatabase" />
-                            <i>(the format used must be database@dsn)</i>
                         </f:entry>
-                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="dimensionsscm.userName,dimensionsscm.password,dimensionsscm.userServer,dimensionsscm.userDatabase,credentialsType" />
+                        <f:entry title="Database connection" help="/plugin/dimensionsscm/dbConn.html">
+                            <f:textbox name="dimensionsscm.userDbConn" />
+                        </f:entry>
+                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerConfig" with="dimensionsscm.userName,dimensionsscm.password,dimensionsscm.userServer,dimensionsscm.userDatabase,dimensionsscm.userDbConn,credentialsType" />
                     </f:nested>
                 </f:radioBlock>
                 <f:radioBlock name="credentialsType" checked="${instance.isChecked('keystoreDefined')}" title="Keystore authentication" value="keystoreDefined" inline="true" help="/plugin/dimensionsscm/keystoreDefined.html">
@@ -68,9 +72,11 @@
                         <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
                             <f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(instance.jobServer, 'Enter your Dimensions server here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
                         </f:entry>
-                        <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                        <f:entry title="Database name" help="/plugin/dimensionsscm/database.html">
                             <f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(instance.jobDatabase, 'Enter your Dimensions database here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
-                            <i>(the format used must be database@dsn)</i>
+                        </f:entry>
+                        <f:entry title="Database connection" help="/plugin/dimensionsscm/dbConn.html">
+                             <f:textbox name="dimensionsscm.keystoreDbConn" value="${h.defaulted(instance.jobDbConn, 'Enter your Dimensions connection here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
                         </f:entry>
                         <f:nested>
                             <dm:blockWrapper>
@@ -86,7 +92,7 @@
                             </dm:blockWrapper>
                         </f:nested>
                         <f:entry>
-                            <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore" with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias" />
+                            <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore" with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.keystoreDbConn,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias" />
                         </f:entry>
                     </f:nested>
                 </f:radioBlock>
