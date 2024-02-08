@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -477,7 +478,8 @@ public class DimensionsSCM extends SCM implements Serializable {
         if (Credentials.isGlobalDefined(credentialsType)) {
             return getDescriptor().getDatabase();
         }
-        return this.jobDatabase;
+        return getDbWithBackwardCompatibility(this.jobDatabase, this.jobDbConn).length < 2
+                ? this.jobDatabase : getDbWithBackwardCompatibility(this.jobDatabase, this.jobDbConn)[0];
     }
 
     /**
@@ -487,7 +489,24 @@ public class DimensionsSCM extends SCM implements Serializable {
         if (Credentials.isGlobalDefined(credentialsType)) {
             return getDescriptor().getDbConn();
         }
-        return this.jobDbConn;
+        return getDbWithBackwardCompatibility(this.jobDatabase, this.jobDbConn).length < 2
+                ? this.jobDbConn : getDbWithBackwardCompatibility(this.jobDatabase, this.jobDbConn)[1];
+    }
+
+    /**
+     * Parses and gets the database name and db connection for support backward compatibility,
+     * if Database Name field contains both values separated by @ as it was before.
+     */
+    private static String[] getDbWithBackwardCompatibility(String dataBase, String dbConn) {
+        String[] db = new String[0];
+        if ((dbConn == null || dbConn.isEmpty()) && dataBase != null && dataBase.contains("@")) {
+            try {
+                db = DimensionsAPI.parseDatabaseString(dataBase);
+            } catch (ParseException e) {
+                // Ignore
+            }
+        }
+        return db;
     }
 
     //this getter is needed for snippet generator
@@ -1280,7 +1299,8 @@ public class DimensionsSCM extends SCM implements Serializable {
          * @return the name of the base database to connect to
          */
         public String getDatabase() {
-            return this.database;
+            return getDbWithBackwardCompatibility(this.database, this.dbConn).length < 2
+                    ? this.database : getDbWithBackwardCompatibility(this.database, this.dbConn)[0];
         }
 
         /**
@@ -1289,7 +1309,8 @@ public class DimensionsSCM extends SCM implements Serializable {
          * @return the name of the base connection
          */
         public String getDbConn() {
-            return this.dbConn;
+            return getDbWithBackwardCompatibility(this.database, this.dbConn).length < 2
+                    ? this.dbConn : getDbWithBackwardCompatibility(this.database, this.dbConn)[1];
         }
 
         /**

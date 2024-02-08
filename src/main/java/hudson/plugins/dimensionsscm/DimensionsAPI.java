@@ -64,13 +64,13 @@ public class DimensionsAPI implements Serializable {
     private static final String MISSING_REQUEST = "The nested element needs a valid request to work on"; //$NON-NLS-1$
     private static final String BAD_BASE_DATABASE_SPEC = "The <dimensions> task needs a valid 'database' attribute, in the format 'dbname@dbconn'"; //$NON-NLS-1$
     private static final String NO_COMMAND_LINE = "The <run> nested element need a valid 'cmd' attribute"; //$NON-NLS-1$
+    public static final String INVALID_PARAMETERS = "Invalid or not parameters have been specified";
 
     // Thread safe key (sequence) generator.
     private static final AtomicLong sequence = new AtomicLong(1);
 
     // Dimensions server details.
     private String dmServer;
-    private String dmDb;
 
     private String dbName;
     private String dbConn;
@@ -139,15 +139,6 @@ public class DimensionsAPI implements Serializable {
         } else {
             return 0;
         }
-    }
-
-    /**
-     * Gets the base database for the connection (as "NAME@CONNECTION").
-     *
-     * @return the name of the base database to connect to
-     */
-    public final String getSCMDatabase() {
-        return this.dmDb;
     }
 
     /**
@@ -234,10 +225,18 @@ public class DimensionsAPI implements Serializable {
 
         Logger.debug("Checking Dimensions login parameters...");
 
-        if (dmServer == null || dmServer.length() == 0
-                || dbName == null || dbName.length() == 0
-                || dbConn == null || dbConn.length() == 0) {
-            throw new IllegalArgumentException("Invalid or not parameters have been specified");
+        if (dmServer == null || dmServer.length() == 0 || dbName == null || dbName.length() == 0) {
+            throw new IllegalArgumentException(INVALID_PARAMETERS);
+        }
+
+        if ((dbConn == null || dbConn.isEmpty())) {
+            try {
+                String[] dbCompts = parseDatabaseString(dbName);
+                dbName = dbCompts[0];
+                dbConn = dbCompts[1];
+            } catch (ParseException e) {
+                throw new IllegalArgumentException(INVALID_PARAMETERS, e);
+            }
         }
 
         Logger.debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dbName + "@" + dbConn);
@@ -447,7 +446,7 @@ public class DimensionsAPI implements Serializable {
      * @return an array of base database specification components
      * @throws ParseException if the supplied String does not conform to the above rules
      */
-    private static String[] parseDatabaseString(String database) throws ParseException {
+    public static String[] parseDatabaseString(String database) throws ParseException {
         String[] dbCompts;
         int endName = database.indexOf('/');
         int startConn = database.indexOf('@');
