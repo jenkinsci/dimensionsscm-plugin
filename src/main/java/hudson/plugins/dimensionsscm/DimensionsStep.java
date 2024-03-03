@@ -12,7 +12,7 @@ import org.kohsuke.stapler.*;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 
 public final class DimensionsStep extends SCMStep {

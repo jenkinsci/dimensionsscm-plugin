@@ -5,16 +5,16 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.32</version>
+        <version>4.76</version>
         <relativePath />
     </parent>
 
     <artifactId>dimensionsscm</artifactId>
-    <version>0.9.3.2-SNAPSHOT</version>
+    <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
     <name>Jenkins Dimensions Plugin</name>
     <description>This plugin integrates the Dimensions CM SCM with Jenkins.</description>
-    <url>https://github.com/jenkinsci/dimensionsscm-plugin</url>
+    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
 
     <licenses>
         <license>
@@ -32,10 +32,10 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-        <tag>HEAD</tag>
+        <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
+        <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
+        <url>https://github.com/${gitHubRepo}</url>
+        <tag>${scmTag}</tag>
     </scm>
 
     <issueManagement>
@@ -44,8 +44,10 @@
     </issueManagement>
 
     <properties>
-        <jenkins.version>2.222.4</jenkins.version>
-        <java.level>8</java.level>
+        <jenkins.version>2.414.3</jenkins.version>
+        <revision>0.9.3.2</revision>
+        <changelist>-SNAPSHOT</changelist>
+        <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
         <maven.compiler.showWarnings>true</maven.compiler.showWarnings>
         <spotbugs.skip>true</spotbugs.skip>
@@ -78,16 +80,15 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.222.x</artifactId>
-                <version>887.vae9c8ac09ff7</version>
+                <artifactId>bom-2.414.x</artifactId>
+                <version>2705.vf5c48c31285b_</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
-                <!-- 1.9.4 when this merged https://github.com/stapler/stapler/pull/211 -->
-                <version>1.9.3</version>
+                <version>1.9.4</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -130,11 +131,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-digester3</artifactId>
             <version>3.2</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
