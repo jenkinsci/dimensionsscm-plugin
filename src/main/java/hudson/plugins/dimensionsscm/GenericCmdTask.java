@@ -19,6 +19,7 @@ abstract class GenericCmdTask extends BaseCallable {
     private final String userName;
     private final Secret passwd;
     private final String database;
+    private final String dbConn;
     private final String server;
 
     private final String certificatePath;
@@ -50,6 +51,7 @@ abstract class GenericCmdTask extends BaseCallable {
             fmtWriter = new PrintWriter(new FileWriter(tmpFile), true);
             fmtWriter.println("-host " + server);
             fmtWriter.println("-dbname " + database);
+            fmtWriter.println("-dsn " + dbConn);
 
             if (isSecureAgentAuth) {
                 fmtWriter.println("-cac_cert_file " + certificatePath);
@@ -72,7 +74,7 @@ abstract class GenericCmdTask extends BaseCallable {
         return tmpFile;
     }
 
-    GenericCmdTask(String userName, Secret passwd, String database, String server, int version,
+    GenericCmdTask(String userName, Secret passwd, String database, String dbConn, String server, int version,
                    String certificatePath, Secret certificatePassword, boolean isSecureAgentAuth, FilePath workspace, TaskListener listener) {
         this.listener = listener;
 
@@ -80,6 +82,7 @@ abstract class GenericCmdTask extends BaseCallable {
         this.userName = userName;
         this.passwd = passwd;
         this.database = database;
+        this.dbConn = dbConn;
         this.server = server;
         this.version = version;
         this.certificatePath = certificatePath;

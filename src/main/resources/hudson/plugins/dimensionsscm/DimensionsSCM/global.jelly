@@ -10,12 +10,14 @@
                     <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
                         <f:textbox name="dimensionsscm.serverPlugin" value="${h.defaulted(descriptor.server, 'Enter your Dimensions server here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
                     </f:entry>
-                    <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                    <f:entry title="Database name" help="/plugin/dimensionsscm/database.html">
                         <f:textbox name="dimensionsscm.databasePlugin" value="${h.defaulted(descriptor.database, 'Enter your Dimensions database here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
-                        <i>(the format used must be database@dsn)</i>
+                    </f:entry>
+                    <f:entry title="Database connection" help="/plugin/dimensionsscm/dbConn.html">
+                        <f:textbox name="dimensionsscm.dbConnPlugin" value="${h.defaulted(descriptor.dbConn, 'Enter your Dimensions connection here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
                     </f:entry>
                     <f:entry>
-                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerGlobal" with="dimensionsscm.serverPlugin,dimensionsscm.databasePlugin,credentialsId,credentialsType" />
+                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerGlobal" with="dimensionsscm.serverPlugin,dimensionsscm.databasePlugin,dimensionsscm.dbConnPlugin,credentialsId,credentialsType" />
                     </f:entry>
                 </f:radioBlock>
                 <f:radioBlock name="credentialsType" checked="${descriptor.isChecked('userDefined')}" title="Legacy username/password" help="/plugin/dimensionsscm/userDefined.html" value="userDefined">
@@ -29,12 +31,14 @@
                     <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
                         <f:textbox name="dimensionsscm.serverUser" value="${h.defaulted(descriptor.server, 'Enter your Dimensions server here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
                     </f:entry>
-                    <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                    <f:entry title="Database name" help="/plugin/dimensionsscm/database.html">
                         <f:textbox name="dimensionsscm.databaseUser" value="${h.defaulted(descriptor.database, 'Enter your Dimensions database here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
-                        <i>(the format used must be database@dsn)</i>
+                    </f:entry>
+                    <f:entry title="Database connection" help="/plugin/dimensionsscm/dbConn.html">
+                        <f:textbox name="dimensionsscm.dbConnUser" value="${h.defaulted(descriptor.dbConn, 'Enter your Dimensions connection here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
                     </f:entry>
                     <f:entry>
-                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerGlobal" with="dimensionsscm.userName,dimensionsscm.passwd,dimensionsscm.serverUser,dimensionsscm.databaseUser,credentialsType" />
+                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerGlobal" with="dimensionsscm.userName,dimensionsscm.passwd,dimensionsscm.serverUser,dimensionsscm.databaseUser,dimensionsscm.dbConnUser,credentialsType" />
                     </f:entry>
                 </f:radioBlock>
                 <f:radioBlock name="credentialsType" checked="${descriptor.isChecked('keystoreDefined')}" title="Keystore authentication" help="/plugin/dimensionsscm/keystoreDefined.html" value="keystoreDefined">
@@ -54,9 +58,11 @@
                     <f:entry title="Server" help="/plugin/dimensionsscm/server.html">
                         <f:textbox name="dimensionsscm.keystoreServer" value="${h.defaulted(descriptor.server, 'Enter your Dimensions server here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
                     </f:entry>
-                    <f:entry title="Database" help="/plugin/dimensionsscm/database.html">
+                    <f:entry title="Database name" help="/plugin/dimensionsscm/database.html">
                         <f:textbox name="dimensionsscm.keystoreDatabase" value="${h.defaulted(descriptor.database, 'Enter your Dimensions database here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
-                        <i>(the format used must be database@dsn)</i>
+                    </f:entry>
+                    <f:entry title="Database connection" help="/plugin/dimensionsscm/dbConn.html">
+                        <f:textbox name="dimensionsscm.keystoreDbConn" value="${h.defaulted(descriptor.dbConn, 'Enter your Dimensions connection here')}" checkUrl="'${rootURL}/scm/DimensionsSCM/manadatoryFieldCheck?value='+escape(this.value)" />
                     </f:entry>
                     <f:nested>
                         <div>
@@ -72,7 +78,7 @@
                         </div>
                     </f:nested>
                     <f:entry>
-                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore" with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias" />
+                        <f:validateButton title="Check Connection..." progress="Checking..." method="checkServerKeystore" with="dimensionsscm.keystorePath,dimensionsscm.keystorePassword,dimensionsscm.keystoreServer,dimensionsscm.keystoreDatabase,dimensionsscm.keystoreDbConn,dimensionsscm.certificatePassword,dimensionsscm.certificateAlias" />
                     </f:entry>
                 </f:radioBlock>
                 <f:entry></f:entry>

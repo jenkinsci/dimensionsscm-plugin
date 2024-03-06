@@ -22,7 +22,9 @@ public final class DimensionsStep extends SCMStep {
     private String userServer;
     private String pluginServer;
     private String userDatabase;
+    private String userDbConn;
     private String pluginDatabase;
+    private String pluginDbConn;
     private String project;
     private String password;
     private String certificatePassword;
@@ -30,6 +32,7 @@ public final class DimensionsStep extends SCMStep {
     private String keystorePassword;
     private String keystoreServer;
     private String keystoreDatabase;
+    private String keystoreDbConn;
     private String credentialsType;
     private String timeZone;
     private String webUrl;
@@ -82,8 +85,18 @@ public final class DimensionsStep extends SCMStep {
     }
 
     @DataBoundSetter
+    public void setUserDbConn(String userDbConn) {
+        this.userDbConn = userDbConn;
+    }
+
+    @DataBoundSetter
     public void setPluginDatabase(String pluginDatabase) {
         this.pluginDatabase = pluginDatabase;
+    }
+
+    @DataBoundSetter
+    public void setPluginDbConn(String pluginDbConn) {
+        this.pluginDbConn = pluginDbConn;
     }
 
     @DataBoundSetter
@@ -114,6 +127,11 @@ public final class DimensionsStep extends SCMStep {
     @DataBoundSetter
     public void setKeystoreDatabase(String keystoreDatabase) {
         this.keystoreDatabase = keystoreDatabase;
+    }
+
+    @DataBoundSetter
+    public void setKeystoreDbConn(String keystoreDbConn) {
+        this.keystoreDbConn = keystoreDbConn;
     }
 
     @DataBoundSetter
@@ -277,8 +295,16 @@ public final class DimensionsStep extends SCMStep {
         return Credentials.isUserDefined(credentialsType) ? userDatabase : null;
     }
 
+    public String getUserDbConn() {
+        return Credentials.isUserDefined(credentialsType) ? userDbConn : null;
+    }
+
     public String getPluginDatabase() {
         return Credentials.isPluginDefined(credentialsType) ? pluginDatabase : null;
+    }
+
+    public String getPluginDbConn() {
+        return Credentials.isPluginDefined(credentialsType) ? pluginDbConn : null;
     }
 
     public String getPassword() {
@@ -317,6 +343,10 @@ public final class DimensionsStep extends SCMStep {
         return Credentials.isKeystoreDefined(credentialsType) ? keystoreDatabase : null;
     }
 
+    public String getKeystoreDbConn() {
+        return Credentials.isKeystoreDefined(credentialsType) ? keystoreDbConn : null;
+    }
+
     public String getKeystorePath() {
         return Credentials.isKeystoreDefined(credentialsType) ? keystorePath : null;
     }
@@ -329,7 +359,7 @@ public final class DimensionsStep extends SCMStep {
     @Override
     protected SCM createSCM() {
         DimensionsSCM scm = new DimensionsSCM(project, credentialsType, userName, password, pluginServer,
-                userServer, keystoreServer, pluginDatabase, userDatabase, keystoreDatabase, keystorePath, certificateAlias, credentialsId, certificatePassword, keystorePassword,
+                userServer, keystoreServer, pluginDatabase, pluginDbConn, userDatabase, userDbConn, keystoreDatabase, keystoreDbConn, keystorePath, certificateAlias, credentialsId, certificatePassword, keystorePassword,
                 certificatePath, remoteCertificatePassword, secureAgentAuth);
         scm.setTimeZone(timeZone);
         scm.setWebUrl(webUrl);
@@ -383,11 +413,13 @@ public final class DimensionsStep extends SCMStep {
                                                   @QueryParameter("dimensionsscm.password") final String jobPasswd,
                                                   @QueryParameter("dimensionsscm.userServer") final String jobServerUser,
                                                   @QueryParameter("dimensionsscm.userDatabase") final String jobDatabaseUser,
+                                                  @QueryParameter("dimensionsscm.userDbConn") final String jobDbConnUser,
                                                   @QueryParameter("dimensionsscm.pluginServer") final String jobServerPlugin,
                                                   @QueryParameter("dimensionsscm.pluginDatabase") final String jobDatabasePlugin,
+                                                  @QueryParameter("dimensionsscm.pluginDbConn") final String jobDbConnPlugin,
                                                   @AncestorInPath final Item item) {
             return delegate.doCheckServerConfig(req, rsp, credentialsId, credentialsType, jobuser, jobPasswd, jobServerUser,
-                    jobDatabaseUser, jobServerPlugin, jobDatabasePlugin, item);
+                    jobDatabaseUser, jobDbConnUser, jobServerPlugin, jobDatabasePlugin, jobDbConnPlugin, item);
         }
 
         @RequirePOST
@@ -396,11 +428,12 @@ public final class DimensionsStep extends SCMStep {
                                                     @QueryParameter("dimensionsscm.keystorePassword") final String keystorePassword,
                                                     @QueryParameter("dimensionsscm.keystoreServer") final String keystoreServer,
                                                     @QueryParameter("dimensionsscm.keystoreDatabase") final String keystoreDatabase,
+                                                    @QueryParameter("dimensionsscm.keystoreDbConn") final String keystoreDbConn,
                                                     @QueryParameter("dimensionsscm.certificatePassword") final String certificatePassword,
                                                     @QueryParameter("dimensionsscm.certificateAlias") final String certificateAlias,
                                                     @AncestorInPath final Item item) {
             return delegate.doCheckServerKeystore(req, rsp, keystorePath, keystorePassword, keystoreServer, keystoreDatabase,
-                    certificatePassword, certificateAlias, item);
+                    keystoreDbConn, certificatePassword, certificateAlias, item);
         }
     }
 }

@@ -64,13 +64,13 @@ public class DimensionsAPI implements Serializable {
     private static final String MISSING_REQUEST = "The nested element needs a valid request to work on"; //$NON-NLS-1$
     private static final String BAD_BASE_DATABASE_SPEC = "The <dimensions> task needs a valid 'database' attribute, in the format 'dbname@dbconn'"; //$NON-NLS-1$
     private static final String NO_COMMAND_LINE = "The <run> nested element need a valid 'cmd' attribute"; //$NON-NLS-1$
+    public static final String INVALID_PARAMETERS = "Invalid or not parameters have been specified";
 
     // Thread safe key (sequence) generator.
     private static final AtomicLong sequence = new AtomicLong(1);
 
     // Dimensions server details.
     private String dmServer;
-    private String dmDb;
 
     private String dbName;
     private String dbConn;
@@ -142,15 +142,6 @@ public class DimensionsAPI implements Serializable {
     }
 
     /**
-     * Gets the base database for the connection (as "NAME@CONNECTION").
-     *
-     * @return the name of the base database to connect to
-     */
-    public final String getSCMDatabase() {
-        return this.dmDb;
-    }
-
-    /**
      * Gets the base database for the connection.
      *
      * @return the name of the base database only
@@ -160,11 +151,11 @@ public class DimensionsAPI implements Serializable {
     }
 
     /**
-     * Gets the database DNS for the connection.
+     * Gets the database connection.
      *
-     * @return the name of the DSN only
+     * @return the name of the connection only
      */
-    public final String getSCMDsn() {
+    public final String getSCMDbConn() {
         return this.dbConn;
     }
 
@@ -225,86 +216,89 @@ public class DimensionsAPI implements Serializable {
      * @return A long key for the connection
      * @throws DimensionsRuntimeException, IllegalArgumentException
      */
-    private long login(DimensionsConnectionDetails details, String database, String server) {
+    private long login(DimensionsConnectionDetails details, String database, String conn, String server) {
         long key = sequence.getAndIncrement();
 
         dmServer = server;
-        dmDb = database;
+        dbName = database;
+        dbConn = conn;
 
         Logger.debug("Checking Dimensions login parameters...");
 
-        if (dmServer == null || dmServer.length() == 0 || dmDb == null || dmDb.length() == 0) {
-            throw new IllegalArgumentException("Invalid or not parameters have been specified");
+        if (dmServer == null || dmServer.length() == 0 || dbName == null || dbName.length() == 0) {
+            throw new IllegalArgumentException(INVALID_PARAMETERS);
         }
-        try {
-            // check if we need to pre-process the login details
-            String[] dbCompts = parseDatabaseString(dmDb);
-            dbName = dbCompts[0];
-            dbConn = dbCompts[1];
-            Logger.debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dmDb);
 
-            details.setDbName(dbName);
-            details.setDbConn(dbConn);
-            details.setServer(dmServer);
-
-            Logger.debug("Getting Dimensions connection...");
-            DimensionsConnection connection = DimensionsConnectionManager.getConnection(details);
-            if (connection != null) {
-                Logger.debug("Connection map key is " + key);
-                Logger.debug("Connection map size before putIfAbsent is " + conns.size());
-                if (conns.putIfAbsent(key, connection) != null) {
-                    Logger.debug("Connection map already contains key " + key);
-                }
-                Logger.debug("Connection map size after putIfAbsent is " + conns.size());
-                if (version < 0) {
-                    version = 2009;
-                    // Get the server version.
-                    List<String> inf = connection.getObjectFactory().getServerVersion(2);
-                    if (inf == null) {
-                        Logger.debug("Detection of server information failed");
-                    }
-                    if (inf != null) {
-                        Logger.debug("Server information detected -" + inf.size());
-                        for (int i = 0; i < inf.size(); ++i) {
-                            String prop = inf.get(i);
-                            Logger.debug(i + " - " + prop);
-                        }
-
-                        // Try and locate the server version.
-                        // If not found, then get the schema version and use that.
-                        String serverx = inf.get(2);
-                        if (serverx == null) {
-                            serverx = inf.get(0);
-                        }
-                        if (serverx != null) {
-                            Logger.debug("Detected server version: " + serverx);
-                            String[] tokens = serverx.split(" ");
-                            serverx = tokens[0];
-                            if (serverx.startsWith("10.")) {
-                                version = 10;
-                            } else if (serverx.startsWith("2009")) {
-                                version = 2009;
-                            } else if (serverx.startsWith("201")) {
-                                version = 2010;
-                            } else if (serverx.startsWith("12.1")) {
-                                version = 2010;
-                            } else if (serverx.startsWith("12.2")) {
-                                version = 2010;
-                            } else {
-                                version = 2009;
-                            }
-                            Logger.debug("Version to process set to " + version);
-                        } else {
-                            Logger.debug("No server information found");
-                        }
-                    }
-                }
-            } else {
-                Logger.debug("Dimensions connection was null");
+        if ((dbConn == null || dbConn.isEmpty())) {
+            try {
+                String[] dbCompts = parseDatabaseString(dbName);
+                dbName = dbCompts[0];
+                dbConn = dbCompts[1];
+            } catch (ParseException e) {
+                throw new IllegalArgumentException(INVALID_PARAMETERS, e);
             }
-        } catch (Exception e) {
-            throw (DimensionsRuntimeException) new DimensionsRuntimeException(Values.exceptionMessage("Login to Dimensions failed",
-                    e, "no message")).initCause(e);
+        }
+
+        Logger.debug("Logging into Dimensions: " + dmUser + " " + dmServer + " " + dbName + "@" + dbConn);
+
+        details.setDbName(dbName);
+        details.setDbConn(dbConn);
+        details.setServer(dmServer);
+
+        Logger.debug("Getting Dimensions connection...");
+        DimensionsConnection connection = DimensionsConnectionManager.getConnection(details);
+        if (connection != null) {
+            Logger.debug("Connection map key is " + key);
+            Logger.debug("Connection map size before putIfAbsent is " + conns.size());
+            if (conns.putIfAbsent(key, connection) != null) {
+                Logger.debug("Connection map already contains key " + key);
+            }
+            Logger.debug("Connection map size after putIfAbsent is " + conns.size());
+            if (version < 0) {
+                version = 2009;
+                // Get the server version.
+                List<String> inf = connection.getObjectFactory().getServerVersion(2);
+                if (inf == null) {
+                    Logger.debug("Detection of server information failed");
+                }
+                if (inf != null) {
+                    Logger.debug("Server information detected -" + inf.size());
+                    for (int i = 0; i < inf.size(); ++i) {
+                        String prop = inf.get(i);
+                        Logger.debug(i + " - " + prop);
+                    }
+
+                    // Try and locate the server version.
+                    // If not found, then get the schema version and use that.
+                    String serverx = inf.get(2);
+                    if (serverx == null) {
+                        serverx = inf.get(0);
+                    }
+                    if (serverx != null) {
+                        Logger.debug("Detected server version: " + serverx);
+                        String[] tokens = serverx.split(" ");
+                        serverx = tokens[0];
+                        if (serverx.startsWith("10.")) {
+                            version = 10;
+                        } else if (serverx.startsWith("2009")) {
+                            version = 2009;
+                        } else if (serverx.startsWith("201")) {
+                            version = 2010;
+                        } else if (serverx.startsWith("12.1")) {
+                            version = 2010;
+                        } else if (serverx.startsWith("12.2")) {
+                            version = 2010;
+                        } else {
+                            version = 2009;
+                        }
+                        Logger.debug("Version to process set to " + version);
+                    } else {
+                        Logger.debug("No server information found");
+                    }
+                }
+            }
+        } else {
+            Logger.debug("Dimensions connection was null");
         }
         if (conns.containsKey(key)) {
             return key;
@@ -312,7 +306,7 @@ public class DimensionsAPI implements Serializable {
         return -1L;
     }
 
-    public final long login(String userID, Secret password, String database, String server) {
+    public final long login(String userID, Secret password, String database, String conn, String server) {
 
         dmUser = userID;
 
@@ -324,12 +318,12 @@ public class DimensionsAPI implements Serializable {
         details.setUsername(dmUser);
         details.setPassword(Secret.toString(password));
 
-        final long key = login(details, database, server);
+        final long key = login(details, database, conn, server);
         Logger.debug("  key: \"" + key + "\"");
         return key;
     }
 
-    public final long login(String server, String database, String certificateAlias, Secret certificatePassword, String keystorePath, Secret keystorePassword) {
+    public final long login(String server, String database, String conn, String certificateAlias, Secret certificatePassword, String keystorePath, Secret keystorePassword) {
         try {
 
             if (StringUtils.isBlank(keystorePath)) {
@@ -361,7 +355,7 @@ public class DimensionsAPI implements Serializable {
             details.setCertificateProver(new CertificateProver(pkEntry.getPrivateKey(), kpgenProv));
             details.setKeyManager(keyManager);
 
-            final long key = login(details, database, server);
+            final long key = login(details, database, conn, server);
             Logger.debug("  key: \"" + key + "\"");
             return key;
         } catch (Exception e) {
@@ -372,14 +366,14 @@ public class DimensionsAPI implements Serializable {
 
     private final long loginImpl(DimensionsSCM scm, Job<?, ?> job) {
         if (Credentials.isKeystoreDefined(scm.getCredentialsType()))
-            return login(scm.getServer(), scm.getDatabase(), scm.getCertificateAlias(), scm.getCertificatePasswordSecret(), scm.getKeystorePath(), scm.getKeystorePasswordSecret());
+            return login(scm.getServer(), scm.getDatabase(), scm.getDbConn(), scm.getCertificateAlias(), scm.getCertificatePasswordSecret(), scm.getKeystorePath(), scm.getKeystorePasswordSecret());
         else if (Credentials.isPluginDefined(scm.getCredentialsType()) && scm.getUserName() == null) {
             Logger.debug("DimensionsAPI.login - filling in non-prefilled credentials");
             // only come here if username is null, remoted tasks should pre-fillInCredentials.
             final UsernamePasswordCredentials credentials = DimensionsSCM.credentialsFromId(scm.getCredentialsId(), job);
-            return login(credentials.getUsername(), credentials.getPassword(), scm.getDatabase(), scm.getServer());
+            return login(credentials.getUsername(), credentials.getPassword(), scm.getDatabase(), scm.getDbConn(), scm.getServer());
         } else
-            return login(scm.getUserName(), Secret.fromString(scm.getPasswordNN()), scm.getDatabase(), scm.getServer());
+            return login(scm.getUserName(), Secret.fromString(scm.getPasswordNN()), scm.getDatabase(), scm.getDbConn(), scm.getServer());
     }
 
     public final long login(DimensionsSCM scm, Job<?, ?> job) {
@@ -452,7 +446,7 @@ public class DimensionsAPI implements Serializable {
      * @return an array of base database specification components
      * @throws ParseException if the supplied String does not conform to the above rules
      */
-    private static String[] parseDatabaseString(String database) throws ParseException {
+    public static String[] parseDatabaseString(String database) throws ParseException {
         String[] dbCompts;
         int endName = database.indexOf('/');
         int startConn = database.indexOf('@');
@@ -1221,7 +1215,7 @@ public class DimensionsAPI implements Serializable {
             if (date == null) {
                 date = (String) item.getAttribute(getDateTypeAttribute("edit"));
             }
-            String urlString = constructURL(spec, url, getSCMDsn(), getSCMBaseDb());
+            String urlString = constructURL(spec, url, getSCMDbConn(), getSCMBaseDb());
             if (urlString == null) {
                 urlString = "";
             }
@@ -1263,7 +1257,7 @@ public class DimensionsAPI implements Serializable {
                     });
 
                     String requestId = (String) req.getAttribute(SystemAttributes.OBJECT_SPEC);
-                    String requestUrl = constructRequestURL(requestId, url, getSCMDsn(), getSCMBaseDb());
+                    String requestUrl = constructRequestURL(requestId, url, getSCMDbConn(), getSCMBaseDb());
                     String requestTitle = (String) req.getAttribute(SystemAttributes.TITLE);
 
                     entry.addRequest(requestId, requestUrl, requestTitle);
@@ -1315,7 +1309,7 @@ public class DimensionsAPI implements Serializable {
     }
 
     // URL encode a webclient path + spec for opening
-    static String constructURL(String spec, String url, String dsn, String db) {
+    static String constructURL(String spec, String url, String dbConn, String db) {
         String urlString = "";
         if (spec != null && spec.length() > 0 && url != null && url.length() > 0) {
             String host = url;
@@ -1331,7 +1325,7 @@ public class DimensionsAPI implements Serializable {
             String urlQuery = "jsp=api&command=openi&object_id=";
             urlQuery += spec;
             urlQuery += "&DB_CONN=";
-            urlQuery += dsn;
+            urlQuery += dbConn;
             urlQuery += "&DB_NAME=";
             urlQuery += db;
             try {
@@ -1348,7 +1342,7 @@ public class DimensionsAPI implements Serializable {
     }
 
     // URL encode a webclient path + spec for opening
-    static String constructRequestURL(String spec, String url, String dsn, String db) {
+    static String constructRequestURL(String spec, String url, String dbConn, String db) {
         String urlString = "";
         if (spec != null && spec.length() > 0 && url != null && url.length() > 0) {
             String host = url;
@@ -1364,7 +1358,7 @@ public class DimensionsAPI implements Serializable {
             String urlQuery = "jsp=api&command=opencd&object_id=";
             urlQuery += spec;
             urlQuery += "&DB_CONN=";
-            urlQuery += dsn;
+            urlQuery += dbConn;
             urlQuery += "&DB_NAME=";
             urlQuery += db;
             try {
