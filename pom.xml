@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.76</version>
+        <version>5.17</version>
         <relativePath />
     </parent>
 
@@ -44,7 +44,7 @@
     </issueManagement>
 
     <properties>
-        <jenkins.version>2.414.3</jenkins.version>
+        <jenkins.version>2.479.3</jenkins.version>
         <revision>0.9.3.2</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
@@ -80,15 +80,10 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.414.x</artifactId>
-                <version>2705.vf5c48c31285b_</version>
+                <artifactId>bom-2.479.x</artifactId>
+                <version>4770.v9a_2b_7a_9d8b_7f</version>
                 <scope>import</scope>
                 <type>pom</type>
-            </dependency>
-            <dependency>
-                <groupId>commons-beanutils</groupId>
-                <artifactId>commons-beanutils</artifactId>
-                <version>1.9.4</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -116,6 +111,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>commons-lang3-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
         </dependency>
@@ -131,6 +130,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-digester3</artifactId>
             <version>3.2</version>
+          <exclusions>
+            <exclusion>
+              <groupId>asm</groupId>
+              <artifactId>asm</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>

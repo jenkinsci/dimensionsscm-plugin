@@ -13,11 +13,13 @@
                     <f:textbox name="dimensionsbuildnotifier.blnType" value="${instance.blnType}" />
                 </f:entry>
                 <f:entry title="Baseline Scope" field="blnScope" help="/plugin/dimensionsscm/blnScope.html">
-                    <select class="setting-input" name="dimensionsbuildnotifier.blnScope">
-                        <f:option value="WORKSET" selected="${'WORKSET'==instance.blnScope}">Project</f:option>
-                        <f:option value="PART" selected="${'PART'==instance.blnScope}">Part</f:option>
-                        <f:option value="REVISED" selected="${'REVISED'==instance.blnScope}">Revised</f:option>
-                    </select>
+                    <div class="jenkins-select">
+                        <select class="jenkins-select__input" name="dimensionsbuildnotifier.blnScope">
+                            <f:option value="WORKSET" selected="${'WORKSET'==instance.blnScope}">Project</f:option>
+                            <f:option value="PART" selected="${'PART'==instance.blnScope}">Part</f:option>
+                            <f:option value="REVISED" selected="${'REVISED'==instance.blnScope}">Revised</f:option>
+                        </select>
+                    </div>
                 </f:entry>
                 <f:entry>
                     <p>(Note - The above options can be used to configure the type of baseline that is
