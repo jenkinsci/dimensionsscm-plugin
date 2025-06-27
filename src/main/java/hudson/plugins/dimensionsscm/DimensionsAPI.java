@@ -25,7 +25,7 @@ import hudson.FilePath;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.util.Secret;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;

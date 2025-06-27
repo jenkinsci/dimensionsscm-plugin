@@ -18,11 +18,13 @@
                 <f:textbox name="dimensionsbuilder.projectStage" value="${instance.projectStage}" />
             </f:entry>
             <f:entry title="Area Type" field="projectType" help="/plugin/dimensionsscm/buildType.html">
-                <select class="setting-input" name="dimensionsbuilder.projectType">
-                    <f:option value="NONE" selected="${'NONE'==instance.projectType}">(None)</f:option>
-                    <f:option value="WORK" selected="${'WORK'==instance.projectType}">Work</f:option>
-                    <f:option value="DEPLOYMENT" selected="${'DEPLOYMENT'==instance.projectType}">Deployment</f:option>
-                </select>
+                <div class="jenkins-select">
+                    <select class="jenkins-select__input" name="dimensionsbuilder.projectType">
+                        <f:option value="NONE" selected="${'NONE'==instance.projectType}">(None)</f:option>
+                        <f:option value="WORK" selected="${'WORK'==instance.projectType}">Work</f:option>
+                        <f:option value="DEPLOYMENT" selected="${'DEPLOYMENT'==instance.projectType}">Deployment</f:option>
+                    </select>
+                </div>
             </f:entry>
             <f:entry title="${%Run the build in background}" help="/plugin/dimensionsscm/batch.html">
                 <f:checkbox name="dimensionsbuilder.projectBatch" default="true" checked="${instance.projectBatch}" />

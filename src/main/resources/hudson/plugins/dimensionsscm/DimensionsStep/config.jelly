@@ -155,19 +155,23 @@
                 <f:checkbox name="dimensionsscm.canJobNoTouch" default="false" checked="${instance.canJobNoTouch}" />
             </f:entry>
             <f:entry title="Default Permissions for updated files" field="permissions">
-                <select class="setting-input" name="dimensionsscm.permissions">
-                    <f:option value="DEFAULT" selected="${'DEFAULT'==instance.permissions}">(Default)</f:option>
-                    <f:option value="READONLY" selected="${'READONLY'==instance.permissions}">Read-only</f:option>
-                    <f:option value="WRITABLE" selected="${'WRITABLE'==instance.permissions}">Writeable</f:option>
-                </select>
+                <div class="jenkins-select">
+                    <select class="jenkins-select__input" name="dimensionsscm.permissions">
+                        <f:option value="DEFAULT" selected="${'DEFAULT'==instance.permissions}">(Default)</f:option>
+                        <f:option value="READONLY" selected="${'READONLY'==instance.permissions}">Read-only</f:option>
+                        <f:option value="WRITABLE" selected="${'WRITABLE'==instance.permissions}">Writeable</f:option>
+                    </select>
+                </div>
             </f:entry>
             <f:entry title="Perform End of Line Conversion for updated files" field="eol">
-                <select class="setting-input" name="dimensionsscm.eol">
-                    <f:option value="DEFAULT" selected="${'DEFAULT'==instance.eol}">(Default)</f:option>
-                    <f:option value="UNIX" selected="${'UNIX'==instance.eol}">Unix style end-of-line</f:option>
-                    <f:option value="WINDOWS" selected="${'WINDOWS'==instance.eol}">Windows style end-of-line</f:option>
-                    <f:option value="UNCHANGED" selected="${'UNCHANGED'==instance.eol}">Leave files as they are</f:option>
-                </select>
+                <div class="jenkins-select">
+                    <select class="jenkins-select__input" name="dimensionsscm.eol">
+                        <f:option value="DEFAULT" selected="${'DEFAULT'==instance.eol}">(Default)</f:option>
+                        <f:option value="UNIX" selected="${'UNIX'==instance.eol}">Unix style end-of-line</f:option>
+                        <f:option value="WINDOWS" selected="${'WINDOWS'==instance.eol}">Windows style end-of-line</f:option>
+                        <f:option value="UNCHANGED" selected="${'UNCHANGED'==instance.eol}">Leave files as they are</f:option>
+                    </select>
+                </div>
             </f:entry>
         </f:optionalBlock>
         <f:entry title="Time zone" help="/plugin/dimensionsscm/timezone.html">
